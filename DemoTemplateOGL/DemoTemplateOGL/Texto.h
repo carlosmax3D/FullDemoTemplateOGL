@@ -24,6 +24,7 @@ public:
 
 	~Texto();
 
+	void initTexto(WCHAR *texto);
 	void initTexto(wstring &texto);
     void initTexto();
 

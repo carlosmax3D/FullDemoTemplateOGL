@@ -43,7 +43,8 @@ private:
 //          vertex.TexCoords = glm::vec2((float)x / (numSegmentsX - 1), (float)z / (numSegmentsZ - 1));
         }
 		// Recalculate normals based on updated vertices
-//		UTILITIES_OGL::calculateNormals(vertices, meshes[0].indices);
+//		UTILITIES_OGL::calculateNormals(vertices, meshes[0]->indices);
+//		buildKDtree();
     }
 public:
 	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera)

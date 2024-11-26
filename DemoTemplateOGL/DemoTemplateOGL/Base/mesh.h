@@ -35,7 +35,7 @@ public:
         glDeleteBuffers(1, &EBO);
     }
     // constructor
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, vector<Material> materials, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, vector<Material>& materials, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
@@ -45,7 +45,7 @@ public:
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
@@ -71,21 +71,29 @@ public:
         //        glEnable(GL_TEXTURE_2D);
         for (unsigned int i = 0; i < textures.size() || i < materials.size(); i++) {
             if (i < textures.size()) {
+                char textShader[255] = {0};
                 glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
                 // retrieve texture number (the N in diffuse_textureN)
                 string number;
-                string name = textures[i].type;
-                if (name == "texture_diffuse")
+                string &name = textures[i].type;
+                if (name.compare("texture_diffuse") == 0)
                     number = std::to_string(diffuseNr++);
-                else if (name == "texture_specular")
+                else if (name.compare("texture_specular") == 0)
                     number = std::to_string(specularNr++); // transfer unsigned int to stream
-                else if (name == "texture_normal")
+                else if (name.compare("texture_normal") == 0)
                     number = std::to_string(normalNr++); // transfer unsigned int to stream
-                else if (name == "texture_height")
+                else if (name.compare("texture_height") == 0)
                     number = std::to_string(heightNr++); // transfer unsigned int to stream
                 shader.setInt("textureSample", 1);
                 // now set the sampler to the correct texture unit
-                glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+#ifdef _WIN32 
+                strcpy_s(textShader, 255, name.c_str());
+                strcat_s(textShader, 255, number.c_str());
+#else
+                strcpy(textShader, name.c_str());
+                strcat(textShader, number.c_str());
+#endif
+                glUniform1i(glGetUniformLocation(shader.ID, textShader), i);
                 // and finally bind the texture
                 glBindTexture(GL_TEXTURE_2D, textures[i].id);
             } else shader.setInt("textureSample", 0);

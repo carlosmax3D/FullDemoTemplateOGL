@@ -25,6 +25,7 @@ using namespace std;
 
 class Model {
 private:
+    std::list<Node::vecType> point_list;
     bool hasTranslate = false;
     glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
     bool hasScale = false;
@@ -47,7 +48,6 @@ private:
     void SetVertexBoneDataToDefault(Vertex& vertex);
     void SetVertexBoneData(Vertex& vertex, int boneID, float weight);
     void ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
-    
 
 public:
     // model data 
@@ -61,12 +61,14 @@ public:
     bool gammaCorrection;
     Shader* gpuDemo = NULL;
     string name;
+    glm::vec3 lightColor = glm::vec3(3.0f,3.0f,3.0f);
+    glm::vec3 lightPos = glm::vec3(100.2f, 100.0f, 100.0f);
 
     // constructor, expects a filepath to a 3D model.
     Model();
     Model(string const& path, Camera* camera, bool rotationX = false, bool rotationY = true, bool gamma = false);
-    Model(vector<Vertex> vertices, unsigned int numVertices, vector<unsigned int> indices, unsigned int numIndices, Camera* camera);
-    Model(string const& path, glm::vec3 actualPosition, Camera* cam, bool rotationX = false, bool rotationY = true, bool gamma = false);
+    Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera);
+    Model(string const& path, glm::vec3& actualPosition, Camera* cam, bool rotationX = false, bool rotationY = true, bool gamma = false);
     ~Model();
     // draws the model, and thus all its meshes
     void prepShader(Shader& gpuDemo);

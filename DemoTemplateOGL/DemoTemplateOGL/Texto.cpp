@@ -27,6 +27,11 @@ void Texto::initTexto(wstring &texto){
 	initTexto();
 }
 
+void Texto::initTexto(WCHAR *texto){
+	this->texto.assign((wchar_t*)texto);
+	initTexto();
+}
+
 void Texto::initTexto(){
 	for (int i = 0; i < this->textBillboard.size(); i++){
 		delete textBillboard[i];

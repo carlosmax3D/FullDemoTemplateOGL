@@ -9,14 +9,15 @@ void font_atlas::clearInstance(){
 }
 
 font_atlas &font_atlas::getInstance(){
-	std::string defFont = "shaders/ttf_FreeSans.ttf";
+	const char *defFont = "shaders/ttf_FreeSans.ttf";
 	return getInstance(defFont);
 }
 
-font_atlas &font_atlas::getInstance(std::string &fontName){
-	std::string font = fontName;
-	if (fontName.compare("") || fontName.size() < 1)
-		font = "shaders/ttf_CanadaDBNormal.ttf";
+font_atlas &font_atlas::getInstance(const char* fontName){
+	const char* defFont = "shaders/ttf_CanadaDBNormal.ttf";
+	char* font = (char*)fontName;	
+	if (strcmp(fontName,"") == 0 || strlen(fontName) < 1)
+		font = (char*)defFont;
 	std::map<std::string, font_atlas>::iterator fontFound = fontsLoaded.find(font);
 	if (fontFound != fontsLoaded.end()){
 		return fontFound->second;
@@ -40,10 +41,10 @@ font_atlas::~font_atlas() {
 }
 
 void font_atlas::create_atlas(){
-	std::string defFont = "shaders/ttf_FreeSans.ttf";
+	const char *defFont = "shaders/ttf_FreeSans.ttf";
 	create_atlas(defFont);
 }
-void font_atlas::create_atlas(std::string &fontName) {
+void font_atlas::create_atlas(const char *fontName) {
 	// FreeType
 	// --------
 	FT_Library ft;
@@ -56,7 +57,7 @@ void font_atlas::create_atlas(std::string &fontName) {
 
 	// load font as face
 	FT_Face face;
-	if (FT_New_Face(ft, fontName.c_str(), 0, &face)) {
+	if (FT_New_Face(ft, fontName, 0, &face)) {
 		LOGGER::LOGS::getLOGGER().info("ERROR::FREETYPE: Failed to load font");
 		return;
 	}

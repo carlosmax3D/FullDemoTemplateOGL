@@ -1,6 +1,7 @@
 #include "model.h"
 #ifdef __linux__ 
 #define ZeroMemory(x,y) memset(x,0,y)
+#define strcat_s(x,y,z) strcat(x,z)
 #endif
 
 
@@ -16,7 +17,7 @@ Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY,
     defaultShader = false;
     buildKDtree();
 }
-Model::Model(vector<Vertex> vertices, unsigned int numVertices, vector<unsigned int> indices, unsigned int numIndices, Camera* camera) {
+Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera) {
     vector<Texture> textures;
     vector<Material> materials;
     meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
@@ -25,7 +26,7 @@ Model::Model(vector<Vertex> vertices, unsigned int numVertices, vector<unsigned 
     this->cameraDetails = camera;
 //    buildKDtree();
 }
-Model::Model(string const& path, glm::vec3 actualPosition, Camera *cam, bool rotationX, bool rotationY, bool gamma) {
+Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool rotationX, bool rotationY, bool gamma) {
     cameraDetails = cam;
     this->setTranslate(&actualPosition);
     this->gammaCorrection = gamma;
@@ -65,17 +66,15 @@ void Model::SetVertexBoneDataToDefault(Vertex& vertex){
 
 // draws the model, and thus all its meshes
 void Model::prepShader(Shader& gpuDemo) {
-    glm::vec3 lightColor;
-    lightColor.x = 3;//sin(7200 * 2.0f);
-    lightColor.y = 3;//sin(7200 * 0.7f);
-    lightColor.z = 3;//sin(7200 * 1.3f);
+//    lightColor.x = 3;//sin(7200 * 2.0f);
+//    lightColor.y = 3;//sin(7200 * 0.7f);
+//    lightColor.z = 3;//sin(7200 * 1.3f);
     glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
     glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
     gpuDemo.setVec3("light.ambient", ambientColor);
     gpuDemo.setVec3("light.diffuse", diffuseColor);
     gpuDemo.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
     //        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-    glm::vec3 lightPos(100.2f, 100.0f, 100.0f);
     gpuDemo.setVec3("light.position", lightPos);
     gpuDemo.setVec3("viewPos", cameraDetails->getPosition());
 
@@ -116,8 +115,12 @@ void Model::Draw(Shader& shader) {
     if (animator != NULL){
         animator->UpdateAnimation(gameTime.deltaTime / 100,glm::mat4(1));
         vector<glm::mat4>* transforms = animator->GetFinalBoneMatrices();
-        for (int i = 0; i < transforms->size(); ++i)
-            shader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms->at(i));
+        for (int i = 0; i < transforms->size(); ++i){
+            char bonesMat[26] = "finalBonesMatrices[";
+            strcat_s(bonesMat, 26, std::to_string(i).c_str());
+            strcat_s(bonesMat, 26, "]");
+            shader.setMat4(bonesMat, transforms->at(i));
+        }
     }
     for (unsigned int i = 0; i < meshes.size(); i++)
         meshes[i]->Draw(shader);
@@ -270,10 +273,20 @@ void Model::buildKDtree() {
 	if (AABB != NULL)
 		delete AABB;
     // Creamos el cubo AABB apartir del arbol de puntos del modelo cargado
-    std::list<Node::vecType> point_list;
+    bool creation = false;
+    auto curr = point_list.begin();
+    if (point_list.size() < 1)
+        creation = true;
     for (unsigned int i = 0; i < meshes.size(); i++){
-        for (unsigned int j = 0; j < meshes[i]->vertices.size(); j++)
-            point_list.emplace_back(Node::vecType(meshes[i]->vertices[j].Position, 1));
+        for (unsigned int j = 0; j < meshes[i]->vertices.size(); j++){
+            if (creation) 
+                point_list.emplace_back(Node::vecType(meshes[i]->vertices[j].Position, 1));
+            else{
+                Node::vecType &vec = *curr;
+                vec = Node::vecType(meshes[i]->vertices[j].Position, 1);
+                curr++;
+            }
+        }
     }
     KDTree kdTree;
     kdTree.makeTree(point_list);

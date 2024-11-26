@@ -128,7 +128,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\ExternalResources\x64-windows\lib\;$(SolutionDir)\..\ExternalResources\glew-2.1.0\lib\Release\x64\;$(SolutionDir)\..\ExternalResources\glfw-3.3.2\lib-vc2019\;$(SolutionDir)\..\ExternalResources\freetype\release dll\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>freetype.lib;assimp-vc142-mt.lib;FreeImage.lib;Xinput.lib;glu32.lib;gdi32.lib;winmm.lib;gdiplus.lib;glew32.lib;glfw3.lib;opengl32.lib;kernel32.lib;user32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -190,6 +190,7 @@
     <ClCompile Include="InputDevices\KeyboardInput.cpp" />
     <ClCompile Include="Base\Model.cpp" />
     <ClCompile Include="Base\Utilities.cpp" />
+    <ClCompile Include="Scenario.cpp" />
     <ClCompile Include="Texto.cpp" />
   </ItemGroup>
   <ItemGroup>

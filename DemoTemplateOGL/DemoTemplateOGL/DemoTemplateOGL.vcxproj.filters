@@ -161,6 +161,9 @@
     <ClCompile Include="Texto.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Scenario.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DemoTemplateOGL.rc">

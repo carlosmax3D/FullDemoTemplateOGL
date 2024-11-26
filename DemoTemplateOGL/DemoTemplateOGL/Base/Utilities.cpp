@@ -686,3 +686,9 @@ long get_nanos() {
 	timespec_get(&ts, TIME_UTC);
 	return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
 }
+/*
+ void * operator new(size_t size){
+//    std::cout << "More memory bitch" << std::endl;
+    void * p = malloc(size);
+    return p;
+}*/

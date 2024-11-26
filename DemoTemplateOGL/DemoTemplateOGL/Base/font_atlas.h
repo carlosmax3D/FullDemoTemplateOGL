@@ -37,10 +37,10 @@ public:
 	std::string name;
 
 	static font_atlas &getInstance();
-	static font_atlas &getInstance(std::string &fontName);
+	static font_atlas &getInstance(const char* fontName);
 	static void clearInstance();
 	font_atlas();
 	~font_atlas();
 	void create_atlas(); // Function to create the atlas
-	void create_atlas(std::string &fontName); // Function to create the atlas
+	void create_atlas(const char* fontName); // Function to create the atlas
 };

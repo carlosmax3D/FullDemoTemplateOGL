@@ -12,12 +12,12 @@ void Billboard::reloadData(vector<Vertex> *vertices){
 		0.0f, 0.0f, 0.0f, textCoords[4], textCoords[5],   //top right
 		1.0f, 0.0f, 0.0f, textCoords[6], textCoords[7],  //top left
 	};
-	vertices->clear();
+//	vertices->clear();
 	for (int i = 0; i < 20; i=i+5) {
-		Vertex v;
+		Vertex &v = vertices->at(i/5);
 		v.Position = glm::vec3(*(verts + i), *(verts + i + 1), *(verts + i + 2));
 		v.TexCoords = glm::vec2(*(verts + i + 3), *(verts + i + 4));
-		vertices->emplace_back(v);
+//		vertices->emplace_back(v);
 	}
 }
 
@@ -40,14 +40,14 @@ void Billboard::reloadData(vector<Vertex> *vertices, glm::vec3 origin){
 		origin.x - right.x, origin.y + alto, origin.z - right.z, textCoords[4], textCoords[5], //top right
 		origin.x + right.x, origin.y + alto, origin.z + right.z, textCoords[6], textCoords[7], //top left
 	};
-	vertices->clear();
+//	vertices->clear();
 	for (int i = 0; i < 20; i = i + 5) {
-		Vertex v;
+		Vertex &v = vertices->at(i/5);
 		v.Position = glm::vec3(*(verts + i), *(verts + i + 1), *(verts + i + 2));
 		v.TexCoords = glm::vec2(*(verts + i + 3), *(verts + i + 4));
-		vertices->emplace_back(v);
+//		vertices->emplace_back(v);
 	}
-	buildKDtree();
+//	buildKDtree();
 }
 
 Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera) {
@@ -81,6 +81,8 @@ void Billboard::initBillboard(Texture texture, float ancho, float alto, float x,
 	setTranslate(&origin);
 	textures_loaded.emplace_back(texture);
 	textures.emplace_back(texture);
+	for (int i = 0; i < 4; i++)
+		vertices.emplace_back();
 	reloadData(&vertices);
 	indices = {
 		0, 1, 3, // first triangle
