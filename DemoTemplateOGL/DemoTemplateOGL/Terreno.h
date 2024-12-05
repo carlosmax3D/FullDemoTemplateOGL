@@ -26,12 +26,14 @@ public:
 		anchof = ancho;
 		proff = prof;
 		//cargamos la textura de la figura
-		wstring tex((const wchar_t*)alturas);
-		string text(tex.begin(), tex.end());
-		unsigned char* mapaAlturas = loadFile(text.c_str(), &mapAlturaX, &mapAlturaY, &mapAlturaComp, 0);
+		char stext[1024];
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)alturas, 1024);
+#else
+		wcstombs(stext, (wchar_t*)alturas, 1024);
+#endif
+		unsigned char* mapaAlturas = loadFile(stext, &mapAlturaX, &mapAlturaY, &mapAlturaComp, 0);
 		//en caso del puntero de la imagen sea nulo se brica esta opcion
-		tex.assign((const wchar_t*)textura);
-		text.assign(tex.begin(), tex.end());
 		UTILITIES_OGL::Maya terreno = UTILITIES_OGL::Plano(mapAlturaX, mapAlturaY, ancho, prof, mapaAlturas, mapAlturaComp, 30);
 		UTILITIES_OGL::vectoresEsfera(terreno, vertices, indices, mapAlturaX * mapAlturaY * 3, (mapAlturaX - 1) * (mapAlturaY - 1) * 6);
 		delete[] terreno.maya;
@@ -44,21 +46,29 @@ public:
 		delete[]mapaAlturas;
 
 		// cargamos la textura de la figura
-		wstring n((const wchar_t*)textura);
-		string texturan(n.begin(), n.end());
-		planoTextura = TextureFromFile(texturan.c_str(), this->directory);
-
-		Texture t = { planoTextura , "texture_height", texturan.c_str() };
+		Texture t;
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
+		strcpy_s(t.type, 255, "texture_height");
+		strcpy_s(t.path, 1024, stext);
+#else
+		wcstombs(stext, (wchar_t*)textura, 1024);
+		strcpy(t.type, "texture_height");
+		strcpy(t.path, stext);
+#endif
+		planoTextura = TextureFromFile(stext, this->directory);
+		t.id = planoTextura;
 		textures.emplace_back(t);
 		meshes.emplace_back(new Mesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
 		setDefaultShader(false);
+		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 	}
 
 	~Terreno() {
 		//nos aseguramos de disponer de los recursos previamente reservados
 	}
 
-	void Draw() {
+	virtual void Draw() {
 		if (gpuDemo == NULL) {
 			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
 			setDefaultShader(true);
@@ -71,12 +81,12 @@ public:
 		} else Draw(*gpuDemo);
 	}
 
-	void Draw(Shader& shader) {
+	virtual void Draw(Shader& shader) {
 		Model::Draw(shader);
 	}
 
 	float Superficie(float x, float z) {
-		vector<Vertex> vertices = meshes[0]->vertices;
+		vector<Vertex> &vertices = meshes[0]->vertices;
 		//obtenemos el indice pero podria incluir una fraccion
 		float indicefx = (x + anchof / 2) / deltax;
 		float indicefz = (z + proff / 2) / deltaz;
@@ -135,7 +145,7 @@ public:
 		return altura;
 	}
 
-	void prepShader(Shader& shader) {
+	virtual void prepShader(Shader& shader) {
 		glm::vec3 lightColor;
 		lightColor.x = sin(7200 * 2.0f);
 		lightColor.y = sin(7200 * 0.7f);

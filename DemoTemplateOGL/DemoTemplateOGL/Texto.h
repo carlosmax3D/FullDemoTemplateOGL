@@ -1,23 +1,24 @@
 #ifndef _textoP_h
 #define _textoP_h
 #include "Base/Utilities.h"
-#include "Base/Billboard.h"
+#include "Billboard2D.h"
 #include "Base/font_atlas.h"
 
 class Texto {
 
 private:
-    std::vector<Billboard*> textBillboard;
+    std::vector<Billboard2D*> textBillboard;
 	Model* cameraDetails = NULL;
     Shader* gpuDemo = NULL;
 	bool defaultShader = false;
 	float scale = 0;
-	std::wstring texto;
+	WCHAR texto[512];
 	float rotacion;
 	float x;
 	float y; 
 	float z;
 public:
+	std::string name = "";
 	Texto(wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera);
 
 	Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Model* camera);
@@ -37,6 +38,9 @@ public:
 
     glm::vec2 rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, float& rotation_angle);
 	void setDefaultShader(bool defaultShader);
+	float getScale();
+	void setScale(float scale);
+	WCHAR* getTexto();
 };
 
 #endif 

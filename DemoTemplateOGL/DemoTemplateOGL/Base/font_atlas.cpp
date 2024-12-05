@@ -2,10 +2,24 @@
 #include "font_atlas.h"
 #include "Utilities.h"
 
-std::map<std::string, font_atlas> font_atlas::fontsLoaded;
+font_atlas *font_atlas::fontsLoaded = NULL;
 
 void font_atlas::clearInstance(){
-	fontsLoaded.clear();
+	while (fontsLoaded != NULL){
+		font_atlas *actual = fontsLoaded;
+		fontsLoaded = fontsLoaded->next;
+		delete actual;
+	}
+}
+
+font_atlas *font_atlas::find(const char* fontName){
+	font_atlas *idx = font_atlas::fontsLoaded;
+	while (idx != NULL){
+		if (strcmp(idx->name,fontName) == 0)
+			return idx;
+		idx = idx->next;
+	}
+	return NULL;
 }
 
 font_atlas &font_atlas::getInstance(){
@@ -18,14 +32,17 @@ font_atlas &font_atlas::getInstance(const char* fontName){
 	char* font = (char*)fontName;	
 	if (strcmp(fontName,"") == 0 || strlen(fontName) < 1)
 		font = (char*)defFont;
-	std::map<std::string, font_atlas>::iterator fontFound = fontsLoaded.find(font);
-	if (fontFound != fontsLoaded.end()){
-		return fontFound->second;
+	font_atlas *fontFound = font_atlas::find(font);
+	if (fontFound != NULL){
+		return *fontFound;
 	} else {
-		fontsLoaded.emplace(std::make_pair(font, font_atlas()));
-		fontFound = fontsLoaded.find(font);
-		fontFound->second.create_atlas(font);
-		return fontFound->second;
+		font_atlas *n = new font_atlas();
+		if (fontsLoaded != NULL)
+			fontsLoaded->prev = n;
+		n->next = fontsLoaded;
+		fontsLoaded = n;
+		fontsLoaded->create_atlas(font);
+		return *n;
 	}
 }
 
@@ -60,10 +77,12 @@ void font_atlas::create_atlas(const char *fontName) {
 	if (FT_New_Face(ft, fontName, 0, &face)) {
 		LOGGER::LOGS::getLOGGER().info("ERROR::FREETYPE: Failed to load font");
 		return;
-	}
-	else
-	{
-		this->name = fontName;
+	} else {
+#ifdef _WIN32 
+		strcpy_s(this->name, 100, fontName);
+#else
+		strcpy(this->name, fontName);
+#endif
 		// Clear the previous map (if any)
 		ch_atlas.clear();
 

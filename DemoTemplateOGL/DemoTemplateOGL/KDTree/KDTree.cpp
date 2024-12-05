@@ -74,8 +74,40 @@ KDTree::vecType KDTree::splitListByMedian(int axis, std::list<KDTree::vecType>& 
 }
 
 // @tbrief Updates the center, width, height and depth of the obj of this head node.
-void KDTree::setHeadVariables(Node* head, std::list<KDTree::vecType>& plist)
-{
+void KDTree::setHeadVariables(Node* head, std::vector<Mesh*>& plist){
+	float maxX = -INFINITY;
+	float maxY = -INFINITY;
+	float maxZ = -INFINITY;
+
+	float minX = INFINITY;
+	float minY = INFINITY;
+	float minZ = INFINITY;
+
+    for (Mesh* m : plist)
+		for (auto& v : m->vertices){
+			glm::vec3 &n = v.Position;
+			if (n.x < minX)
+				minX = n.x;
+			if (n.y < minY)
+				minY = n.y;
+			if (n.z < minZ)
+				minZ = n.z;
+
+			if (n.x > maxX)
+				maxX = n.x;
+			if (n.y > maxY)
+				maxY = n.y;
+			if (n.z > maxZ)
+				maxZ = n.z;
+		}
+	head->m_center = glm::vec4((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2, 1);
+	head->m_halfWidth = head->m_center.x - minX;
+	head->m_halfHeight = head->m_center.y - minY;
+	head->m_halfDepth = head->m_center.z - minZ;
+}
+
+// @tbrief Updates the center, width, height and depth of the obj of this head node.
+void KDTree::setHeadVariables(Node* head, std::list<KDTree::vecType>& plist){
 	float maxX = -INFINITY;
 	float maxY = -INFINITY;
 	float maxZ = -INFINITY;
@@ -129,7 +161,7 @@ void KDTree::makeTreeRecursivelyImpl(Node* head, std::list<KDTree::vecType>& pli
 		KDTree::vecType median = splitListByMedian(axis, plist, left_list, right_list);
 		head->m_median = median;
 
-		setHeadVariables(head, plist);
+		KDTree::setHeadVariables(head, plist);
 
 		Node* left_node = new Node();
 		Node* right_node = new Node();

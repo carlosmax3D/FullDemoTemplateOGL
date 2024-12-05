@@ -3,6 +3,9 @@
 #include "SkyDome.h"
 #include "Terreno.h"
 #include "Billboard.h"
+#include "BillboardAnimation.h"
+#include "Billboard2D.h"
+#include "Texto.h"
 #include "Water.h"
 #include "Animator.h"
 #include "Animation.h"
@@ -17,8 +20,11 @@ class Scene {
 		virtual Terreno* getTerreno() = 0;
 		virtual std::vector<Model*> *getLoadedModels() = 0;
 		virtual std::vector<Billboard*> *getLoadedBillboards() = 0;
+		virtual std::vector<BillboardAnimation*> *getLoadedBillboardsAnimation() = 0;
+		virtual std::vector<Billboard2D*> *getLoadedBillboards2D() = 0;
+		virtual std::vector<Texto*> *getLoadedText() = 0;
 
-		Model* lookForCollition(bool collitionMovement = false) {
+		virtual Model* lookForCollition(bool collitionMovement = false) {
 			std::vector<Model*> *ourModel = getLoadedModels();
 			Model *camara = getMainModel();
 			for (int i = 0; i < ourModel->size(); i++) {

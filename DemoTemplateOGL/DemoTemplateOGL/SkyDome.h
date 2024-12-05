@@ -27,14 +27,23 @@ public:
 		delete[] cuadro.maya;
 		delete[] cuadro.indices;
 		// cargamos la textura de la figura
-		wstring n((const wchar_t*)nombre);
-		string textura(n.begin(), n.end());
-		esferaTextura = TextureFromFile(textura.c_str(), this->directory);
-		Texture t = { esferaTextura , "texture_diffuse", textura.c_str() };
-		textures_loaded.emplace_back(t);
+		char stext[1024];
+		Texture t;
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)nombre, 1024);
+		strcpy_s(t.type, 255, "texture_diffuse");
+		strcpy_s(t.path, 1024, stext);
+#else
+		wcstombs(stext, (wchar_t*)nombre, 1024);
+		strcpy(t.type, "texture_diffuse");
+		strcpy(t.path, stext);
+#endif
+		esferaTextura = TextureFromFile(stext, this->directory);
+		t.id = esferaTextura;
 		textures.emplace_back(t);
 		gpuDemo = NULL;
 		meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
+		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 		setDefaultShader(false);
 	}
 
@@ -84,6 +93,12 @@ public:
 		glm::mat4 model = glm::mat4(1.0f);
 		//		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::translate(model, glm::vec3(cameraDetails->getPosition().x, cameraDetails->getPosition().y - 5, cameraDetails->getPosition().z)); // translate it down so it's at the center of the scene
+		if (getRotationVector()->x != 0)
+			model = glm::rotate(model, glm::radians(getRotX()), glm::vec3(1, 0, 0));
+		if (getRotationVector()->y != 0)
+			model = glm::rotate(model, glm::radians(getRotY()), glm::vec3(0, 1, 0));
+		if (getRotationVector()->z != 0)
+			model = glm::rotate(model, glm::radians(getRotZ()), glm::vec3(0, 0, 1));
 		//model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
 //			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		shader.setMat4("model", model);

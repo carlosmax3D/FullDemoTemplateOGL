@@ -29,13 +29,15 @@
 enum Ejes { EjeX, EjeY, EjeZ };
 
 // Tamanio de la ventana
-extern long get_nanos();
+extern double get_nanos();
 extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
+extern glm::vec2 windowSize;
+extern bool showHitbox;
 
 struct GameTime {
-	long lastTick = 0;
-	long deltaTime = 0;
+	double lastTick = 0;
+	double deltaTime = 0;
 };
 extern GameTime gameTime;
 
@@ -95,8 +97,8 @@ struct BoneInfo {
 // Estructura de Texture para guardar el ID de la textura y su tipo
 struct Texture {
 	unsigned int id;
-	std::string type;
-	std::string path;
+	char type[255];
+	char path[1024];
 };
 
 extern std::wstring s2ws(const std::string& s);

@@ -87,6 +87,13 @@ void Scenario::InitGraph(Model *main) {
 	ourModel.emplace_back(model);
 	model->lightColor = glm::vec3(10,0,0);
 
+	model = new CollitionBox(25.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
+	translate = glm::vec3(25.0f, 15.0f, 10.0f);
+	model->setTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);
+
+
 	inicializaBillboards();
 	std::wstring prueba(L"Esta es una prueba");
 	ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
@@ -103,18 +110,30 @@ void Scenario::InitGraph(Model *main) {
 	wcscat_s(wCoordenadas, 350, L" Z: ");
 	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
 	wcscat_s(wCoordenadas, 350, componente);
-	coordenadas = new Texto((WCHAR*)wCoordenadas, 15, 0, 0, 0, 0, camara);
+	ourText.emplace_back(new Texto((WCHAR*)wCoordenadas, 20, 0, 0, 0, 0, camara));
+	ourText.back()->name = "Coordenadas";
 }
 
 void Scenario::inicializaBillboards() {
 	float ye = terreno->Superficie(0, 0);
 	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye - 1, 0, camara->cameraDetails));
 
-	ye = terreno->Superficie(5, -5);
-	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol2.png", 6, 6, 5, ye - 1, -5, camara->cameraDetails));
-
 	ye = terreno->Superficie(-9, -15);
 	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye - 1, -15, camara->cameraDetails));
+
+	BillboardAnimation *billBoardAnimated = new BillboardAnimation();
+	ye = terreno->Superficie(5, -5);
+	for (int frameArbol = 1; frameArbol < 4; frameArbol++){
+		wchar_t textura[50] = {L"billboards/Arbol"};
+		if (frameArbol != 1){
+			wchar_t convert[25];
+			swprintf(convert, 25, L"%d", frameArbol);
+			wcscat_s(textura, 50, convert);
+		}
+		wcscat_s(textura, 50, L".png");
+		billBoardAnimated->pushFrame(new Billboard((WCHAR*)textura, 6, 6, 5, ye - 1, -5, camara->cameraDetails));		
+	}
+	billBoardAnim.emplace_back(billBoardAnimated);
 }
 
 	//el metodo render toma el dispositivo sobre el cual va a dibujar
@@ -128,26 +147,16 @@ Scene* Scenario::Render() {
 
 	// Actualizamos la camara
 	camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
+	this->angulo = this->angulo >= 360 ? this->angulo - 360.0 : this->angulo;
+	sky->setRotY(this->angulo);
 
-	if (this->animacion > 25) { // Timer se ejecuta cada 1000/30 = 33.333 ms
-		float ye = terreno->Superficie(5, -5);
-		Billboard* temporal = billBoard[1];
-		wchar_t textura[50] = {L"billboards/Arbol"};
-		if (this->frameArbol != 1)
-			wcscat_s(textura, 50, to_wstring(this->frameArbol).c_str());
-		wcscat_s(textura, 50, L".png");
-		billBoard[1] = new Billboard((WCHAR*)textura, 6, 6, 5, ye - 1, -5, camara->cameraDetails);
-		if (this->frameArbol == 3) {
-			this->frameArbol = 1;
-		}
-		else {
-			this->frameArbol++;
+	if (this->animacion > 10) { // Timer se ejecuta cada 1000/30 = 33.333 ms
+		for (BillboardAnimation *b : billBoardAnim){
+			b->nextAnimation();
 		}
 		this->animacion = 0;
-		delete temporal;
-	}
-	else {
-		animacion++;
+	} else {
+		animacion = animacion + (1 * gameTime.deltaTime/100);
 	}
 	// Decimos que dibuje la media esfera
 	sky->Draw();
@@ -157,16 +166,14 @@ Scene* Scenario::Render() {
 	// Dibujamos cada billboard que este cargado en el arreglo de billboards.
 	for (int i = 0; i < billBoard.size(); i++)
 		billBoard[i]->Draw();
+	for (int i = 0; i < billBoardAnim.size(); i++)
+		billBoardAnim[i]->Draw();
 	for (int i = 0; i < billBoard2D.size(); i++)
 		billBoard2D[i]->Draw();
 	// Dibujamos cada modelo que este cargado en nuestro arreglo de modelos
 	for (int i = 0; i < ourModel.size(); i++) {
 		ourModel[i]->Draw();
 	}
-	for (int i = 0; i < ourText.size(); i++) {
-		ourText[i]->Draw();
-	}
-	// No es optimo ya que crea el texto cada renderizado....
 	wchar_t componente[100] = { 0 };
 	wcscpy_s(wCoordenadas, 350, L"X: ");
 	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->x);
@@ -177,8 +184,14 @@ Scene* Scenario::Render() {
 	wcscat_s(wCoordenadas, 350, L" Z: ");
 	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
 	wcscat_s(wCoordenadas, 350, componente);
-	coordenadas->initTexto((WCHAR*)wCoordenadas);
-	coordenadas->Draw();
+	for (int i = 0; i < ourText.size(); i++) {
+		if (ourText[i]->name.compare("Coordenadas") == 0
+			&& wcscmp((wchar_t*)ourText[i]->getTexto(),wCoordenadas) != 0){
+			// No es optimo ya que crea el texto cada renderizado....
+			ourText[i]->initTexto((WCHAR*)wCoordenadas);
+		}
+		ourText[i]->Draw();
+	}
 	// Le decimos a winapi que haga el update en la ventana
 	return this;
 }
@@ -189,6 +202,16 @@ std::vector<Model*> *Scenario::getLoadedModels() {
 std::vector<Billboard*> *Scenario::getLoadedBillboards() {
 	return &billBoard;
 }
+std::vector<Billboard2D*> *Scenario::getLoadedBillboards2D(){
+	return &billBoard2D;
+}
+std::vector<Texto*> *Scenario::getLoadedText(){
+	return &ourText;
+}
+std::vector<BillboardAnimation*> *Scenario::getLoadedBillboardsAnimation(){
+	return &billBoardAnim;
+}
+
 Model* Scenario::getMainModel() {
 	return this->camara;
 }
@@ -205,7 +228,7 @@ Terreno* Scenario::getTerreno() {
 	return terreno;
 }
 
-	Scenario::~Scenario() {
+Scenario::~Scenario() {
 	if (this->sky != NULL) {
 		delete this->sky;
 		this->sky = NULL;
@@ -217,6 +240,9 @@ Terreno* Scenario::getTerreno() {
 	if (billBoard.size() > 0)
 		for (int i = 0; i < billBoard.size(); i++)
 			delete billBoard[i];
+	if (billBoardAnim.size() > 0)
+		for (int i = 0; i < billBoardAnim.size(); i++)
+			delete billBoardAnim[i];
 	if (billBoard2D.size() > 0)
 		for (int i = 0; i < billBoard2D.size(); i++)
 			delete billBoard2D[i];

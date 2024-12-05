@@ -44,6 +44,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -122,6 +123,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -151,10 +153,12 @@
     <ClInclude Include="Base\Animation.h" />
     <ClInclude Include="Base\Animator.h" />
     <ClInclude Include="Base\Billboard.h" />
+    <ClInclude Include="Base\BillboardAnimation.h" />
     <ClInclude Include="Base\Bone.h" />
     <ClInclude Include="Base\camera.h" />
     <ClInclude Include="Base\font_atlas.h" />
     <ClInclude Include="Billboard2D.h" />
+    <ClInclude Include="CollitionBox.h" />
     <ClInclude Include="KDTree\CollitionDetection.h" />
     <ClInclude Include="Texto.h" />
     <ClInclude Include="Water.h" />

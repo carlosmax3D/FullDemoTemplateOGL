@@ -25,15 +25,15 @@ public:
 
 	~Billboard();
 
-	void reloadData();
+	virtual void reloadData();
 
-	void initBillboard(Texture texture, float ancho, float alto, float x, float y, float z, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW);
+	virtual void initBillboard(Texture &texture, float ancho, float alto, float x, float y, float z, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW);
 	// Usa el shader default para poder imprimir el billboard
-	void Draw();
+	virtual void Draw();
 
-	void Draw(Shader &shader);
+	virtual void Draw(Shader &shader);
 
-	void prepShader(Shader& shader);
+	virtual void prepShader(Shader& shader);
 
 	void setTextureCoords(float *tCoords);
 };

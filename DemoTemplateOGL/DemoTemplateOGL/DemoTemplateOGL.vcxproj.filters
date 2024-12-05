@@ -120,6 +120,12 @@
     <ClInclude Include="Billboard2D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CollitionBox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\BillboardAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DemoTemplateOGL.cpp">

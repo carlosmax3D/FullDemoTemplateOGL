@@ -50,14 +50,14 @@ public:
 	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera)
 		: Terreno(alturas, textura, ancho, prof, camera, GL_DYNAMIC_DRAW) {
 		gpuDemo = NULL;
-		buildKDtree();
+//		buildKDtree();
 	}
 
 	~Water() {
 		//nos aseguramos de disponer de los recursos previamente reservados
 	}
 
-	void Draw() {
+	virtual void Draw() {
 		if (gpuDemo == NULL) {
 			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
 			setDefaultShader(true);
@@ -71,7 +71,7 @@ public:
 		else Draw(*gpuDemo);
 	}
 
-	void Draw(Shader& shader) {
+	virtual void Draw(Shader& shader) {
 		reloadData(meshes[0]->vertices);
 		Model::Draw(shader);
 	}

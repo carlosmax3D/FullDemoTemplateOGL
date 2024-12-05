@@ -19,6 +19,7 @@
 #include <queue>
 #include <utility>
 #include <glm/glm.hpp>
+#include "../Base/mesh.h"
 
 class Node
 {
@@ -73,7 +74,8 @@ public:
 	// Making the tree.
 	void makeTree(std::list<vecType>& plist);
 
-	void setHeadVariables(Node* head, std::list<vecType>& plist);
+	static void setHeadVariables(Node* head, std::vector<Mesh*>& plist);
+	static void setHeadVariables(Node* head, std::list<vecType>& plist);
 
 private:
 	// Helper for makeTree.

@@ -1,4 +1,10 @@
 #include "Billboard.h"
+#ifdef __linux__ 
+#define ZeroMemory(x,y) memset(x,0,y)
+#define wcscpy_s(x,y,z) wcscpy(x,z)
+#define strcpy_s(x,y,z) strcpy(x,z)
+#define wcstombs_s(x, y, z, w, r) wcstombs(y,w,r)
+#endif
 
 void Billboard::reloadData(){
 	reloadData(&(meshes[0]->vertices));
@@ -51,23 +57,32 @@ void Billboard::reloadData(vector<Vertex> *vertices, glm::vec3 origin){
 }
 
 Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera) {
-	wstring tex((const wchar_t*)textura);
-	string text(tex.begin(), tex.end());
-	Texture t = { glTextura , "texture_diffuse", text.c_str() };
+    long tLength = wcslen((const wchar_t*)textura);
+	char stext[1024];
+//    std::string stext(texto.begin(), texto.end());
+	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
+	Texture t;
+	t.id = glTextura;
+	strcpy_s(t.type, 255, "texture_diffuse");
+	strcpy_s(t.path, 1024, stext);
 	initBillboard(t, ancho, alto, x, y, z, camera, GL_DYNAMIC_DRAW);
 }
 
 Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y, float z, Camera* camera) {
 	unsigned int texturaB;
 	bool alpha = true;
-	wstring tex((const wchar_t*)textura);
-	string text(tex.begin(), tex.end());
-	texturaB = TextureFromFile(text.c_str(), this->directory, false, true, &alpha);
-	Texture t = { texturaB , "texture_diffuse", text.c_str() };
+	char stext[1024];
+//    std::string stext(texto.begin(), texto.end());
+	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
+	texturaB = TextureFromFile(stext, this->directory, false, true, &alpha);
+	Texture t;
+	t.id = texturaB;
+	strcpy_s(t.type, 255, "texture_diffuse");
+	strcpy_s(t.type, 1024, stext);
 	initBillboard(t, ancho, alto, x, y, z, camera, GL_DYNAMIC_DRAW);
 }
 
-void Billboard::initBillboard(Texture texture, float ancho, float alto, float x, float y, float z, Camera* camera,  int VBOGLDrawType, int EBOGLDrawType){
+void Billboard::initBillboard(Texture &texture, float ancho, float alto, float x, float y, float z, Camera* camera,  int VBOGLDrawType, int EBOGLDrawType){
 	cameraDetails = camera;
 	vector<unsigned int> indices;
 	vector<Vertex>	vertices;
@@ -79,18 +94,19 @@ void Billboard::initBillboard(Texture texture, float ancho, float alto, float x,
 //		this->alto = alto * 2;
 	glm::vec3 origin = glm::vec3(x, y, z);
 	setTranslate(&origin);
-	textures_loaded.emplace_back(texture);
 	textures.emplace_back(texture);
+	vertices.reserve(4);
 	for (int i = 0; i < 4; i++)
 		vertices.emplace_back();
 	reloadData(&vertices);
+	indices.reserve(6);
 	indices = {
 		0, 1, 3, // first triangle
 		1, 2, 3  // second triangle
 	};
 	gpuDemo = NULL;
 	meshes.emplace_back(new Mesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
-	buildKDtree();
+	textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 }
 
 Billboard::~Billboard(){

@@ -220,12 +220,17 @@ public:
     }
     void setFirstPerson(bool fps) {
         firstPerson = fps;
+        angleAroundPlayer = 0;
     }
     bool getFirstPerson() {
         return firstPerson;
     }
     void calculateAngleAroundPlayer(double val) {
         angleAroundPlayer -= val * 0.5;
+        if ((!firstPerson) && angleAroundPlayer > 90)
+            angleAroundPlayer = 90;
+        if ((!firstPerson) && angleAroundPlayer < -90)
+            angleAroundPlayer = -90;
     }
     void calculateZoomPlayer(float val) {
         DistanceFromPlayer -= val * 0.5f;

@@ -28,13 +28,16 @@ struct Character
 
 class font_atlas{
 private:
-	static std::map<std::string, font_atlas> fontsLoaded;
+	static font_atlas *fontsLoaded;
+	font_atlas *next = NULL;
+	font_atlas *prev = NULL;
+	static font_atlas *find(const char* fontName);
 public:
 	unsigned int textureID;
 	unsigned int TextureWidth; // Total width of the atlas
 	unsigned int TextureHeight; // Total height of the atlas
 	std::map<char, Character> ch_atlas;
-	std::string name;
+	char name[100];
 
 	static font_atlas &getInstance();
 	static font_atlas &getInstance(const char* fontName);

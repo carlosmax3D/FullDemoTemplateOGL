@@ -2,6 +2,9 @@
 #ifdef __linux__ 
 #define ZeroMemory(x,y) memset(x,0,y)
 #define strcat_s(x,y,z) strcat(x,z)
+#define wcscpy_s(x,y,z) wcscpy(x,z)
+#define strcpy_s(x,y,z) strcpy(x,z)
+#define wcstombs_s(x, y, z, w, r) wcstombs(y,w,r)
 #endif
 
 
@@ -46,11 +49,11 @@ Model::~Model() {
         delete animator;
         animator = NULL;
     }
+    for (int i = 0; cleanTextures && i < textures_loaded.size(); i++) {
+        glDeleteTextures(1, &(textures_loaded[i]->id));
+    }
     for (int i = 0; i < meshes.size(); i++) {
         delete meshes[i];
-    }
-    for (int i = 0; cleanTextures && i < textures_loaded.size(); i++) {
-        glDeleteTextures(1, &(textures_loaded[i].id));
     }
 }
 
@@ -112,20 +115,22 @@ void Model::Draw() {
     else gpuDemo->desuse();
 }
 void Model::Draw(Shader& shader) {
-    if (animator != NULL){
-        animator->UpdateAnimation(gameTime.deltaTime / 100,glm::mat4(1));
-        vector<glm::mat4>* transforms = animator->GetFinalBoneMatrices();
-        for (int i = 0; i < transforms->size(); ++i){
-            char bonesMat[26] = "finalBonesMatrices[";
-            strcat_s(bonesMat, 26, std::to_string(i).c_str());
-            strcat_s(bonesMat, 26, "]");
-            shader.setMat4(bonesMat, transforms->at(i));
+    if (active){
+        if (animator != NULL){
+            animator->UpdateAnimation(gameTime.deltaTime / 100,glm::mat4(1));
+            vector<glm::mat4>* transforms = animator->GetFinalBoneMatrices();
+            for (int i = 0; i < transforms->size(); ++i){
+                char bonesMat[26] = "finalBonesMatrices[";
+                strcat_s(bonesMat, 26, std::to_string(i).c_str());
+                strcat_s(bonesMat, 26, "]");
+                shader.setMat4(bonesMat, transforms->at(i));
+            }
         }
+        for (unsigned int i = 0; i < meshes.size(); i++)
+            meshes[i]->Draw(shader);
+        if (showHitbox && this->AABB != NULL)
+            this->AABB->Draw(shader);
     }
-    for (unsigned int i = 0; i < meshes.size(); i++)
-        meshes[i]->Draw(shader);
-    if (this->AABB)
-        this->AABB->Draw(shader);
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations) const {
     glm::mat4 model = makeTrans() * prevTransformations;
@@ -265,6 +270,14 @@ glm::vec3* Model::getNextRotationVector() {
     return &this->nextRotation;
 }
 
+bool Model::getActive(){
+    return active;
+}
+
+void Model::setActive(bool active){
+    this->active = active;
+}
+
 void Model::setAnimator(Animator *animator){
     this->animator = animator;
 }
@@ -273,31 +286,20 @@ void Model::buildKDtree() {
 	if (AABB != NULL)
 		delete AABB;
     // Creamos el cubo AABB apartir del arbol de puntos del modelo cargado
-    bool creation = false;
-    auto curr = point_list.begin();
-    if (point_list.size() < 1)
-        creation = true;
-    for (unsigned int i = 0; i < meshes.size(); i++){
-        for (unsigned int j = 0; j < meshes[i]->vertices.size(); j++){
-            if (creation) 
-                point_list.emplace_back(Node::vecType(meshes[i]->vertices[j].Position, 1));
-            else{
-                Node::vecType &vec = *curr;
-                vec = Node::vecType(meshes[i]->vertices[j].Position, 1);
-                curr++;
-            }
-        }
-    }
-    KDTree kdTree;
-    kdTree.makeTree(point_list);
-    vector<Vertex> cuboAABB = init_cube(kdTree.getRoot()->m_center.x, kdTree.getRoot()->m_center.y, kdTree.getRoot()->m_center.z, kdTree.getRoot()->m_halfWidth, kdTree.getRoot()->m_halfHeight, kdTree.getRoot()->m_halfDepth);
+    Node head;
+    KDTree::setHeadVariables(&head,meshes);
+    buildCollider(head.m_center.x, head.m_center.y, head.m_center.z, head.m_halfWidth, head.m_halfHeight, head.m_halfDepth);
+}
+
+void Model::buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth){
+    vector<Vertex> cuboAABB = init_cube(x, y, z, halfWidth, halfHeight, halfDepth);
     vector<unsigned int> cuboIndex = getCubeIndex();
     this->AABB = new Model(cuboAABB, cuboAABB.size(), cuboIndex, cuboIndex.size(), this->cameraDetails);
     for (Mesh *m : this->AABB->meshes)
         m->VBOGLDrawType = GL_LINE_LOOP;
 }
 
-vector<Material> Model::loadMaterial(aiMaterial* mat) {
+void Model::loadMaterial(vector<Material> &m, aiMaterial* mat) {
     Material material;
     ZeroMemory(&material, sizeof(material));
     aiColor3D color(0.f, 0.f, 0.f);
@@ -330,12 +332,9 @@ vector<Material> Model::loadMaterial(aiMaterial* mat) {
         material.hasShininess = true;
     }
     else material.hasShininess = false;
-    vector<Material> m;
     if (matFound) {
-        material_loaded.emplace_back(material);
         m.emplace_back(material);
     }
-    return m;
 }
 
 // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
@@ -453,56 +452,59 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
     // normal: texture_normalN
 
     // 1. diffuse maps
-    vector<Material> mat = loadMaterial(material);
-    materials.insert(materials.end(), mat.begin(), mat.end());
-    vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", rotationX, rotationY);
-    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+    loadMaterial(materials, material);
+    loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, "texture_diffuse", rotationX, rotationY);
     // 2. specular maps
-    vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", rotationX, rotationY);
-    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+    loadMaterialTextures(textures, material, aiTextureType_SPECULAR, "texture_specular", rotationX, rotationY);
     // 3. normal maps
-    std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal", rotationX, rotationY);
-    textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+    loadMaterialTextures(textures, material, aiTextureType_HEIGHT, "texture_normal", rotationX, rotationY);
     // 4. height maps
-    std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height", rotationX, rotationY);
-    textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
+    loadMaterialTextures(textures, material, aiTextureType_AMBIENT, "texture_height", rotationX, rotationY);
 
     ExtractBoneWeightForVertices(vertices,mesh,scene);
     // return a mesh object created from the extracted mesh data
     meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
+    if (textures_loaded.capacity() < textures.size())
+        textures_loaded.reserve(textures_loaded.capacity() + textures.size());
+    for (int i = 0; i < textures.size(); i++)
+        textures_loaded.emplace_back(&meshes.back()->textures.data()[i]);
+    if (material_loaded.capacity() < materials.size())
+        material_loaded.reserve(material_loaded.capacity() + materials.size());
+    for (int i = 0; i < materials.size(); i++)
+        material_loaded.emplace_back(&meshes.back()->materials.data()[i]);
 }
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
-vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName, bool rotationX, bool rotationY)
+void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiTextureType type, string typeName, bool rotationX, bool rotationY)
 {
-    vector<Texture> textures;
-    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-    {
+    if (textures.capacity() < mat->GetTextureCount(type))
+        textures.reserve(textures.capacity() + mat->GetTextureCount(type));
+    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
         mat->GetTexture(type, i, &str);
         // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
         bool skip = false;
         for (unsigned int j = 0; j < textures_loaded.size(); j++)
-        {
-            if (std::strcmp(textures_loaded[j].path.data(), str.C_Str()) == 0)
-            {
-                textures.emplace_back(textures_loaded[j]);
+            if (std::strcmp(textures_loaded[j]->path, str.C_Str()) == 0) {
+                textures.emplace_back(*(textures_loaded[j]));
                 skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
                 break;
             }
-        }
-        if (!skip)
-        {   // if texture hasn't been loaded already, load it
+        for (unsigned int j = 0; j < textures.size(); j++)
+            if (std::strcmp(textures[j].path, str.C_Str()) == 0) {
+                textures.emplace_back(textures[j]);
+                skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
+                break;
+            }
+        if (!skip) {   // if texture hasn't been loaded already, load it
             Texture texture;
             texture.id = TextureFromFile(str.C_Str(), this->directory, rotationX, rotationY);
-            texture.type = typeName;
-            texture.path = str.C_Str();
+            strcpy_s(texture.type, 255, typeName.c_str());
+            strcpy_s(texture.path, 1024, str.C_Str());
             textures.emplace_back(texture);
-            textures_loaded.emplace_back(texture);  // store it as texture loaded for entire model, to ensure we won't unnecesery load duplicate textures.
         }
     }
-    return textures;
 }
 
 void Model::SetVertexBoneData(Vertex& vertex, int boneID, float weight){
@@ -543,34 +545,48 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
 }
 
 bool Model::colisionaCon(Model& objeto, bool collitionMove) {
+    return Model::colisionaCon(*this, objeto, collitionMove);
+}
+bool Model::colisionaCon(Model& objeto0, Model& objeto, bool collitionMove) {
+    if (objeto0.AABB == NULL || objeto.AABB == NULL)
+        return false;
+    if (!(objeto0.active && objeto.active))
+        return false;
     // Obtener las matrices de transformación para ambos modelos
     // collitionMove sirve para saber si el modelo principal a comparar va avanzar(true)
     // o esta quieto(false)
-    glm::mat4 transform1 = collitionMove ? this->makeTransScaleNextPosition(glm::mat4(1)) : this->makeTransScale(glm::mat4(1)) ; // Para el cubo A
+    glm::mat4 transform1 = collitionMove ? objeto0.makeTransScaleNextPosition(glm::mat4(1)) : objeto0.makeTransScale(glm::mat4(1)) ; // Para el cubo A
     // Asumimos que el modelo a comparar esta quieto y no se esta moviendo
     glm::mat4 transform2 = objeto.makeTransScale(glm::mat4(1)); // Para el cubo B
 
     // Obtener los vértices de ambos cubos AABB
-    vector<Vertex> verticesCubo1 = this->AABB->meshes[0]->vertices;
-    vector<Vertex> verticesCubo2 = objeto.AABB->meshes[0]->vertices;
+//    vector<Vertex> verticesCubo1 = objeto0.AABB->meshes[0]->vertices;
+    Vertex verticesCubo1[24];
+//    vector<Vertex> verticesCubo2 = objeto.AABB->meshes[0]->vertices;
+    Vertex verticesCubo2[24];
 
-            // Transformar los vértices de cada cubo usando sus respectivas matrices de transformación
-            for (Vertex& vertex : verticesCubo1) {
-                vertex.Position = glm::vec3(transform1 * glm::vec4(vertex.Position, 1.0f));
-            }
-            for (Vertex& vertex : verticesCubo2) {
-                vertex.Position = glm::vec3(transform2 * glm::vec4(vertex.Position, 1.0f));
-            }
+    // Transformar los vértices de cada cubo usando sus respectivas matrices de transformación
+    Vertex *idx = verticesCubo1;
+    for (Vertex& vertex : objeto0.AABB->meshes[0]->vertices) {
+        idx->Position = glm::vec3(transform1 * glm::vec4(vertex.Position, 1.0f));
+        idx++;
+    }
+    idx = verticesCubo2;
+    for (Vertex& vertex : objeto.AABB->meshes[0]->vertices) {
+        idx->Position = glm::vec3(transform2 * glm::vec4(vertex.Position, 1.0f));
+        idx++;
+    }
 
-            // Obtener los ejes de separación
-            std::vector<glm::vec3> ejes = obtenerEjesSeparacion(transform1, transform2);
-
-            // Verificar si las proyecciones de los cubos se solapan en cada eje
-            for (const glm::vec3& eje : ejes) {
-                if (!proyectarYComprobarSolapamiento(verticesCubo1, verticesCubo2, eje)) {
-                    return false; // No hay solapamiento en este eje, no hay colisión
-                }
-            }
+    // Obtener los ejes de separación
+//            std::vector<glm::vec3> ejes = obtenerEjesSeparacion(transform1, transform2);
+    glm::vec3 ejes[15];
+    obtenerEjesSeparacion(ejes, transform1, transform2);
+    // Verificar si las proyecciones de los cubos se solapan en cada eje
+    for (int i = 0; i < 15; i++) {
+        if (!proyectarYComprobarSolapamiento(verticesCubo1, verticesCubo2, ejes[i])) {
+            return false; // No hay solapamiento en este eje, no hay colisión
+        }
+    }
 
     // Si las proyecciones se solapan en todos los ejes, hay colisión
     return true;
@@ -579,6 +595,7 @@ bool Model::colisionaCon(Model& objeto, bool collitionMove) {
 vector<Vertex> Model::init_cube(float x, float y, float z, float width, float height, float depth){
     //Vertex* myVertex = (Vertex*)malloc(sizeof(Vertex) * 24 * 44);
     vector<Vertex> myVertex;
+    myVertex.reserve(24);
 //    Vertex t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
     myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
 //    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
@@ -656,6 +673,7 @@ vector<unsigned int> Model::getCubeIndex() {
     22, 21, 20,
     23, 22, 20
     };
+    indices.reserve(cubeIndexSize);
     for (unsigned int i = 0; i < cubeIndexSize; i++)
         indices.emplace_back(cubeIndex[i]);
     return indices;

@@ -681,14 +681,13 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 	return textureID;
 }
 
-long get_nanos() {
+double get_nanos() {
 	struct timespec ts;
 	timespec_get(&ts, TIME_UTC);
-	return (long)ts.tv_sec * 1000000000L + ts.tv_nsec;
+	return ts.tv_sec * 1000000000L + ts.tv_nsec;
 }
-/*
- void * operator new(size_t size){
-//    std::cout << "More memory bitch" << std::endl;
-    void * p = malloc(size);
-    return p;
-}*/
+
+//void * operator new(size_t size){
+//    void * p = malloc(size);
+//    return p;
+//}

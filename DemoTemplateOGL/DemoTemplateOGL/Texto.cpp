@@ -1,4 +1,9 @@
 #include "Texto.h"
+#ifdef __linux__ 
+#define ZeroMemory(x,y) memset(x,0,y)
+#define wcscpy_s(x,y,z) wcscpy(x,z)
+#define wcstombs_s(x, y, z, w, r) wcstombs(y,w,r)
+#endif
 
 Texto::Texto(wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera){
 	this->scale = escala;
@@ -7,7 +12,7 @@ Texto::Texto(wstring &texto, float escala, float rotacion, float x, float y, flo
 	this->y = y;
 	this->z = z;
 	cameraDetails = camera;
-	this->texto = texto;
+	wcscpy_s((wchar_t*)this->texto, 512, texto.c_str());
     initTexto();
 }
 
@@ -18,37 +23,44 @@ Texto::Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float
 	this->y = y;
 	this->z = z;
 	cameraDetails = camera;
-	this->texto.assign((wchar_t*)texto);
+	wcscpy_s((wchar_t*)this->texto, 512, (const wchar_t*)texto);
     initTexto();
 }
 
 void Texto::initTexto(wstring &texto){
-	this->texto = texto;
+	wcscpy_s((wchar_t*)this->texto, 512, texto.c_str());
 	initTexto();
 }
 
 void Texto::initTexto(WCHAR *texto){
-	this->texto.assign((wchar_t*)texto);
+	wcscpy_s((wchar_t*)this->texto, 512, (const wchar_t*)texto);
 	initTexto();
 }
 
 void Texto::initTexto(){
-	for (int i = 0; i < this->textBillboard.size(); i++){
-		delete textBillboard[i];
-	}
-	this->textBillboard.clear();
-    long tLength = texto.size();
+    long tLength = wcslen((const wchar_t*)texto);
 	if (this->textBillboard.capacity() < tLength)
 	    this->textBillboard.reserve(tLength);
 	font_atlas &fontTexture = font_atlas::getInstance();
-    std::string stext(texto.begin(), texto.end());
+	char stext[1024];
+//    std::string stext(texto.begin(), texto.end());
+	wcstombs_s(NULL, stext, 1024, (wchar_t*)texto, 512);
 	// Store the x,y location
 	glm::vec2 loc = glm::vec2(x,y);
 	glm::vec2 rotated_pt;
 
 	float xpos = x;
 	float ypos = y;
-	for (int i = 0; i < tLength; i++) {
+	for (int i = this->textBillboard.size(); i < tLength; i++){
+        textBillboard.emplace_back(new Billboard2D(0, (WCHAR*)L"TEXTO", 0, 0, 0, cameraDetails->cameraDetails));
+		textBillboard.back()->setCleanTextures(false);
+	}
+	for (int i = 0; i < textBillboard.size(); i++) {
+		if (i >= tLength){
+			textBillboard[i]->setActive(false);
+			continue;
+		}
+		Billboard2D &letra = *textBillboard[i];
 		// get the atlas information
 		char ch = stext[i];
 
@@ -62,14 +74,16 @@ void Texto::initTexto(){
 
 		float margin = 0.00002; // This value prevents the minor overlap with the next char when rendering
 //		rotated_pt = rotate_pt(loc, glm::vec2(xpos, ypos + h), rotacion);
-        textBillboard.emplace_back(new Billboard(fontTexture.textureID, (WCHAR*)L"TEXTO", xpos, ypos, 0, cameraDetails->cameraDetails));
+		glm::vec3 pos = glm::vec3(xpos, ypos, 0);
+		letra.textures_loaded[0]->id = fontTexture.textureID;
+		letra.setTranslate(&pos);
+		letra.setActive(true);
         float texCoords[] = { ch_data.bot_right.x - margin, ch_data.bot_right.y,
 		                      ch_data.top_left.x+ margin,  ch_data.bot_right.y,
 		                      ch_data.top_left.x + margin, ch_data.top_left.y,
 		                      ch_data.bot_right.x - margin, ch_data.top_left.y };
-        textBillboard.back()->setTextureCoords(texCoords);
-		textBillboard.back()->setCleanTextures(false);
-        textBillboard.back()->reloadData();
+        letra.setTextureCoords(texCoords);
+        letra.reloadData();
 		xpos += scale;
 	}
 }
@@ -77,6 +91,8 @@ void Texto::initTexto(){
 Texto::~Texto(){
     if (gpuDemo != NULL)
         delete gpuDemo;
+	for (int i = 0; i < textBillboard.size(); i++)
+		delete textBillboard[i];
 	textBillboard.clear();
 }
 
@@ -100,7 +116,7 @@ void Texto::Draw(){
 void Texto::Draw(Shader &shader){
     for (int i = 0; i < textBillboard.size(); i ++){
 		prepShader(shader,*textBillboard[i]->getTranslate());
-        textBillboard[i]->Draw(shader);
+	    textBillboard[i]->Draw(shader);
     }
 }
 
@@ -138,4 +154,16 @@ glm::vec2 Texto::rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, float& rotatio
 
 void Texto::setDefaultShader(bool defaultShader){
     this->defaultShader = defaultShader;
+}
+
+void Texto::setScale(float scale){
+	this->scale = scale;
+}
+
+float Texto::getScale(){
+	return this->scale;
+}
+
+WCHAR *Texto::getTexto(){
+	return this->texto;
 }

@@ -11,26 +11,27 @@
 #include <vector>
 #include "Base/camera.h"
 #include "Base/Billboard.h"
+#include "Base/BillboardAnimation.h"
 #include <iostream>
 #include "Base/Scene.h"
 #include "Texto.h"
 #include "Billboard2D.h"
+#include "CollitionBox.h"
 
 class Scenario : public Scene {
 private:
 	SkyDome* sky;
 	Terreno* terreno;
 	std::vector<Billboard*> billBoard;
+	std::vector<BillboardAnimation*> billBoardAnim;
 	std::vector<Billboard2D*> billBoard2D;
 	std::vector<Model*> ourModel;
 	Model* camara;
 	Water* water;
 	float angulo;
-	int animacion = 0;
-	int frameArbol = 1;
+	float animacion = 0;
 	std::vector<Texto*> ourText;
 	wchar_t wCoordenadas[350];
-	Texto *coordenadas = NULL;
 public:
 	Scenario(Camera *cam);
 	Scenario(Model *camIni);
@@ -44,6 +45,9 @@ public:
 
 	std::vector<Model*> *getLoadedModels();
 	std::vector<Billboard*> *getLoadedBillboards();
+	std::vector<BillboardAnimation*> *getLoadedBillboardsAnimation();
+	std::vector<Billboard2D*> *getLoadedBillboards2D();
+	std::vector<Texto*> *getLoadedText();
 	Model* getMainModel();
 	float getAngulo();
 	void setAngulo(float angulo);
