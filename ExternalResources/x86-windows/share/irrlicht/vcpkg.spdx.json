@@ -1,0 +1,221 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/irrlicht-x86-windows-1.8.5-2aa95afd-71c5-4378-b733-cf31f29ac647",
+  "name": "irrlicht:x86-windows@1.8.5 70d922d71c5ee35e7b3358aaa6323f4daae167f61998fc1d5fd22743892a741a",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-2025-01-29-a75ad067f470c19f030361064e32a2585392bee2"
+    ],
+    "created": "2025-02-06T09:07:30Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-2"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-3"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-4"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-5"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-6"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-2",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-3",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-4",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-5",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-6",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "irrlicht",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "1.8.5",
+      "downloadLocation": "git+https://github.com/Microsoft/vcpkg#ports/irrlicht",
+      "homepage": "http://irrlicht.sourceforge.net",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "The Irrlicht Engine is an open source realtime 3D engine written in C++. It is cross-platform, using D3D, OpenGL and its own software renderers.",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "irrlicht:x86-windows",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "70d922d71c5ee35e7b3358aaa6323f4daae167f61998fc1d5fd22743892a741a",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-0",
+      "name": "irrlicht-${VERSION}.zip",
+      "packageFileName": "irrlicht-${VERSION}.zip",
+      "downloadLocation": "https://sourceforge.net/projects/irrlicht/Irrlicht%20SDK/files/1.8/1.8.5/irrlicht-${VERSION}.zip",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "d11c7a056bfb8c9737ed583c5bc5794223bc59fb4620411b63bc4d1eedc41db2ed1cab5cb7a37fee42a7f38c0e0645f5fc53fd329fff0f2aa78e0df6804c47c9"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/CMakeLists.txt",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "83f97d612746f6ce44ef69c7efd7ccb8506ed35314b4d215eab8e59b7e124d0b"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/fix-encoding.patch",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a3110bda4daa10a6b5d43ce0b5b6187e454f66739a14728ef569b919498cdbe3"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/fix-osx-compilation.patch",
+      "SPDXID": "SPDXRef-file-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a8a9a495577769241b3ed28d4b245f07a6aec16d03db82aa38c7b25901b55741"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/LICENSE.txt",
+      "SPDXID": "SPDXRef-file-3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "42dadc00075a24f9d0ac71975b28bda82a26f4dfca92599f7c4072847b853ce5"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/portfile.cmake",
+      "SPDXID": "SPDXRef-file-4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6c0b0a7617e69d67600b9dbd5151cc6793be770eba79b79fc5a6a385b384b3a1"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/vcpkg-cmake-wrapper.cmake",
+      "SPDXID": "SPDXRef-file-5",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2d43c899f95557ebc9b9e70799676453a28e0411370a4c7d18b97a26b3d2e20b"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/irrlicht/vcpkg.json",
+      "SPDXID": "SPDXRef-file-6",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "697433fe34f7fe693ec1ac1b475020c05bc31012c89ce85f7e0902f05e5b30bd"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

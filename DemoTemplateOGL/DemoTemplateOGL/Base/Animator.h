@@ -9,21 +9,21 @@ public:
     Animator();
     ~Animator();
 
-    Animator(Animation* Animation);
+    Animator(Animation Animation);
 	
     void UpdateAnimation(float dt, glm::mat4 parentTransform = glm::mat4(1.0f));
 	
-    void PlayAnimation(Animation* pAnimation);
+    void PlayAnimation(Animation pAnimation);
 	
     void CalculateBoneTransform(const UTILITIES_OGL::AssimpNodeData* node, const glm::mat4& parentTransform);
 	
-    std::vector<glm::mat4>* GetFinalBoneMatrices() ;
+    const glm::mat4* GetFinalBoneMatrices() ;
 
-    void setAnimation(Animation *Animation);
+    void setAnimation(Animation Animation);
 
 private:
-    std::vector<glm::mat4> m_FinalBoneMatrices;
-    Animation* m_CurrentAnimation;
+    glm::mat4 m_FinalBoneMatrices[MAX_MODEL_BONES];
+    Animation m_CurrentAnimation;
     double m_CurrentTime = 0.0;
     double m_DeltaTime = 0.0;
 };

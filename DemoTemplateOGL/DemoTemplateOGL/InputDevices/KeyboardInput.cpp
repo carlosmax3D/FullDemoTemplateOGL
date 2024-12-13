@@ -56,7 +56,7 @@ bool KeysEvents(GameActions *actions){
 		KEYS[input.P] = false;
 	}
 	if (KEYS[input.C]) {
-		showHitbox = !showHitbox;
+		actions->displayHitboxStats = !actions->displayHitboxStats;
 		KEYS[input.C] = false;
 	}
 	if (KEYS[input.D]) {
@@ -65,7 +65,6 @@ bool KeysEvents(GameActions *actions){
 		else
 			actions->sideAdvance = -1;
 //		KEYS[input.D] = false;
-		checkCollition = true;
 	}
 	if (KEYS[input.A]) {
 		if (KEYS[KEYB_HMOVEMENT])
@@ -73,17 +72,17 @@ bool KeysEvents(GameActions *actions){
 		else
 			actions->sideAdvance = 1;
 //		KEYS[input.A] = false;
-		checkCollition = true;
 	}
 	if (KEYS[input.W]) {
 		actions->advance = 1;
 //		KEYS[input.W] = false;
-		checkCollition = true;
 	}
 	if (KEYS[input.S]) {
 		actions->advance = -1;
 //		KEYS[input.S] = false;
-		checkCollition = true;
+	}
+	if (KEYS[input.Space] && *actions->jump == 0){
+		*actions->jump = 20;
 	}
 	if (cDelta.getLbtn() && cDelta.getDX() != 0) {
 		actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);

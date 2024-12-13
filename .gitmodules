@@ -1,0 +1,9 @@
+[submodule "ExternalResources/assimp"]
+	path = ExternalResources/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "ExternalResources/glm"]
+	path = ExternalResources/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "ExternalResources/FreeImage"]
+	path = ExternalResources/FreeImage
+	url = https://github.com/danoli3/FreeImage.git

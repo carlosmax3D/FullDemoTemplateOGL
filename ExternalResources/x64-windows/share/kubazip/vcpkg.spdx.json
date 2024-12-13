@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/kubazip-x64-windows-0.3.3-ce618bc2-742d-481c-832d-93118d1965a8",
+  "name": "kubazip:x64-windows@0.3.3 8947f968a2254f30ece05babeae2529501730980c4025469177900dce3b00348",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-2025-01-29-a75ad067f470c19f030361064e32a2585392bee2"
+    ],
+    "created": "2025-02-06T09:07:57Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-2"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-2",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "kubazip",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "0.3.3",
+      "downloadLocation": "git+https://github.com/Microsoft/vcpkg#ports/kubazip",
+      "homepage": "https://github.com/kuba--/zip",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "A portable, simple zip library written in C",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "kubazip:x64-windows",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "8947f968a2254f30ece05babeae2529501730980c4025469177900dce3b00348",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-0",
+      "name": "kuba--/zip",
+      "downloadLocation": "git+https://github.com/kuba--/zip@v0.3.3",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "dd516f2e6765e49c00063bd72b49d97bc6f1254921045269b534a801e41e0728171cbf09a73713b236f40c4cf30b5473e74579b82962004b79166b38ad6a3e0d"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/kubazip/fix_targets.patch",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2e981fb41f3367f8e73b56492bc41d5accb5ca65c3db11d54fdefc049715c4e7"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/kubazip/portfile.cmake",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "13ccb4f8e7ac6f80c67b0173adc14a2930a56a32a5e698a7f2c2542690a80ca0"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/kubazip/vcpkg.json",
+      "SPDXID": "SPDXRef-file-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "25339de80618f29210bfb80aec5431f9dadd3365bd13682d064756451aef6f7d"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

@@ -3,10 +3,12 @@ project(FullDemoTemplateOGL VERSION 0.1.0)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/glfw-3.3.2/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/glm/)
+add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/assimp/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/FreeImage/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/freetype/)
 
 include_directories(FullDemoTemplateOGL
+    ${CMAKE_SOURCE_DIR}/ExternalResources/assimp/include/
     ${CMAKE_SOURCE_DIR}/ExternalResources/glfw-3.3.2/include/
     ${CMAKE_SOURCE_DIR}/ExternalResources/glad/include/
     ${CMAKE_SOURCE_DIR}/ExternalResources/glm/
@@ -40,10 +42,11 @@ target_link_libraries(FullDemoTemplateOGL glfw)
 target_link_libraries(FullDemoTemplateOGL glm)
 target_link_libraries(FullDemoTemplateOGL FreeImage)
 target_link_libraries(FullDemoTemplateOGL freetype)
-find_package(assimp REQUIRED)
-if (assimp_FOUND)
-    set(ASSIMP_LIBRARY "assimp")
-    add_library(${ASSIMP_LIBRARY} SHARED IMPORTED)
-    set_target_properties(${ASSIMP_LIBRARY} PROPERTIES IMPORTED_LOCATION "${LIB_DIR}/assimp/libassimp.so")
-    target_link_libraries(${PROJECT_NAME} ${ASSIMP_LIBRARIES})
-endif(assimp_FOUND)
+target_link_libraries(FullDemoTemplateOGL assimp)
+#find_package(assimp REQUIRED)
+#if (assimp_FOUND)
+#    set(ASSIMP_LIBRARY "assimp")
+#    add_library(${ASSIMP_LIBRARY} SHARED IMPORTED)
+#    set_target_properties(${ASSIMP_LIBRARY} PROPERTIES IMPORTED_LOCATION "${LIB_DIR}/assimp/libassimp.so")
+#    target_link_libraries(${PROJECT_NAME} ${ASSIMP_LIBRARIES})
+#endif(assimp_FOUND)

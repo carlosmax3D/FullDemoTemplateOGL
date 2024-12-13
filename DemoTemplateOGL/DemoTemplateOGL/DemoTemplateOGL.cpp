@@ -51,12 +51,16 @@ int isProgramRunning(void *ptr);
 void swapGLBuffers();
 int finishProgram(void *ptr);
 int gamePadEvents(GameActions *actions);
+void updatePosCords(Texto* coordenadas);
+void updateFPS(Texto *fps, int totFrames);
+Model *gravityAndCollition(float superfi, double &jump, glm::vec3 &modPos, bool type);
 
 // Propiedades de la ventana
 unsigned int SCR_WIDTH = 800;
 unsigned int SCR_HEIGHT = 600;
 glm::vec2 windowSize;
 bool showHitbox = true;
+bool showStats = true;
 bool newContext = false; // Bandera para identificar si OpenGL 2.0 > esta activa
 struct GameTime gameTime;
 
@@ -94,7 +98,7 @@ int main(int argc, char** argv){
     windowSize = glm::vec2(SCR_WIDTH, SCR_HEIGHT);
     glfwMakeContextCurrent(window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
-        cout << "No opengl load"<< endl;
+        ERRORL("No opengl load", "OPENGL");
         glfwTerminate();
         return -1;
     }
@@ -115,7 +119,7 @@ int main(int argc, char** argv){
     model->setTranslate(&translate);
     
     OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
-    translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(model->getNextTranslate()->x, model->getNextTranslate()->z), -5.0f);
+    translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
     model->setTranslate(&translate);
     model->setNextTranslate(&translate);
     renderiza = false;
@@ -124,50 +128,66 @@ int main(int argc, char** argv){
     Texto *fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
     fps->name = "FPSCounter";
     OGLobj->getLoadedText()->emplace_back(fps);
-
+    Texto *coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
+	coordenadas->name = "Coordenadas";
+    OGLobj->getLoadedText()->emplace_back(coordenadas);
+    updatePosCords(coordenadas);
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-    WCHAR conv[50] = {0};
     gameTime.lastTick = get_nanos() / 1000000.0; // ms
     int totFrames = 0;
     double deltasCount = 0;
+    double jump = 0;
 //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     while (isProgramRunning(ptrMsg)) {
         deltasCount += gameTime.deltaTime;
         totFrames++;
         if (deltasCount >= 1000.0f){
-            swprintf((wchar_t*)conv, 50, L"%d", totFrames);
-            wcscat_s((wchar_t*)conv, 50, L" FPS");
-            fps->initTexto(conv);
+            updateFPS(fps, totFrames);
             deltasCount -= 1000.0f;
             totFrames = 1;
-        }
+        }    
         OGLobj->setAngulo(OGLobj->getAngulo() + 1.5 * gameTime.deltaTime / 100);
         if (renderiza) {
             GameActions actions;
+            actions.jump = &jump;
             // render
             // ------
             bool checkCollition = checkInput(&actions, OGLobj);
             if (checkCollition) { // Bandera para buscar colisiones sobre Camara/Modelo
-                if (OGLobj->lookForCollition(true) != NULL) { // Llamamos a la funcion de colision 
+                glm::vec3 &modPos = *OGLobj->getMainModel()->getNextTranslate();
+                float superfi = OGLobj->getTerreno()->Superficie(modPos.x, modPos.z);
+                if (modPos.y < superfi)
+                    modPos.y = superfi;
+                glm::vec3 &currPos = *OGLobj->getMainModel()->getTranslate();
+                Model *collition = gravityAndCollition(superfi, jump, modPos, true);
+
+                // Para activar las colisiones cambiar false por true y viceversa para desactivar                
+                if (false && collition != NULL) { // Llamamos a la funcion de colision
+                    superfi = OGLobj->getTerreno()->Superficie(currPos.x, currPos.z);
+                    if (currPos.y < superfi)
+                        currPos.y = superfi;
+                    Model *collition = gravityAndCollition(superfi, jump, currPos, false);
                     model->setNextTranslate(model->getTranslate());
                     model->setNextRotX(model->getRotX());
                     model->setNextRotY(model->getRotY());
                     model->setNextRotZ(model->getRotZ());
                 } else {
-                    //model->CamaraAvanza();
                     model->setTranslate(model->getNextTranslate());
                     model->setRotX(model->getNextRotX());
                     model->setRotY(model->getNextRotY());
                     model->setRotZ(model->getNextRotZ());
+                    updatePosCords(coordenadas);
                 }
             }
             Scene *escena = OGLobj->Render();
             if (escena != OGLobj) {
                 delete OGLobj;
                 OGLobj = escena;
+                OGLobj->getLoadedText()->emplace_back(fps);
+                OGLobj->getLoadedText()->emplace_back(coordenadas);
             }
             swapGLBuffers();
         }
@@ -175,6 +195,8 @@ int main(int argc, char** argv){
     if (OGLobj != NULL) delete OGLobj;
     if (camera != NULL) delete camera;
     if (model != NULL) delete model;
+    if (fps != NULL) delete fps;
+    if (coordenadas != NULL) delete coordenadas;
     font_atlas::clearInstance();
     return finishProgram(ptrMsg);
 }
@@ -187,6 +209,10 @@ bool checkInput(GameActions *actions, Scene* scene) {
         checkCollition = KeysEvents(actions);
     }
     Model* OGLobj = scene->getMainModel();
+    if (actions->displayHitboxStats){
+        showHitbox = !showHitbox;
+        showStats = !showStats;
+    }
     if (actions->firstPerson) {
         OGLobj->cameraDetails->setFirstPerson(!OGLobj->cameraDetails->getFirstPerson());
     }
@@ -199,7 +225,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         pos.x += actions->hAdvance * 0.5 * glm::cos(glm::radians(OGLobj->getRotY()));
         pos.z += actions->hAdvance * 0.5 * glm::sin(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-        pos.y = scene->getTerreno()->Superficie(pos.x, pos.z);
+//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
 
         OGLobj->setNextTranslate(&pos);
         checkCollition = true;
@@ -209,7 +235,16 @@ bool checkInput(GameActions *actions, Scene* scene) {
         pos.x += actions->advance * 0.5 * glm::sin(glm::radians(OGLobj->getRotY()));
         pos.z += actions->advance * 0.5 * glm::cos(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-        pos.y = scene->getTerreno()->Superficie(pos.x, pos.z);
+//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+        OGLobj->setNextTranslate(&pos);
+        checkCollition = true;
+    }
+    if (*actions->jump > 0){
+        glm::vec3 pos = *OGLobj->getNextTranslate();
+        double del = (*actions->jump) * gameTime.deltaTime / 100;
+        pos.y += del;
+        (*actions->jump) -= del;
+        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
         OGLobj->setNextTranslate(&pos);
         checkCollition = true;
     }
@@ -226,7 +261,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         OGLobj->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * 0.50);
     }
 
-    return checkCollition;
+    return true || checkCollition; // siempre buscar colision
 }
 
 #ifdef _WIN32
@@ -492,6 +527,10 @@ void mouseActions() {
 }
 
 int isProgramRunning(void *ptr){
+    double currentTime = get_nanos() / 1000000.0;
+    gameTime.deltaTime =  currentTime - gameTime.lastTick; // ms
+    gameTime.lastTick = currentTime;  // ms
+    int flag = 1;
 #ifndef _WIN32
     if (!renderiza){
         glfwSetKeyCallback(window, key_callback);
@@ -501,29 +540,20 @@ int isProgramRunning(void *ptr){
         glfwSetMouseButtonCallback(window, mouse_button_callback);
         renderiza = true;
     }
-    double currentTime = get_nanos() / 1000000.0;
-    gameTime.deltaTime =  currentTime - gameTime.lastTick; // ms
-    gameTime.lastTick = currentTime;  // ms
-    int flag = !glfwWindowShouldClose(window);
+    flag = !glfwWindowShouldClose(window);
     if (flag)
         glfwPollEvents();
-    return flag;
 #else
     if (!renderiza)
         renderiza = true;
-    double currentTime = get_nanos() / 1000000.0;
-    gameTime.deltaTime =  currentTime - gameTime.lastTick; // ms
-    gameTime.lastTick = currentTime;  // ms
     MSG &msg = *(MSG*)ptr;
     if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
-        if (msg.message == WM_QUIT) {
-            return 0;
-        }
+        flag = msg.message == WM_QUIT? 0 : 1;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    return 1;
 #endif
+    return flag;
 }
 
 void swapGLBuffers(){
@@ -565,7 +595,48 @@ int gamePadEvents(GameActions *actions){
         return 0;
 #else
     if (false)
-        cout << "This should be the gamepad code \n";
+        ERRORL("This should be the gamepad code", "GAMEPAD");
     return 0;
 #endif
+}
+
+void updatePosCords(Texto* coordenadas) {
+    wchar_t wCoordenadas[350] = { 0 };
+	wchar_t componente[100] = { 0 };
+	wcscpy_s(wCoordenadas, 350, L"X: ");
+	swprintf(componente, 100, L"%f", OGLobj->getMainModel()->getTranslate()->x);
+	wcscat_s(wCoordenadas, 350, componente);
+	wcscat_s(wCoordenadas, 350, L" Y: ");
+	swprintf(componente, 100, L"%f", OGLobj->getMainModel()->getTranslate()->y);
+	wcscat_s(wCoordenadas, 350, componente);
+	wcscat_s(wCoordenadas, 350, L" Z: ");
+	swprintf(componente, 100, L"%f", OGLobj->getMainModel()->getTranslate()->z);
+	wcscat_s(wCoordenadas, 350, componente);
+	coordenadas->initTexto((WCHAR*)wCoordenadas);
+}
+
+void updateFPS(Texto *fps, int totFrames){
+    WCHAR conv[50] = { 0 };
+    swprintf((wchar_t*)conv, 50, L"%d", totFrames);
+    wcscat_s((wchar_t*)conv, 50, L" FPS");
+    fps->initTexto(conv);
+}
+
+Model *gravityAndCollition(float superfi, double &jump, glm::vec3 &modPos, bool type) {
+    glm::vec3 yPos;
+    Model *collition = OGLobj->lookForCollition(yPos, type);
+    float pPos = modPos.y - 0.0098 * gameTime.deltaTime;
+    float tPos = collition != NULL ? yPos.y : superfi;
+    if (modPos.y > tPos)
+        modPos.y = pPos;
+    else{
+        if (modPos.y > (yPos.y - ((yPos.y - yPos.x) * 0.025)) ){
+            modPos.y = tPos;
+            jump = 0;
+        } else if (modPos.y == superfi){
+            jump = 0;
+        }
+        collition = OGLobj->lookForCollition(yPos, type);
+    }    
+    return collition;
 }

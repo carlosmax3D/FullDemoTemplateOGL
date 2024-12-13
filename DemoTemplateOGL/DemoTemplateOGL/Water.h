@@ -14,43 +14,47 @@
 class Water : public Terreno {
 
 private:
-    void reloadData(vector<Vertex>& vertices) {
-        // Increment time for animation
-        static float waveSpeed = 0.1f;
-        static float time = 0.f;
-        static float waveAmplitude = 0.5f;
-        static float waveFrequency = 0.5f;
-        time += waveSpeed;
+double WATER_PI_FACTOR = 2.0f * M_PI;
+size_t mapSizeX;
+static constexpr float waveSpeed = 0.1f;
+static constexpr float waveAmplitude = 0.5f;
+static constexpr float waveFrequency = 0.5f;
+void reloadData(vector<Vertex>& vertices) {
+    static float time = 0.f;
+    time += waveSpeed;
+    
+    const float waveTime = waveFrequency * time;
 
-        // Define the size of the water surface
-        static const float water_size = 200;
+    Vertex* vData = vertices.data();  // Direct pointer access for fast memory operations
+    size_t numVerts = vertices.size();
 
-        // Define the number of segments for the water surface
-        unsigned int x = 0; // Number of segments in X direction
-        unsigned int z = 0; // Number of segments in Z direction
+    for (size_t i = 0; i < numVerts; i += 4) {  // Loop unrolling: Process 4 vertices per iteration
+        for (int j = 0; j < 4 && (i + j) < numVerts; j++) {
+            Vertex &v = vData[i + j];  // Access vertex directly using pointer arithmetic
 
-        for (unsigned int segments = 0; segments < vertices.size(); segments++) {
-            // Calculate position based on wave function
-			x = segments / (getMapAlturaX() * 3);
-			z = segments % (getMapAlturaX() * 3);
-			Vertex &vertex = vertices.at(segments);
-			float xPos = vertex.Position.x;
-            float zPos = vertex.Position.z;
-            float yPos = waveAmplitude * sin(waveFrequency * (xPos + time)) + waveAmplitude * sin(waveFrequency * (zPos + time));
+            float xPos = v.Position.x;
+            float zPos = v.Position.z;
 
-            // Add vertex with updated position and texture coordinates
-			vertex.Position.y = yPos;
-//          vertex.TexCoords = glm::vec2((float)x / (numSegmentsX - 1), (float)z / (numSegmentsZ - 1));
+            // Fast sine lookup (LUT) instead of costly sin() calls
+            int xIndex = ((int)((waveFrequency * xPos + waveTime) * LUT_SIZE / (WATER_PI_FACTOR))) % LUT_SIZE;
+            int zIndex = ((int)((waveFrequency * zPos + waveTime) * LUT_SIZE / (WATER_PI_FACTOR))) % LUT_SIZE;
+            
+            v.Position.y = waveAmplitude * (UTILITIES_OGL::sinLUT[xIndex] + UTILITIES_OGL::sinLUT[zIndex]);
         }
-		// Recalculate normals based on updated vertices
-//		UTILITIES_OGL::calculateNormals(vertices, meshes[0]->indices);
-//		buildKDtree();
     }
+    // If needed, recalculate normals and rebuild KD tree
+//    UTILITIES_OGL::calculateNormals(vertices, meshes[0]->indices);
+//    buildKDtree();
+}
 public:
 	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera)
 		: Terreno(alturas, textura, ancho, prof, camera, GL_DYNAMIC_DRAW) {
 		gpuDemo = NULL;
 //		buildKDtree();
+		mapSizeX = getMapAlturaX() * 3;
+		for (int i = 0; i < LUT_SIZE; i++) {
+			UTILITIES_OGL::sinLUT[i] = sin((float)i / LUT_SIZE * 2.0f * M_PI);
+		}
 	}
 
 	~Water() {
@@ -59,7 +63,7 @@ public:
 
 	virtual void Draw() {
 		if (gpuDemo == NULL) {
-			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
+			gpuDemo = new Shader("shaders/water.vs", "shaders/water.fs");
 			setDefaultShader(true);
 		}
 		if (getDefaultShader()) {
@@ -72,10 +76,12 @@ public:
 	}
 
 	virtual void Draw(Shader& shader) {
-		reloadData(meshes[0]->vertices);
+//		reloadData(meshes[0]->vertices);
+		static float time = 0.f;
+		time += waveSpeed;
+		shader.setFloat("time", time);
 		Model::Draw(shader);
 	}
 
 };
-
 #endif 

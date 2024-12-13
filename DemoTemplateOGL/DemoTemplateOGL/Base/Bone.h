@@ -10,9 +10,9 @@
 
 class Bone {
 private:
-    std::vector<UTILITIES_OGL::KeyPosition> m_Positions;
-    std::vector<UTILITIES_OGL::KeyRotation> m_Rotations;
-    std::vector<UTILITIES_OGL::KeyScale> m_Scales;
+    std::vector<UTILITIES_OGL::KeyFrame> m_Positions;
+    std::vector<UTILITIES_OGL::KeyFrame> m_Rotations;
+    std::vector<UTILITIES_OGL::KeyFrame> m_Scales;
     int m_NumPositions;
     int m_NumRotations;
     int m_NumScalings;
@@ -29,9 +29,9 @@ public:
     /*interpolates  b/w positions,rotations & scaling keys based on the curren time of 
     the animation and prepares the local transformation matrix by combining all keys 
     tranformations*/
-    void Update(double animationTime);
+    glm::mat4& Update(double animationTime);
 
-    glm::mat4 GetLocalTransform();
+    glm::mat4& GetLocalTransform();
     const std::string& GetBoneName();
     int GetBoneID();
 	

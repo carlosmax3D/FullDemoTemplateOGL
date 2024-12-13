@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/spdx/spdx-spec/v2.2.1/schemas/spdx-schema.json",
+  "spdxVersion": "SPDX-2.2",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "documentNamespace": "https://spdx.org/spdxdocs/assimp-x64-windows-5.4.3-435960b4-cf16-4300-ac68-0a0ec45f0ae8",
+  "name": "assimp:x64-windows@5.4.3 039d3144191e6b074e9604928e7cb0d321cbd4031992809491d6c0d8ae4db04e",
+  "creationInfo": {
+    "creators": [
+      "Tool: vcpkg-2025-01-29-a75ad067f470c19f030361064e32a2585392bee2"
+    ],
+    "created": "2025-02-06T16:00:18Z"
+  },
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "GENERATES",
+      "relatedSpdxElement": "SPDXRef-binary"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-0"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-1"
+    },
+    {
+      "spdxElementId": "SPDXRef-port",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-file-2"
+    },
+    {
+      "spdxElementId": "SPDXRef-binary",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-0",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-1",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    },
+    {
+      "spdxElementId": "SPDXRef-file-2",
+      "relationshipType": "CONTAINED_BY",
+      "relatedSpdxElement": "SPDXRef-port"
+    }
+  ],
+  "packages": [
+    {
+      "name": "assimp",
+      "SPDXID": "SPDXRef-port",
+      "versionInfo": "5.4.3",
+      "downloadLocation": "git+https://github.com/Microsoft/vcpkg#ports/assimp",
+      "homepage": "https://github.com/assimp/assimp",
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "description": "The Open Asset import library",
+      "comment": "This is the port (recipe) consumed by vcpkg."
+    },
+    {
+      "name": "assimp:x64-windows",
+      "SPDXID": "SPDXRef-binary",
+      "versionInfo": "039d3144191e6b074e9604928e7cb0d321cbd4031992809491d6c0d8ae4db04e",
+      "downloadLocation": "NONE",
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "comment": "This is a binary package built by vcpkg."
+    },
+    {
+      "SPDXID": "SPDXRef-resource-0",
+      "name": "assimp/assimp",
+      "downloadLocation": "git+https://github.com/assimp/assimp@v5.4.3",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "copyrightText": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "4738db84068d36face8caf61c0789178fdfc1310fa8e81ffb9b025e14183bde546b784d691c92438ab310a79ab7b75ab62ee0247d5f01e81ddf04fb94b7a9c0b"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/assimp/build_fixes.patch",
+      "SPDXID": "SPDXRef-file-0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f7853f403859d9b22afe5c285792937f02dc1a83db45762bf306073b2c7a29b8"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/assimp/portfile.cmake",
+      "SPDXID": "SPDXRef-file-1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "db5d633a0b23afcc3b8393200c56a72677b3d31d7b6b362f6a14f577c54922b8"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    },
+    {
+      "fileName": "./C:/OpenGL_ROOT/vcpkg/ports/assimp/vcpkg.json",
+      "SPDXID": "SPDXRef-file-2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "69ef5b42d7897d47f0e356ab2e8812b440b584bc0ab0b4bd0da9fcbde3c77f3c"
+        }
+      ],
+      "licenseConcluded": "NOASSERTION",
+      "copyrightText": "NOASSERTION"
+    }
+  ]
+}

@@ -45,10 +45,6 @@ Model::~Model() {
         delete gpuDemo;
         gpuDemo = NULL;
     }
-    if (animator != NULL){
-        delete animator;
-        animator = NULL;
-    }
     for (int i = 0; cleanTextures && i < textures_loaded.size(); i++) {
         glDeleteTextures(1, &(textures_loaded[i]->id));
     }
@@ -57,7 +53,9 @@ Model::~Model() {
     }
 }
 
-std::unordered_map<string, BoneInfo>& Model::GetBoneInfoMap() { return m_BoneInfoMap; }
+std::unordered_map<string, int>* Model::GetBoneInfoMap() { return &m_BoneInfoMap; }
+std::vector<BoneInfo>* Model::getBonesInfo(){ return &bonesInfo; }
+
 int& Model::GetBoneCount() { return m_BoneCounter; }    
 
 void Model::SetVertexBoneDataToDefault(Vertex& vertex){
@@ -116,19 +114,15 @@ void Model::Draw() {
 }
 void Model::Draw(Shader& shader) {
     if (active){
-        if (animator != NULL){
-            animator->UpdateAnimation(gameTime.deltaTime / 100,glm::mat4(1));
-            vector<glm::mat4>* transforms = animator->GetFinalBoneMatrices();
-            for (int i = 0; i < transforms->size(); ++i){
-                char bonesMat[26] = "finalBonesMatrices[";
-                strcat_s(bonesMat, 26, std::to_string(i).c_str());
-                strcat_s(bonesMat, 26, "]");
-                shader.setMat4(bonesMat, transforms->at(i));
-            }
+        if (animatorIdx != -1){
+            Animator &animator = animators[animatorIdx];
+            animator.UpdateAnimation(gameTime.deltaTime / 1000, glm::mat4(1));
+            const glm::mat4* transforms = animator.GetFinalBoneMatrices();
+            shader.setMat4Array("finalBonesMatrices", transforms, MAX_MODEL_BONES);
         }
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i]->Draw(shader);
-        if (showHitbox && this->AABB != NULL)
+        if (showHitbox && this->AABB)
             this->AABB->Draw(shader);
     }
 }
@@ -278,8 +272,17 @@ void Model::setActive(bool active){
     this->active = active;
 }
 
-void Model::setAnimator(Animator *animator){
-    this->animator = animator;
+void Model::setAnimator(Animator animator){
+    this->animators.emplace_back(animator);
+    animatorIdx = 0;
+}
+void Model::setAnimator(std::vector<Animator>& animator){
+    for (Animator &anim : animator)
+        this->animators.emplace_back(anim);
+    animatorIdx = 0;
+}
+void Model::setAnimation(unsigned int id){
+    this->animatorIdx = id >= animators.size() ? -1 : id;
 }
 
 void Model::buildKDtree() {
@@ -342,13 +345,14 @@ void Model::loadModel(string const& path, bool rotationX, bool rotationY)
 {
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+//    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+    const aiScene* scene = importer.ReadFile(path, ASSIMP_READFILE);
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
     {
         string err("ERROR::ASSIMP:: ");
         err.append(importer.GetErrorString());
-        LOGGER::LOGS::getLOGGER().info(err, "ERROR LOAD OBJ");
+        INFO(err, "ERROR LOAD OBJ");
         return;
     }
     // retrieve the directory path of the filepath
@@ -453,13 +457,13 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
 
     // 1. diffuse maps
     loadMaterial(materials, material);
-    loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, "texture_diffuse", rotationX, rotationY);
+    loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, "texture_diffuse", scene, rotationX, rotationY);
     // 2. specular maps
-    loadMaterialTextures(textures, material, aiTextureType_SPECULAR, "texture_specular", rotationX, rotationY);
+    loadMaterialTextures(textures, material, aiTextureType_SPECULAR, "texture_specular", scene, rotationX, rotationY);
     // 3. normal maps
-    loadMaterialTextures(textures, material, aiTextureType_HEIGHT, "texture_normal", rotationX, rotationY);
+    loadMaterialTextures(textures, material, aiTextureType_HEIGHT, "texture_normal", scene, rotationX, rotationY);
     // 4. height maps
-    loadMaterialTextures(textures, material, aiTextureType_AMBIENT, "texture_height", rotationX, rotationY);
+    loadMaterialTextures(textures, material, aiTextureType_AMBIENT, "texture_height", scene, rotationX, rotationY);
 
     ExtractBoneWeightForVertices(vertices,mesh,scene);
     // return a mesh object created from the extracted mesh data
@@ -476,13 +480,17 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
 
 // checks all material textures of a given type and loads the textures if they're not loaded yet.
 // the required info is returned as a Texture struct.
-void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiTextureType type, string typeName, bool rotationX, bool rotationY)
+void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiTextureType type, string typeName, const aiScene *scene, bool rotationX, bool rotationY)
 {
     if (textures.capacity() < mat->GetTextureCount(type))
         textures.reserve(textures.capacity() + mat->GetTextureCount(type));
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++) {
         aiString str;
-        mat->GetTexture(type, i, &str);
+        if (mat->GetTexture(type, i, &str) != AI_SUCCESS){
+            std::string name = str.C_Str();
+            WARNING("Error at reading texture "+ name, "Model loading");
+            continue;
+        }
         // check if texture was loaded before and if so, continue to next iteration: skip loading a new texture
         bool skip = false;
         for (unsigned int j = 0; j < textures_loaded.size(); j++)
@@ -499,7 +507,9 @@ void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiT
             }
         if (!skip) {   // if texture hasn't been loaded already, load it
             Texture texture;
-            texture.id = TextureFromFile(str.C_Str(), this->directory, rotationX, rotationY);
+            const aiTexture *paiTexture = scene->GetEmbeddedTexture(str.C_Str());
+            texture.id = paiTexture != NULL ? TextureFromMemory(paiTexture, rotationX, rotationY) :
+                                TextureFromFile(str.C_Str(), this->directory, rotationX, rotationY);
             strcpy_s(texture.type, 255, typeName.c_str());
             strcpy_s(texture.path, 1024, str.C_Str());
             textures.emplace_back(texture);
@@ -509,12 +519,15 @@ void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiT
 
 void Model::SetVertexBoneData(Vertex& vertex, int boneID, float weight){
     for (int i = 0; i < MAX_BONE_INFLUENCE; ++i){
-        if (vertex.m_BoneIDs[i] < 0){
+        if (vertex.m_BoneIDs[i] == boneID || weight == 0.0f)
+            return;
+        if (vertex.m_BoneIDs[i] == -1){
             vertex.m_Weights[i] = weight;
             vertex.m_BoneIDs[i] = boneID;
-            break;
+            return;
         }
     }
+    ERRORL("This model has more bone influence than expected " + to_string(MAX_BONE_INFLUENCE), "Load model "+this->name);
 }
 
 void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene){
@@ -525,11 +538,12 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
             BoneInfo newBoneInfo;
             newBoneInfo.id = m_BoneCounter;
             newBoneInfo.offset = UTILITIES_OGL::aiMatrix4x4ToGlm(mesh->mBones[boneIndex]->mOffsetMatrix);
-            m_BoneInfoMap[boneName] = newBoneInfo;
+            bonesInfo.emplace_back(newBoneInfo);
+            m_BoneInfoMap[boneName] = bonesInfo.size() - 1;
             boneID = m_BoneCounter;
             m_BoneCounter++;
         } else {
-            boneID = m_BoneInfoMap[boneName].id;
+            boneID = bonesInfo[m_BoneInfoMap[boneName]].id;
         }
         assert(boneID != -1);
         auto weights = mesh->mBones[boneIndex]->mWeights;
@@ -538,16 +552,15 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
         for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex){
             int vertexId = weights[weightIndex].mVertexId;
             float weight = weights[weightIndex].mWeight;
-            assert(vertexId <= vertices.size());
             SetVertexBoneData(vertices[vertexId], boneID, weight);
         }
     }
 }
 
-bool Model::colisionaCon(Model& objeto, bool collitionMove) {
-    return Model::colisionaCon(*this, objeto, collitionMove);
+bool Model::colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove) {
+    return Model::colisionaCon(*this, objeto, yPos, collitionMove);
 }
-bool Model::colisionaCon(Model& objeto0, Model& objeto, bool collitionMove) {
+bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove) {
     if (objeto0.AABB == NULL || objeto.AABB == NULL)
         return false;
     if (!(objeto0.active && objeto.active))
@@ -567,13 +580,22 @@ bool Model::colisionaCon(Model& objeto0, Model& objeto, bool collitionMove) {
 
     // Transformar los vértices de cada cubo usando sus respectivas matrices de transformación
     Vertex *idx = verticesCubo1;
+    yPos.z = objeto0.AABB->meshes[0]->vertices[0].Position.y;
     for (Vertex& vertex : objeto0.AABB->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform1 * glm::vec4(vertex.Position, 1.0f));
+        if (yPos.z > idx->Position.y) // Min cube position
+            yPos.z = idx->Position.y;
         idx++;
     }
     idx = verticesCubo2;
+    yPos.x = objeto.AABB->meshes[0]->vertices[0].Position.y;
+    yPos.y = objeto.AABB->meshes[0]->vertices[0].Position.y;
     for (Vertex& vertex : objeto.AABB->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform2 * glm::vec4(vertex.Position, 1.0f));
+        if (yPos.x > idx->Position.y) // Min cube position
+            yPos.x = idx->Position.y;
+        if (yPos.y < idx->Position.y) // Max cube position
+            yPos.y = idx->Position.y;
         idx++;
     }
 

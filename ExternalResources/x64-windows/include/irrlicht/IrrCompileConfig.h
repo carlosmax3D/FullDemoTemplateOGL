@@ -8,11 +8,11 @@
 //! Irrlicht SDK Version
 #define IRRLICHT_VERSION_MAJOR 1
 #define IRRLICHT_VERSION_MINOR 8
-#define IRRLICHT_VERSION_REVISION 4
+#define IRRLICHT_VERSION_REVISION 5
 // This flag will be defined only in SVN, the official release code will have
 // it undefined
 //#define IRRLICHT_VERSION_SVN -alpha
-#define IRRLICHT_SDK_VERSION "1.8.4"
+#define IRRLICHT_SDK_VERSION "1.8.5"
 
 #include <stdio.h> // TODO: Although included elsewhere this is required at least for mingw
 
@@ -238,7 +238,7 @@ for Windows based systems. You also have to set #define UNICODE for this to comp
 #undef _IRR_WCHAR_FILESYSTEM
 #endif
 
-//! Define _IRR_COMPILE_WITH_JPEGLIB_ to enable compiling the engine using libjpeg.
+//! Define _IRR_COMPILE_WITH_LIBJPEG_ to enable compiling the engine using libjpeg.
 /** This enables the engine to read jpeg images. If you comment this out,
 the engine will no longer read .jpeg images. */
 #define _IRR_COMPILE_WITH_LIBJPEG_

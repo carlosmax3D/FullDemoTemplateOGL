@@ -1,14 +1,14 @@
 ################################################################################
 # CMake minimum version required
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5...3.30)
 
 ################################################################################
 # RapidJSON source dir
-set( RapidJSON_SOURCE_DIR "C:/OpenGL_ROOT/ExternalResources/vcpkg/buildtrees/rapidjson/src/c72ed4364c-35829b36f2.clean")
+
 
 ################################################################################
 # RapidJSON build dir
-set( RapidJSON_DIR "C:/OpenGL_ROOT/ExternalResources/vcpkg/buildtrees/rapidjson/x64-windows-rel")
+
 
 ################################################################################
 # Compute paths

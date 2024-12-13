@@ -163,6 +163,9 @@ public:
     {
         glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, GL_FALSE, &mat[0][0]);
     }
+    void setMat4Array(const char* name, const glm::mat4* matrices, size_t count) {
+        glUniformMatrix4fv(glGetUniformLocation(ID, name), count, GL_FALSE, glm::value_ptr(matrices[0]));
+    }
 
 private:
     // utility function for checking shader compilation/linking errors.

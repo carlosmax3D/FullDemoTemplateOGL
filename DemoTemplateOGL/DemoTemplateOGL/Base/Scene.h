@@ -24,13 +24,13 @@ class Scene {
 		virtual std::vector<Billboard2D*> *getLoadedBillboards2D() = 0;
 		virtual std::vector<Texto*> *getLoadedText() = 0;
 
-		virtual Model* lookForCollition(bool collitionMovement = false) {
+		virtual Model* lookForCollition(glm::vec3 &yPos, bool collitionMovement = false) {
 			std::vector<Model*> *ourModel = getLoadedModels();
 			Model *camara = getMainModel();
 			for (int i = 0; i < ourModel->size(); i++) {
 				Model *model = (*ourModel)[i];
 				if (model != camara) {
-					if (camara->colisionaCon(*model, collitionMovement)) {
+					if (camara->colisionaCon(*model, yPos, collitionMovement)) {
 						return model;
 					}
 				}

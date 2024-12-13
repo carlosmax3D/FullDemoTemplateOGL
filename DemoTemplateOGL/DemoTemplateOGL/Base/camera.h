@@ -80,12 +80,12 @@ public:
     }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 GetViewMatrix() {
-        glm::mat4 viewMatrix(1.0f); // constructs an identity matrix
+    void GetViewMatrix(glm::mat4& viewMatrix) {
+        viewMatrix = glm::mat4(1.0f); // constructs an identity matrix
         viewMatrix = glm::rotate(viewMatrix, glm::radians(Pitch), glm::vec3(1, 0, 0));
         viewMatrix = glm::rotate(viewMatrix, glm::radians(Yaw), glm::vec3(0, 1, 0));
         viewMatrix = glm::translate(viewMatrix, glm::vec3(-this->Position.x, -this->Position.y, -this->Position.z));
-        return viewMatrix;//glm::lookAt(Position, Position + Front, Up);
+        //glm::lookAt(Position, Position + Front, Up);
     }
 
     void calculateCameraPosition(float pRotY, glm::vec3 *pTrans, float dHorizontal, float dVertical) {
@@ -108,7 +108,7 @@ public:
         // Obtenemos la proyeccion en base a la ventana
         projection = glm::perspective(glm::radians(getZoom()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         // Obtenemos la vista
-        view = GetViewMatrix();
+        GetViewMatrix(view);
         return glm::lookAt(Position,
             Position + Front,
             glm::vec3(0, 1, 0));
@@ -128,13 +128,11 @@ public:
             Position += Right * velocity;
     }
 
-    glm::vec3 movePosition(float vel) {
-        glm::vec3 avance;
+    void movePosition(glm::vec3& avance, float vel) {
         avance.x = Position.x + Front.x * vel;
         avance.y = Position.y + Front.y * vel;
         avance.z = Position.z + Front.z * vel;
         Position = avance;
-        return avance;
     }
     void CamaraAvanza() {
 //        setPosition(nextPosition);
@@ -145,7 +143,8 @@ public:
         glm::lookAt(Position, Position + tmp, Up);
     }
     void CamaraAvanza(float vel) {
-        glm::vec3 newPos = movePosition(vel);        
+        glm::vec3 newPos;
+        movePosition(newPos, vel);        
         setPosition(newPos);
         /*gluLookAt(posc.X, posc.Y, posc.Z,
             posc.X + dirc.X, posc.Y, posc.Z + dirc.Z,
