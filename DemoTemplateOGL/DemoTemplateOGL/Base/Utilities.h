@@ -34,6 +34,7 @@ extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
+extern bool showStats;
 
 struct GameTime {
 	double lastTick = 0;
@@ -47,8 +48,9 @@ struct GameActions {
 	float hAdvance = 0;
 	float sideAdvance = 0;
 	bool firstPerson = false;
-	bool jump = false;
+	double *jump = NULL;
 	bool action = false;
+	bool displayHitboxStats = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);

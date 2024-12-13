@@ -31,7 +31,6 @@ private:
 	float angulo;
 	float animacion = 0;
 	std::vector<Texto*> ourText;
-	wchar_t wCoordenadas[350];
 public:
 	Scenario(Camera *cam);
 	Scenario(Model *camIni);

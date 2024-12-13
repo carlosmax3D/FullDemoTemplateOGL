@@ -100,18 +100,6 @@ void Scenario::InitGraph(Model *main) {
 	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
 	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
 	billBoard2D.back()->setScale(&scale);
-	wchar_t componente[100] = { 0 };
-	wcscpy_s(wCoordenadas, 350, L"X: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->x);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Y: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->y);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Z: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
-	wcscat_s(wCoordenadas, 350, componente);
-	ourText.emplace_back(new Texto((WCHAR*)wCoordenadas, 20, 0, 0, 0, 0, camara));
-	ourText.back()->name = "Coordenadas";
 }
 
 void Scenario::inicializaBillboards() {
@@ -174,22 +162,7 @@ Scene* Scenario::Render() {
 	for (int i = 0; i < ourModel.size(); i++) {
 		ourModel[i]->Draw();
 	}
-	wchar_t componente[100] = { 0 };
-	wcscpy_s(wCoordenadas, 350, L"X: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->x);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Y: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->y);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Z: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
-	wcscat_s(wCoordenadas, 350, componente);
 	for (int i = 0; i < ourText.size(); i++) {
-		if (ourText[i]->name.compare("Coordenadas") == 0
-			&& wcscmp((wchar_t*)ourText[i]->getTexto(),wCoordenadas) != 0){
-			// No es optimo ya que crea el texto cada renderizado....
-			ourText[i]->initTexto((WCHAR*)wCoordenadas);
-		}
 		ourText[i]->Draw();
 	}
 	// Le decimos a winapi que haga el update en la ventana
@@ -249,7 +222,8 @@ Scenario::~Scenario() {
 	this->billBoard.clear();
 	if (ourText.size() > 0)
 		for (int i = 0; i < ourText.size(); i++)
-			delete ourText[i];
+			if (!(ourText[i]->name.compare("FPSCounter") || ourText[i]->name.compare("Coordenadas")))
+				delete ourText[i];
 	this->ourText.clear();
 	if (ourModel.size() > 0)
 		for (int i = 0; i < ourModel.size(); i++)
