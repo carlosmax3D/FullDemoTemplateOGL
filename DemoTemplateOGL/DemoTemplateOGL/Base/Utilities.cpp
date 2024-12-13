@@ -670,7 +670,7 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 		delete[] data;
 	}
 	else {
-		LOGGER::LOGS::getLOGGER().info("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
+		INFO("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
 	}
 	if (img != NULL) {
 		img->format = format;

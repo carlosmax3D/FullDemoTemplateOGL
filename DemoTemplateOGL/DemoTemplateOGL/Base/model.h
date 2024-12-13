@@ -102,9 +102,9 @@ public:
 
     void buildKDtree();
     void buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth);
-    bool colisionaCon(Model& objeto, bool collitionMove = false);
+    bool colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
     bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false);
-    static bool colisionaCon(Model& objeto0, Model& objeto, bool collitionMove = false);
+    static bool colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
     std::unordered_map<string, BoneInfo>& GetBoneInfoMap();
     int& GetBoneCount();

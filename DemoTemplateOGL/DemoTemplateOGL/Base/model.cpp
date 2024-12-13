@@ -348,7 +348,7 @@ void Model::loadModel(string const& path, bool rotationX, bool rotationY)
     {
         string err("ERROR::ASSIMP:: ");
         err.append(importer.GetErrorString());
-        LOGGER::LOGS::getLOGGER().info(err, "ERROR LOAD OBJ");
+        INFO(err, "ERROR LOAD OBJ");
         return;
     }
     // retrieve the directory path of the filepath
@@ -544,10 +544,10 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
     }
 }
 
-bool Model::colisionaCon(Model& objeto, bool collitionMove) {
-    return Model::colisionaCon(*this, objeto, collitionMove);
+bool Model::colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove) {
+    return Model::colisionaCon(*this, objeto, yPos, collitionMove);
 }
-bool Model::colisionaCon(Model& objeto0, Model& objeto, bool collitionMove) {
+bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove) {
     if (objeto0.AABB == NULL || objeto.AABB == NULL)
         return false;
     if (!(objeto0.active && objeto.active))
@@ -567,13 +567,22 @@ bool Model::colisionaCon(Model& objeto0, Model& objeto, bool collitionMove) {
 
     // Transformar los vértices de cada cubo usando sus respectivas matrices de transformación
     Vertex *idx = verticesCubo1;
+    yPos.z = objeto0.AABB->meshes[0]->vertices[0].Position.y;
     for (Vertex& vertex : objeto0.AABB->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform1 * glm::vec4(vertex.Position, 1.0f));
+        if (yPos.z > idx->Position.y) // Min cube position
+            yPos.z = idx->Position.y;
         idx++;
     }
     idx = verticesCubo2;
+    yPos.x = objeto.AABB->meshes[0]->vertices[0].Position.y;
+    yPos.y = objeto.AABB->meshes[0]->vertices[0].Position.y;
     for (Vertex& vertex : objeto.AABB->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform2 * glm::vec4(vertex.Position, 1.0f));
+        if (yPos.x > idx->Position.y) // Min cube position
+            yPos.x = idx->Position.y;
+        if (yPos.y < idx->Position.y) // Max cube position
+            yPos.y = idx->Position.y;
         idx++;
     }
 

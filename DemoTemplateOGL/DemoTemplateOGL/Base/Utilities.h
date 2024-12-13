@@ -19,6 +19,11 @@
 #include <assimp/matrix4x4.h>
 
 #ifndef UTILITIES_OGL_H
+#define INFO(x,y) LOGGER::LOGS::getLOGGER().info(x, y);
+#define ERROR(x,y) LOGGER::LOGS::getLOGGER().error(x, y);
+#define WARNING(x,y) LOGGER::LOGS::getLOGGER().warning(x, y);
+#define EXCLAMATION(x,y) LOGGER::LOGS::getLOGGER().exclamation(x, y);
+#define QUESTION(x,y) LOGGER::LOGS::getLOGGER().question(x, y);
 // FLAG TO DISPLAY ERRORS ON MessageBox
 #define SHOWLOGGERMB
 #define DEBUGFILE
@@ -34,6 +39,7 @@ extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
+extern bool showStats;
 
 struct GameTime {
 	double lastTick = 0;
@@ -47,8 +53,9 @@ struct GameActions {
 	float hAdvance = 0;
 	float sideAdvance = 0;
 	bool firstPerson = false;
-	bool jump = false;
+	double *jump = NULL;
 	bool action = false;
+	bool displayHitboxStats = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);
