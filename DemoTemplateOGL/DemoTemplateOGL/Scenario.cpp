@@ -49,31 +49,38 @@ void Scenario::InitGraph(Model *main) {
 	ourModel.emplace_back(model);
 	model = new Model("models/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.1f, 0.1f, 0.1f);	// it's a bit too big for our scene, so scale it down
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
 	model->setScale(&scale);
 	model->setRotY(90);
 	ourModel.emplace_back(model);
-/*	try{
-		Animation *ani = new Animation("models/dancing_vampire.dae", model->GetBoneInfoMap(), model->GetBoneCount());
-	    model->setAnimator(new Animator(ani));
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
 	}catch(...){
-		cout << "Could not load animation!\n";
-	}*/
-	model = new Model("models/Silly_Dancing.dae", main->cameraDetails);
-	translate = glm::vec3(10.0f, terreno->Superficie(0.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.1f, 0.1f, 0.1f);	// it's a bit too big for our scene, so scale it down
+		ERRORL("Could not load animation!", "ANIMACION");
+	}
+	model = new Model("models/Silly_Dancing.fbx", main->cameraDetails);
+	translate = glm::vec3(10.0f, terreno->Superficie(10.0f, 60.0f) , 60.0f);
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
 	model->setScale(&scale);
 	model->setRotY(180);
 	ourModel.emplace_back(model);
-/*	try{
-		Animation *ani = new Animation("models/Silly_Dancing.dae", model->GetBoneInfoMap(), model->GetBoneCount());
-	    model->setAnimator(new Animator(ani));
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/Silly_Dancing.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+/*		std::vector<Animation> animation = Animation::loadAllAnimations("models/Maria_WProp_J_J_Ong_dead1.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
+		animation = Animation::loadAllAnimations("models/Maria_WProp_J_J_Ong_jump1.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::move(animation.begin(), animation.end(), std::back_inserter(animations));*/
+		for (Animation animation : animations)
+			model->setAnimator(Animator(animation));
+//		model->setAnimation(0);
 	}catch(...){
-		cout << "Could not load animation!\n";
-	}*/
-//	model = new Model("models/IronMan.obj", main);
+		ERRORL("Could not load animation!", "ANIMACION");
+	}
+//	model = new Model("models/IronMan.obj", main->cameraDetails);
 //	translate = glm::vec3(0.0f, 20.0f, 30.0f);
 //	scale = glm::vec3(0.025f, 0.025f, 0.025f);	// it's a bit too big for our scene, so scale it down
 //	model->setScale(&scale);
@@ -100,18 +107,6 @@ void Scenario::InitGraph(Model *main) {
 	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
 	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
 	billBoard2D.back()->setScale(&scale);
-	wchar_t componente[100] = { 0 };
-	wcscpy_s(wCoordenadas, 350, L"X: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->x);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Y: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->y);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Z: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
-	wcscat_s(wCoordenadas, 350, componente);
-	ourText.emplace_back(new Texto((WCHAR*)wCoordenadas, 20, 0, 0, 0, 0, camara));
-	ourText.back()->name = "Coordenadas";
 }
 
 void Scenario::inicializaBillboards() {
@@ -174,22 +169,7 @@ Scene* Scenario::Render() {
 	for (int i = 0; i < ourModel.size(); i++) {
 		ourModel[i]->Draw();
 	}
-	wchar_t componente[100] = { 0 };
-	wcscpy_s(wCoordenadas, 350, L"X: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->x);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Y: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->y);
-	wcscat_s(wCoordenadas, 350, componente);
-	wcscat_s(wCoordenadas, 350, L" Z: ");
-	swprintf(componente, 100, L"%f", getMainModel()->getTranslate()->z);
-	wcscat_s(wCoordenadas, 350, componente);
 	for (int i = 0; i < ourText.size(); i++) {
-		if (ourText[i]->name.compare("Coordenadas") == 0
-			&& wcscmp((wchar_t*)ourText[i]->getTexto(),wCoordenadas) != 0){
-			// No es optimo ya que crea el texto cada renderizado....
-			ourText[i]->initTexto((WCHAR*)wCoordenadas);
-		}
 		ourText[i]->Draw();
 	}
 	// Le decimos a winapi que haga el update en la ventana
@@ -249,7 +229,8 @@ Scenario::~Scenario() {
 	this->billBoard.clear();
 	if (ourText.size() > 0)
 		for (int i = 0; i < ourText.size(); i++)
-			delete ourText[i];
+			if (!(ourText[i]->name.compare("FPSCounter") || ourText[i]->name.compare("Coordenadas")))
+				delete ourText[i];
 	this->ourText.clear();
 	if (ourModel.size() > 0)
 		for (int i = 0; i < ourModel.size(); i++)

@@ -111,7 +111,7 @@ void LOGGER::LOG::processLog(const char* log, const char* title, const char* typ
 	filename.append(".log");
 	std::ofstream f(filename, std::ios::app);
 	if (f.is_open()) {
-		f << type << ":: " << log << std::endl;
+		f << type << "::" << title << ":: " << log << std::endl;
 		f.close();
 	}
 #endif
@@ -628,6 +628,105 @@ unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req
 	return tmp;
 }
 
+unsigned char* loadMemory(const aiTexture *tex, int* x, int* y, int* comp, int req_comp, bool rotateX, bool rotateY) {
+	unsigned char* data = NULL, * tmp = NULL;
+#ifdef __linux__ 
+	if (FreeImage_IsPluginEnabled(FIF_BMP) == -1 || FreeImage_IsPluginEnabled(FIF_BMP) == FALSE )
+		FreeImage_Initialise();
+#endif
+    // Create a memory stream from the data buffer
+    FIMEMORY* memStream = FreeImage_OpenMemory((BYTE*)tex->pcData, tex->mWidth);
+    if (!memStream) {
+        ERRORL("Failed to create memory stream for embbebed texture.", "Error at loading model");
+        return data;
+    }
+	FREE_IMAGE_FORMAT formato = tex->mHeight == 0 ? FreeImage_GetFileTypeFromMemory(memStream) : FIF_UNKNOWN;
+	formato = formato == FIF_UNKNOWN ? FreeImage_GetFIFFromFormat(tex->achFormatHint) : formato;
+	FIBITMAP* imagen = formato == FIF_UNKNOWN ? NULL : FreeImage_LoadFromMemory(formato, memStream);
+	if (imagen != NULL) {
+		if (rotateY) FreeImage_FlipVertical(imagen);
+		if (rotateX) FreeImage_FlipHorizontal(imagen);
+		*x = FreeImage_GetWidth(imagen);
+		*y = FreeImage_GetHeight(imagen);
+		// calculate the number of bytes per pixel
+		*comp = FreeImage_GetLine(imagen) / FreeImage_GetWidth(imagen);
+		// calculate the number of samples per pixel
+		unsigned samples = *comp / sizeof(FreeImage_GetImageType(imagen));
+		tmp = new unsigned char[(*x) * (*y) * (*comp)];
+		memcpy(tmp, (unsigned char*)FreeImage_GetBits(imagen), (*x) * (*y) * (*comp));
+		for (int j = 0; j < (*x) * (*y) && (*comp) >= 3; j++) {
+			unsigned char c = tmp[j * (*comp) + 0];
+			tmp[j * (*comp) + 0] = tmp[j * (*comp) + 2];
+			//tmp[j * (*comp) + 1] = tmp[j * (*comp) + 1];
+			tmp[j * (*comp) + 2] = c;
+			//tmp[j * (*comp) + 3] = tmp[j * (*comp) + 3];
+		}
+		FreeImage_Unload(imagen);
+	    FreeImage_CloseMemory(memStream);
+	}
+	else {
+		if (rotateY) stbi_set_flip_vertically_on_load(false);
+		data = stbi_load_from_memory((const stbi_uc*)tex->pcData, tex->mWidth, x, y, comp, 0);
+		if (data) {
+			tmp = new unsigned char[(*x) * (*y) * (*comp)];
+			memcpy(tmp, data, (*x) * (*y) * (*comp));
+			stbi_image_free(data);
+		}
+		stbi_set_flip_vertically_on_load(false);
+	}
+	return tmp;
+}
+
+unsigned int TextureFromMemory(const aiTexture *texture, bool rotateX, bool rotateY, bool *alpha, struct UTILITIES_OGL::ImageDetails* img) {
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = loadMemory(texture, &width, &height, &nrComponents, 0, rotateX, rotateY);
+	GLenum format = GL_RGBA;
+	if (data) {
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3) {
+			format = GL_RGB;
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		}
+		else if (nrComponents == 4) {
+			format = GL_RGBA;
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		}
+		if (alpha != NULL && *alpha) {
+			format = GL_RGBA;
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+		}
+		if (format == GL_RGBA && alpha != NULL)
+			*alpha = true;
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		//        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);   //Requires GL 1.4. Removed from GL 3.1 and above.
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		delete[] data;
+	}
+	else {
+		std::string name = texture->mFilename.C_Str();
+		INFO("Texture failed to load texture : " + name, "ERROR LOAD OBJ");
+	}
+	if (img != NULL) {
+		img->format = format;
+		img->height = height;
+		img->nrComponents = nrComponents;
+		img->width = width;
+	}
+	return textureID;
+}
+
 unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX, bool rotateY, bool *alpha, struct UTILITIES_OGL::ImageDetails* img) {
 	std::string filename = std::string(path);
 	if (!directory.empty())
@@ -670,7 +769,7 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 		delete[] data;
 	}
 	else {
-		LOGGER::LOGS::getLOGGER().info("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
+		INFO("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
 	}
 	if (img != NULL) {
 		img->format = format;

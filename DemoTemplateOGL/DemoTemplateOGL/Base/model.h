@@ -39,9 +39,11 @@ private:
     float nextRotY = 0;
     float nextRotZ = 0;
     glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    std::unordered_map<string, BoneInfo> m_BoneInfoMap;
+    std::unordered_map<string, int> m_BoneInfoMap;
+    std::vector<BoneInfo> bonesInfo;
     int m_BoneCounter = 0;
-	Animator* animator = NULL;
+	std::vector<Animator> animators;
+    int animatorIdx = -1;
     bool cleanTextures = true;
     bool active = true;
 
@@ -102,13 +104,16 @@ public:
 
     void buildKDtree();
     void buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth);
-    bool colisionaCon(Model& objeto, bool collitionMove = false);
+    bool colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
     bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false);
-    static bool colisionaCon(Model& objeto0, Model& objeto, bool collitionMove = false);
+    static bool colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
-    std::unordered_map<string, BoneInfo>& GetBoneInfoMap();
+    std::unordered_map<string, int>* GetBoneInfoMap();
+    std::vector<BoneInfo>* getBonesInfo();
     int& GetBoneCount();
-    void setAnimator(Animator *animator);
+    void setAnimator(Animator animator);
+    void setAnimator(std::vector<Animator>& animator);
+    void setAnimation(unsigned int id);
     void setCleanTextures(bool flag);
 private:
     vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth);
@@ -121,7 +126,7 @@ private:
     void processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX = false, bool rotationY = true);
     // checks all material textures of a given type and loads the textures if they're not loaded yet.
     // the required info is returned as a Texture struct.
-    void loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiTextureType type, string typeName, bool rotationX = false, bool rotationY = true);
+    void loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiTextureType type, string typeName, const aiScene *scene, bool rotationX = false, bool rotationY = true);
     void SetVertexBoneDataToDefault(Vertex& vertex);
     void SetVertexBoneData(Vertex& vertex, int boneID, float weight);
     void ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);

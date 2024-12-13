@@ -11,12 +11,13 @@ out vec3 FragPos;
 out vec2 TexCoords;
 out vec3 Normal;
 
+uniform int nModelBones;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-const int MAX_BONES = 100;
-const int MAX_BONE_INFLUENCE = 4;
+const int MAX_BONES = 200;
+const int MAX_BONES_INFLUENCE = 4;
 uniform mat4 finalBonesMatrices[MAX_BONES];
 
 bool isZeroMatrix(mat4 m) {
@@ -25,32 +26,29 @@ bool isZeroMatrix(mat4 m) {
            m[2].x == 0.0 && m[2].y == 0.0 && m[2].z == 0.0 && m[2].w == 0.0 &&
            m[3].x == 0.0 && m[3].y == 0.0 && m[3].z == 0.0 && m[3].w == 0.0;
 }
-void main()
-{
-    mat4 BoneTransform = finalBonesMatrices[boneIds[0]] * weights[0];
-    BoneTransform += finalBonesMatrices[boneIds[1]] * weights[1];
-    BoneTransform += finalBonesMatrices[boneIds[2]] * weights[2];
-    BoneTransform += finalBonesMatrices[boneIds[3]] * weights[3];
-    if (isZeroMatrix(BoneTransform))
-        BoneTransform = mat4(1);
-    vec4 totalPosition = BoneTransform * vec4(aPos, 1.0f);
-//    int flagBones = 1;
-//    for(int i = 0 ; i < MAX_BONE_INFLUENCE ; i++) {
-//        if(boneIds[i] == -1) 
-//            continue;
-//        if(boneIds[i] >=MAX_BONES) {
-//            totalPosition = vec4(aPos,1.0f);
-//            break;
-//        }
-//        flagBones = 0;
-//        vec4 localPosition = finalBonesMatrices[boneIds[i]] * vec4(aPos,1.0f);
-//        totalPosition += localPosition * weights[i];
-//        vec3 localNormal = mat3(finalBonesMatrices[boneIds[i]]) * aNormal;
-//    }
-//    if (flagBones == 1)
-    mat3 normalMatrix = transpose(inverse(mat3(BoneTransform)));
+bool isZeroVec4(vec4 v){
+    return v.x == 0 && v.y == 0 && v.z == 0 && v.w == 0;
+}
+void main() {
+    vec4 totalPosition = vec4(0);
+    mat3 localNormal = mat3(mat4(1));
+    for(int i = 0 ; i < MAX_BONES_INFLUENCE ; i++) {
+        vec4 localPosition = vec4(0);
+        if(boneIds[i] == -1 || isZeroMatrix(finalBonesMatrices[boneIds[i]]) || weights[i] == 0.0f)
+            continue;
+        if (boneIds[i] >= MAX_BONES){
+            totalPosition = vec4(aPos,1.0f);
+            break;
+        }
+        localPosition = finalBonesMatrices[boneIds[i]] * vec4(aPos,1.0f);
+        totalPosition += localPosition * weights[i];
+        localNormal *= mat3(finalBonesMatrices[boneIds[i]]);
+    }
+    if (isZeroVec4(totalPosition))
+        totalPosition = vec4(aPos, 1.0f);
+//    mat3 normalMatrix = transpose(inverse(mat3(BoneTransform)));
     FragPos = vec3(model * totalPosition);
-    Normal = normalize(normalMatrix * aNormal);
+    Normal = normalize(localNormal * aNormal);
 
     TexCoords = aTexCoords;
     gl_Position = projection * view * model * totalPosition;

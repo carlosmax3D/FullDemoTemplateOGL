@@ -17,12 +17,19 @@
 #include "wglext.h"
 #include <FreeImage.h>
 #include <assimp/matrix4x4.h>
+#include <assimp/texture.h>
 
 #ifndef UTILITIES_OGL_H
+#define INFO(x,y) LOGGER::LOGS::getLOGGER().info(x, y);
+#define ERRORL(x,y) LOGGER::LOGS::getLOGGER().error(x, y);
+#define WARNING(x,y) LOGGER::LOGS::getLOGGER().warning(x, y);
+#define EXCLAMATION(x,y) LOGGER::LOGS::getLOGGER().exclamation(x, y);
+#define QUESTION(x,y) LOGGER::LOGS::getLOGGER().question(x, y);
 // FLAG TO DISPLAY ERRORS ON MessageBox
 #define SHOWLOGGERMB
 #define DEBUGFILE
 #define MAX_BONE_INFLUENCE 4
+#define ASSIMP_READFILE aiProcess_LimitBoneWeights | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace
 
 #define UTILITIES_OGL_H
 // ejemplo de uso de enumeracion para definir cual eje se utilizara
@@ -34,6 +41,7 @@ extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
+extern bool showStats;
 
 struct GameTime {
 	double lastTick = 0;
@@ -47,8 +55,9 @@ struct GameActions {
 	float hAdvance = 0;
 	float sideAdvance = 0;
 	bool firstPerson = false;
-	bool jump = false;
+	double *jump = NULL;
 	bool action = false;
+	bool displayHitboxStats = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);
@@ -81,9 +90,9 @@ struct Vertex {
 	Vertex(glm::vec3 pos, glm::vec2 texCoord, glm::vec3 normal, glm::vec3 color);
 
     //bone indexes which will influence this vertex
-    int m_BoneIDs[MAX_BONE_INFLUENCE];
+    int m_BoneIDs[MAX_BONE_INFLUENCE] = { -1 };
     //weights from each bone
-    float m_Weights[MAX_BONE_INFLUENCE];
+    float m_Weights[MAX_BONE_INFLUENCE] = { 0.0f };
 };
 
 struct BoneInfo {
@@ -123,7 +132,10 @@ namespace UTILITIES_OGL {
 
 struct AssimpNodeData {
     glm::mat4 transformation;
+    glm::mat4 invTransformation;
     std::string name;
+	int idxBone = -1;
+	int boneInfo = -1;
     int childrenCount;
     std::vector<AssimpNodeData> children;
 };
@@ -161,6 +173,7 @@ struct KeyScale {
 	extern glm::vec3 genNormal(float* v1, float* v2, float* v3);
 }
 extern unsigned char* loadFile(char const* filename, int* x, int* y, int* comp, int req_comp, bool rotateX = false, bool rotateY = true);
+extern unsigned int TextureFromMemory(const aiTexture *texture, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
 extern unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
 
 #pragma once
