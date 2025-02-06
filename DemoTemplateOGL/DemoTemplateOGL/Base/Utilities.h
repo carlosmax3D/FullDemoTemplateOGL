@@ -20,7 +20,7 @@
 
 #ifndef UTILITIES_OGL_H
 #define INFO(x,y) LOGGER::LOGS::getLOGGER().info(x, y);
-#define ERROR(x,y) LOGGER::LOGS::getLOGGER().error(x, y);
+#define ERRORL(x,y) LOGGER::LOGS::getLOGGER().error(x, y);
 #define WARNING(x,y) LOGGER::LOGS::getLOGGER().warning(x, y);
 #define EXCLAMATION(x,y) LOGGER::LOGS::getLOGGER().exclamation(x, y);
 #define QUESTION(x,y) LOGGER::LOGS::getLOGGER().question(x, y);
@@ -28,6 +28,7 @@
 #define SHOWLOGGERMB
 #define DEBUGFILE
 #define MAX_BONE_INFLUENCE 4
+#define ASSIMP_READFILE aiProcess_LimitBoneWeights | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace
 
 #define UTILITIES_OGL_H
 // ejemplo de uso de enumeracion para definir cual eje se utilizara
@@ -88,9 +89,9 @@ struct Vertex {
 	Vertex(glm::vec3 pos, glm::vec2 texCoord, glm::vec3 normal, glm::vec3 color);
 
     //bone indexes which will influence this vertex
-    int m_BoneIDs[MAX_BONE_INFLUENCE];
+    int m_BoneIDs[MAX_BONE_INFLUENCE] = { -1 };
     //weights from each bone
-    float m_Weights[MAX_BONE_INFLUENCE];
+    float m_Weights[MAX_BONE_INFLUENCE] = { 0.0f };
 };
 
 struct BoneInfo {
@@ -130,6 +131,7 @@ namespace UTILITIES_OGL {
 
 struct AssimpNodeData {
     glm::mat4 transformation;
+    glm::mat4 invTransformation;
     std::string name;
     int childrenCount;
     std::vector<AssimpNodeData> children;

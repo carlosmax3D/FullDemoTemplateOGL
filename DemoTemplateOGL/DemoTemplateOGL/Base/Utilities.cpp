@@ -111,7 +111,7 @@ void LOGGER::LOG::processLog(const char* log, const char* title, const char* typ
 	filename.append(".log");
 	std::ofstream f(filename, std::ios::app);
 	if (f.is_open()) {
-		f << type << ":: " << log << std::endl;
+		f << type << "::" << title << ":: " << log << std::endl;
 		f.close();
 	}
 #endif

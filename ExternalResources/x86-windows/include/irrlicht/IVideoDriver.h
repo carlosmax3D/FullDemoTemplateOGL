@@ -437,7 +437,9 @@ namespace video
 		\param format The color format of the render target. Floating point formats are supported.
 		\return Pointer to the created texture or 0 if the texture
 		could not be created. This pointer should not be dropped. See
-		IReferenceCounted::drop() for more information. */
+		IReferenceCounted::drop() for more information.
+		You may want to remove it from driver texture cache with removeTexture if you no longer need it.
+		*/
 		virtual ITexture* addRenderTargetTexture(const core::dimension2d<u32>& size,
 				const io::path& name = "rt", const ECOLOR_FORMAT format = ECF_UNKNOWN) =0;
 
@@ -515,7 +517,7 @@ namespace video
 		example in picture edit programs. To avoid this problem, you
 		could use the makeColorKeyTexture method, which takes the
 		position of a pixel instead a color value.
-		\param zeroTexels \deprecated If set to true, then any texels that match
+		\param zeroTexels (deprecated) If set to true, then any texels that match
 		the color key will have their color, as well as their alpha, set to zero
 		(i.e. black). This behavior matches the legacy (buggy) behavior prior
 		to release 1.5 and is provided for backwards compatibility only.
@@ -532,7 +534,7 @@ namespace video
 		\param colorKeyPixelPos Position of a pixel with the color key
 		color. Every texel with this color will become fully transparent as
 		described above.
-		\param zeroTexels \deprecated If set to true, then any texels that match
+		\param zeroTexels (deprecated) If set to true, then any texels that match
 		the color key will have their color, as well as their alpha, set to zero
 		(i.e. black). This behavior matches the legacy (buggy) behavior prior
 		to release 1.5 and is provided for backwards compatibility only.
@@ -1412,14 +1414,14 @@ namespace video
 		virtual SOverrideMaterial& getOverrideMaterial() =0;
 
 		//! Get the 2d override material for altering its values
-		/** The 2d override materual allows to alter certain render
+		/** The 2d override material allows to alter certain render
 		states of the 2d methods. Not all members of SMaterial are
 		honored, especially not MaterialType and Textures. Moreover,
 		the zbuffer is always ignored, and lighting is always off. All
 		other flags can be changed, though some might have to effect
 		in most cases.
 		Please note that you have to enable/disable this effect with
-		enableInitMaterial2D(). This effect is costly, as it increases
+		enableMaterial2D(). This effect is costly, as it increases
 		the number of state changes considerably. Always reset the
 		values when done.
 		\return Material reference which should be altered to reflect

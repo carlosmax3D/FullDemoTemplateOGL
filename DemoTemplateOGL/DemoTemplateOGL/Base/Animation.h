@@ -30,8 +30,8 @@ public:
     std::unordered_map<std::string,BoneInfo>& GetBoneIDMap();
 
 private:
-    void ReadMissingBones(const aiAnimation* animation, std::unordered_map<std::string, BoneInfo>& boneInfoMap, int& boneCount);
-    void ReadHeirarchyData(UTILITIES_OGL::AssimpNodeData& dest, const aiNode* src);
+    void ReadMissingBones(const aiAnimation* animation, std::unordered_map<std::string, BoneInfo>& boneInfoMap, int& boneCount, const aiScene *scene);
+    void ReadHeirarchyData(UTILITIES_OGL::AssimpNodeData& dest, const aiNode* src, const aiScene *scene);
 
     double m_Duration = 0;
     double m_TicksPerSecond = 0;

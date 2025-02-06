@@ -117,8 +117,9 @@ void Model::Draw() {
 void Model::Draw(Shader& shader) {
     if (active){
         if (animator != NULL){
-            animator->UpdateAnimation(gameTime.deltaTime / 100,glm::mat4(1));
+            animator->UpdateAnimation(gameTime.deltaTime / 1000, glm::mat4(1));
             vector<glm::mat4>* transforms = animator->GetFinalBoneMatrices();
+            shader.setInt("nModelBones", transforms->size());
             for (int i = 0; i < transforms->size(); ++i){
                 char bonesMat[26] = "finalBonesMatrices[";
                 strcat_s(bonesMat, 26, std::to_string(i).c_str());
@@ -342,7 +343,8 @@ void Model::loadModel(string const& path, bool rotationX, bool rotationY)
 {
     // read file via ASSIMP
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+//    importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+    const aiScene* scene = importer.ReadFile(path, ASSIMP_READFILE);
     // check for errors
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
     {
@@ -509,12 +511,13 @@ void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiT
 
 void Model::SetVertexBoneData(Vertex& vertex, int boneID, float weight){
     for (int i = 0; i < MAX_BONE_INFLUENCE; ++i){
-        if (vertex.m_BoneIDs[i] < 0){
-            vertex.m_Weights[i] = weight;
+        if (vertex.m_BoneIDs[i] == -1){
+            vertex.m_Weights[i] += weight;
             vertex.m_BoneIDs[i] = boneID;
-            break;
+            return;
         }
     }
+    ERRORL("This model has more bone influence than expected " + to_string(MAX_BONE_INFLUENCE), "Load model "+this->name);
 }
 
 void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene){
@@ -538,8 +541,8 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
         for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex){
             int vertexId = weights[weightIndex].mVertexId;
             float weight = weights[weightIndex].mWeight;
-            assert(vertexId <= vertices.size());
-            SetVertexBoneData(vertices[vertexId], boneID, weight);
+            if (weight > 0.0f)
+                SetVertexBoneData(vertices[vertexId], boneID, weight);
         }
     }
 }

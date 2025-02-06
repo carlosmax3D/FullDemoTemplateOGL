@@ -98,7 +98,7 @@ int main(int argc, char** argv){
     windowSize = glm::vec2(SCR_WIDTH, SCR_HEIGHT);
     glfwMakeContextCurrent(window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
-        ERROR("No opengl load", "OPENGL");
+        ERRORL("No opengl load", "OPENGL");
         glfwTerminate();
         return -1;
     }
@@ -595,7 +595,7 @@ int gamePadEvents(GameActions *actions){
         return 0;
 #else
     if (false)
-        ERROR("This should be the gamepad code", "GAMEPAD");
+        ERRORL("This should be the gamepad code", "GAMEPAD");
     return 0;
 #endif
 }

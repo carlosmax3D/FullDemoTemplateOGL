@@ -68,14 +68,14 @@ void font_atlas::create_atlas(const char *fontName) {
 	// All functions return a value different than 0 whenever an error occurred
 	if (FT_Init_FreeType(&ft))
 	{
-		ERROR("ERROR::FREETYPE: Could not init FreeType Library", "Error");
+		ERRORL("ERROR::FREETYPE: Could not init FreeType Library", "Error");
 		return;
 	}
 
 	// load font as face
 	FT_Face face;
 	if (FT_New_Face(ft, fontName, 0, &face)) {
-		ERROR("ERROR::FREETYPE: Failed to load font", "Error");
+		ERRORL("ERROR::FREETYPE: Failed to load font", "Error");
 		return;
 	} else {
 #ifdef _WIN32 
@@ -102,7 +102,7 @@ void font_atlas::create_atlas(const char *fontName) {
 			// load glyph
 			if (FT_Load_Char(face, c, FT_LOAD_RENDER))
 			{
-				ERROR("ERROR::FREETYTPE: Failed to load Glyph", "Error");
+				ERRORL("ERROR::FREETYTPE: Failed to load Glyph", "Error");
 				continue;
 			}
 
@@ -141,7 +141,7 @@ void font_atlas::create_atlas(const char *fontName) {
 			// load glyph
 			if (FT_Load_Char(face, static_cast<char>(c), FT_LOAD_RENDER))
 			{
-				ERROR("ERROR::FREETYTPE: Failed to load Glyph", "Error");
+				ERRORL("ERROR::FREETYTPE: Failed to load Glyph", "Error");
 				continue;
 			}
 

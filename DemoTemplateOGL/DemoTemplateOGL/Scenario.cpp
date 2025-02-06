@@ -49,7 +49,7 @@ void Scenario::InitGraph(Model *main) {
 	ourModel.emplace_back(model);
 	model = new Model("models/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.1f, 0.1f, 0.1f);	// it's a bit too big for our scene, so scale it down
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
 	model->setScale(&scale);
 	model->setRotY(90);
@@ -58,20 +58,20 @@ void Scenario::InitGraph(Model *main) {
 		Animation *ani = new Animation("models/dancing_vampire.dae", model->GetBoneInfoMap(), model->GetBoneCount());
 	    model->setAnimator(new Animator(ani));
 	}catch(...){
-		ERROR("Could not load animation!", "ANIMACION");
+		ERRORL("Could not load animation!", "ANIMACION");
 	}
-	model = new Model("models/Silly_Dancing.dae", main->cameraDetails);
+	model = new Model("models/Silly_Dancing.fbx", main->cameraDetails);
 	translate = glm::vec3(10.0f, terreno->Superficie(0.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.1f, 0.1f, 0.1f);	// it's a bit too big for our scene, so scale it down
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
 	model->setScale(&scale);
 	model->setRotY(180);
 	ourModel.emplace_back(model);
 	try{
-		Animation *ani = new Animation("models/Silly_Dancing.dae", model->GetBoneInfoMap(), model->GetBoneCount());
+		Animation *ani = new Animation("models/Silly_Dancing.fbx", model->GetBoneInfoMap(), model->GetBoneCount());
 	    model->setAnimator(new Animator(ani));
 	}catch(...){
-		ERROR("Could not load animation!", "ANIMACION");
+		ERRORL("Could not load animation!", "ANIMACION");
 	}
 //	model = new Model("models/IronMan.obj", main);
 //	translate = glm::vec3(0.0f, 20.0f, 30.0f);
