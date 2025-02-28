@@ -3,6 +3,7 @@
 #include "Utilities.h"
 
 font_atlas *font_atlas::fontsLoaded = NULL;
+float font_atlas::oglVersion = 0;
 
 void font_atlas::clearInstance(){
 	while (fontsLoaded != NULL){
@@ -49,7 +50,10 @@ font_atlas &font_atlas::getInstance(const char* fontName){
 font_atlas::font_atlas()
 	:textureID(0), TextureWidth(0), TextureHeight(0)
 {
-
+	if (font_atlas::oglVersion == 0){
+		const char* version = (const char*)glGetString(GL_VERSION);
+		font_atlas::oglVersion = atof(version);	
+	}
 }
 
 font_atlas::~font_atlas() {
@@ -146,29 +150,31 @@ void font_atlas::create_atlas(const char *fontName) {
 			}
 
 			// add glyph to texture atlas
-		/*	glTexSubImage2D(
-				GL_TEXTURE_2D,
-				0,
-				x,
-				0,
-				face->glyph->bitmap.width,
-				face->glyph->bitmap.rows,
-				GL_RED,
-				GL_UNSIGNED_BYTE,
-				face->glyph->bitmap.buffer
-			);*/
-
-			glTextureSubImage2D(
-				textureID,
-				0,
-				x,
-				0,
-				face->glyph->bitmap.width,
-				face->glyph->bitmap.rows,
-				GL_RED,
-				GL_UNSIGNED_BYTE,
-				face->glyph->bitmap.buffer
-			);
+			if (font_atlas::oglVersion >= 4.5f && glTextureSubImage2D != NULL)
+				glTextureSubImage2D(
+					textureID,
+					0,
+					x,
+					0,
+					face->glyph->bitmap.width,
+					face->glyph->bitmap.rows,
+					GL_RED,
+					GL_UNSIGNED_BYTE,
+					face->glyph->bitmap.buffer
+				);
+			else{
+				glTexSubImage2D(
+					GL_TEXTURE_2D,
+					0,
+					x,
+					0,
+					face->glyph->bitmap.width,
+					face->glyph->bitmap.rows,
+					GL_RED,
+					GL_UNSIGNED_BYTE,
+					face->glyph->bitmap.buffer
+				);
+			}
 
 			// store glyph information in character map
 			Character character;

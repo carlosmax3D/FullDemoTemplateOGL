@@ -31,6 +31,7 @@ private:
 	static font_atlas *fontsLoaded;
 	font_atlas *next = NULL;
 	font_atlas *prev = NULL;
+	static float oglVersion;
 	static font_atlas *find(const char* fontName);
 public:
 	unsigned int textureID;
