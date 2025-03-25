@@ -285,11 +285,69 @@ void Model::setAnimation(unsigned int id){
     this->animatorIdx = id >= animators.size() ? -1 : id;
 }
 
+void Model::setVelocity(glm::vec3* velocity){
+    this->velocity = *velocity;
+}
+
+glm::vec3* Model::getVelocity(){
+    return &velocity;
+}
+
+Model* Model::update(float terrainY, std::vector<Model*> models, bool gravityEnable){
+    Model *collide = NULL;
+    // Apply gravity
+    this->velocity.y += GRAVITY * gameTime.deltaTime/1000;
+    if (this->velocity.y < TERMINAL_VELOCITY) {
+        this->velocity.y = TERMINAL_VELOCITY;
+    }
+
+    // Predict next position
+    glm::vec3 &nextPosition = *this->getNextTranslate();
+    if (gravityEnable)
+        nextPosition += this->velocity; //uncomment this for gravity enablement
+
+    bool thisInMovement = (*getNextTranslate()) != (*getTranslate());
+    glm::vec3 yPos;
+    // Check collisions with objects
+    for (auto& other : models) {
+        bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
+        if (this != other && this->colisionaCon(*other, yPos, thisInMovement)) {
+            // If colliding, place object on top of the other object
+            glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
+//            nextPosition.y = otherPos.y + other->AABBsize.m_halfHeight + this->AABBsize.m_halfHeight / 2;
+            if (nextPosition.y > (yPos.y - ((yPos.y - yPos.x) * 0.025)) )
+                nextPosition.y = yPos.y;
+            else{
+                setNextTranslate(getTranslate());
+                setNextRotX(getRotX());
+                setNextRotY(getRotY());
+                setNextRotZ(getRotZ());    
+            }
+            this->velocity.y = 0.0f;  // Stop downward movement
+            collide = other;
+            break;
+        }
+    }
+
+    // Check terrain collision
+    if (nextPosition.y < terrainY) {
+        nextPosition.y = terrainY;
+        this->velocity.y = 0.0f;
+    }
+
+    // Apply final position
+    this->setTranslate(&nextPosition);
+    setRotX(getNextRotX());
+    setRotY(getNextRotY());
+    setRotZ(getNextRotZ());
+    return collide;
+}
+
 void Model::buildKDtree() {
 	if (AABB != NULL)
 		delete AABB;
     // Creamos el cubo AABB apartir del arbol de puntos del modelo cargado
-    Node head;
+    Node &head = AABBsize;
     KDTree::setHeadVariables(&head,meshes);
     buildCollider(head.m_center.x, head.m_center.y, head.m_center.z, head.m_halfWidth, head.m_halfHeight, head.m_halfDepth);
 }
@@ -570,7 +628,7 @@ bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool co
     // o esta quieto(false)
     glm::mat4 transform1 = collitionMove ? objeto0.makeTransScaleNextPosition(glm::mat4(1)) : objeto0.makeTransScale(glm::mat4(1)) ; // Para el cubo A
     // Asumimos que el modelo a comparar esta quieto y no se esta moviendo
-    glm::mat4 transform2 = objeto.makeTransScale(glm::mat4(1)); // Para el cubo B
+    glm::mat4 transform2 = collitionMove ? objeto.makeTransScaleNextPosition(glm::mat4(1)) : objeto.makeTransScale(glm::mat4(1)); // Para el cubo B
 
     // Obtener los vértices de ambos cubos AABB
 //    vector<Vertex> verticesCubo1 = objeto0.AABB->meshes[0]->vertices;

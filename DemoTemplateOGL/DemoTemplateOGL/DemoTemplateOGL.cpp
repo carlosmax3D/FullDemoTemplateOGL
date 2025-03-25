@@ -53,7 +53,6 @@ int finishProgram(void *ptr);
 int gamePadEvents(GameActions *actions);
 void updatePosCords(Texto* coordenadas);
 void updateFPS(Texto *fps, int totFrames);
-Model *gravityAndCollition(float superfi, double &jump, glm::vec3 &modPos, bool type);
 
 // Propiedades de la ventana
 unsigned int SCR_WIDTH = 800;
@@ -148,49 +147,22 @@ int main(int argc, char** argv){
             updateFPS(fps, totFrames);
             deltasCount -= 1000.0f;
             totFrames = 1;
-        }    
-        OGLobj->setAngulo(OGLobj->getAngulo() + 1.5 * gameTime.deltaTime / 100);
-        if (renderiza) {
-            GameActions actions;
-            actions.jump = &jump;
-            // render
-            // ------
-            bool checkCollition = checkInput(&actions, OGLobj);
-            if (checkCollition) { // Bandera para buscar colisiones sobre Camara/Modelo
-                glm::vec3 &modPos = *OGLobj->getMainModel()->getNextTranslate();
-                float superfi = OGLobj->getTerreno()->Superficie(modPos.x, modPos.z);
-                if (modPos.y < superfi)
-                    modPos.y = superfi;
-                glm::vec3 &currPos = *OGLobj->getMainModel()->getTranslate();
-                Model *collition = gravityAndCollition(superfi, jump, modPos, true);
-
-                // Para activar las colisiones cambiar false por true y viceversa para desactivar                
-                if (false && collition != NULL) { // Llamamos a la funcion de colision
-                    superfi = OGLobj->getTerreno()->Superficie(currPos.x, currPos.z);
-                    if (currPos.y < superfi)
-                        currPos.y = superfi;
-                    Model *collition = gravityAndCollition(superfi, jump, currPos, false);
-                    model->setNextTranslate(model->getTranslate());
-                    model->setNextRotX(model->getRotX());
-                    model->setNextRotY(model->getRotY());
-                    model->setNextRotZ(model->getRotZ());
-                } else {
-                    model->setTranslate(model->getNextTranslate());
-                    model->setRotX(model->getNextRotX());
-                    model->setRotY(model->getNextRotY());
-                    model->setRotZ(model->getNextRotZ());
-                    updatePosCords(coordenadas);
-                }
-            }
-            Scene *escena = OGLobj->Render();
-            if (escena != OGLobj) {
-                delete OGLobj;
-                OGLobj = escena;
-                OGLobj->getLoadedText()->emplace_back(fps);
-                OGLobj->getLoadedText()->emplace_back(coordenadas);
-            }
-            swapGLBuffers();
         }
+        updatePosCords(coordenadas);
+        GameActions actions;
+        actions.jump = &jump;
+        // render
+        // ------
+        bool checkCollition = checkInput(&actions, OGLobj);
+        OGLobj->update();
+        Scene *escena = OGLobj->Render();
+        if (escena != OGLobj) {
+            delete OGLobj;
+            OGLobj = escena;
+            OGLobj->getLoadedText()->emplace_back(fps);
+            OGLobj->getLoadedText()->emplace_back(coordenadas);
+        }
+        swapGLBuffers();
     }
     if (OGLobj != NULL) delete OGLobj;
     if (camera != NULL) delete camera;
@@ -244,6 +216,8 @@ bool checkInput(GameActions *actions, Scene* scene) {
         double del = (*actions->jump) * gameTime.deltaTime / 100;
         pos.y += del;
         (*actions->jump) -= del;
+        if (*actions->jump < 0.01f)
+            *actions->jump = 0.0f;
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
         OGLobj->setNextTranslate(&pos);
         checkCollition = true;
@@ -620,23 +594,4 @@ void updateFPS(Texto *fps, int totFrames){
     swprintf((wchar_t*)conv, 50, L"%d", totFrames);
     wcscat_s((wchar_t*)conv, 50, L" FPS");
     fps->initTexto(conv);
-}
-
-Model *gravityAndCollition(float superfi, double &jump, glm::vec3 &modPos, bool type) {
-    glm::vec3 yPos;
-    Model *collition = OGLobj->lookForCollition(yPos, type);
-    float pPos = modPos.y - 0.0098 * gameTime.deltaTime;
-    float tPos = collition != NULL ? yPos.y : superfi;
-    if (modPos.y > tPos)
-        modPos.y = pPos;
-    else{
-        if (modPos.y > (yPos.y - ((yPos.y - yPos.x) * 0.025)) ){
-            modPos.y = tPos;
-            jump = 0;
-        } else if (modPos.y == superfi){
-            jump = 0;
-        }
-        collition = OGLobj->lookForCollition(yPos, type);
-    }    
-    return collition;
 }
