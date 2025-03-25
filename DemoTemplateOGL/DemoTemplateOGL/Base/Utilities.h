@@ -44,6 +44,8 @@ extern unsigned int SCR_HEIGHT;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
 extern bool showStats;
+const float GRAVITY = -9.81f; // Gravity acceleration (m/s²)
+const float TERMINAL_VELOCITY = -50.0f; // Optional: Prevents infinite acceleration
 
 struct GameTime {
 	double lastTick = 0;

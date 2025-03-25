@@ -187,6 +187,7 @@
     <ClCompile Include="Base\Billboard.cpp" />
     <ClCompile Include="Base\Bone.cpp" />
     <ClCompile Include="Base\font_atlas.cpp" />
+    <ClCompile Include="CollitionBox.cpp" />
     <ClCompile Include="KDTree\CollitionDetection.cpp" />
     <ClCompile Include="DemoTemplateOGL.cpp" />
     <ClCompile Include="Base\glad.c" />

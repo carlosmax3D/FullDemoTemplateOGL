@@ -46,11 +46,13 @@ private:
     int animatorIdx = -1;
     bool cleanTextures = true;
     bool active = true;
+    glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 
 public:
     // model data 
     Camera* cameraDetails = NULL;
     Model* AABB = NULL; // Modelo que alberga un cubo para colisiones
+    Node AABBsize;
 
     vector<Texture*> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Material*> material_loaded;	// stores all the materials.
@@ -67,7 +69,7 @@ public:
     Model(string const& path, Camera* camera, bool rotationX = false, bool rotationY = true, bool gamma = false);
     Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera);
     Model(string const& path, glm::vec3& actualPosition, Camera* cam, bool rotationX = false, bool rotationY = true, bool gamma = false);
-    ~Model();
+    virtual ~Model();
     // draws the model, and thus all its meshes
     virtual void prepShader(Shader& gpuDemo);
     virtual void Draw();
@@ -85,6 +87,8 @@ public:
     void setRotX(float rotationAngle);
     void setRotY(float rotationAngle);
     void setRotZ(float rotationAngle);
+    void setVelocity(glm::vec3* velocity);
+    glm::vec3* getVelocity();
     glm::vec3* getTranslate();
     glm::vec3* getNextTranslate();
     glm::vec3* getScale();
@@ -115,6 +119,7 @@ public:
     void setAnimator(std::vector<Animator>& animator);
     void setAnimation(unsigned int id);
     void setCleanTextures(bool flag);
+    virtual Model* update(float terrainY, std::vector<Model*>& models, bool gravityEnable = false);
 private:
     vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth);
     vector<unsigned int> getCubeIndex();

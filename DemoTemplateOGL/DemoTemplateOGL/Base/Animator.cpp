@@ -18,6 +18,9 @@ void Animator::UpdateAnimation(float dt, glm::mat4 parentTransform) {
     CalculateBoneTransform(&m_CurrentAnimation.GetRootNode(), parentTransform);
 }
 	
+void Animator::PlayAnimation() {
+    m_CurrentTime = 0.0;
+}
 void Animator::PlayAnimation(Animation pAnimation) {
     m_CurrentAnimation = pAnimation;
     m_CurrentTime = 0.0;

@@ -125,17 +125,22 @@ void LOGGER::LOG::processLog(const char* log, const char* title, const char* typ
 		std::wstring wlog = s2ws(slog), wtitle = s2ws(stitle);
 		const wchar_t* buf = wlog.c_str();
 		const wchar_t* bufT = wtitle.c_str();
-		MessageBox((HWND)this->WINDOW, buf, bufT, MB_TYPE);
+		HWND* window = (HWND*)(this->getWindow() == NULL ? LOGGER::LOGS::WINDOW : this->getWindow());
+		// Muestra el messagebox del mensaje de log
+		MessageBox(*window, buf, bufT, MB_TYPE);
+		// Envia un mensaje a la ventana para que reinice los botones del teclado
+		SendMessage(*window, WM_COMMAND, 9999, 0);
 #elif __linux__
 		std::string command = "xmessage -center -title \"" + stitle + "\" \"" + slog + "\"";
 		system(command.c_str());
-		std::cout << stitle << ": " << slog << std::endl;
 #else
 		std::string command = "/usr/bin/osascript -e \"display dialog \\\"" + slog + "\\\"\"";
 		system(command.c_str());
-		std::cout << stitle << ": " << slog << std::endl;
 #endif
 	}
+#ifndef _WIN32 
+	std::cout << title << ": " << log << std::endl;
+#endif
 }
 void LOGGER::LOG::setWindow(void* hwnd) {
 	LOGGER::LOGS::WINDOW = hwnd;

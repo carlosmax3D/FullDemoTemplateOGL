@@ -39,20 +39,20 @@ void Scenario::InitGraph(Model *main) {
 	Model* model;
 	model = new Model("models/fogata.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, 10.0f, 25.0f);
-	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
 	rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
-	model->setRotX(45); // 45� rotation
+	model->setNextRotX(45); // 45� rotation
 	ourModel.emplace_back(model);
 	model= new Model("models/pez.obj", main->cameraDetails);
-	translate = glm::vec3(0.0f, 7.0f, 50.0f);
-	model->setTranslate(&translate);
+	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
+	model->setNextTranslate(&translate);
 	ourModel.emplace_back(model);
 	model = new Model("models/dancing_vampire.dae", main->cameraDetails);
-	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f) , 60.0f);
+	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
-	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
 	model->setScale(&scale);
-	model->setRotY(90);
+	model->setNextRotY(90);
 	ourModel.emplace_back(model);
 	try{
 		std::vector<Animation> animations = Animation::loadAllAnimations("models/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
@@ -64,9 +64,9 @@ void Scenario::InitGraph(Model *main) {
 	model = new Model("models/Silly_Dancing.fbx", main->cameraDetails);
 	translate = glm::vec3(10.0f, terreno->Superficie(10.0f, 60.0f) , 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
-	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
 	model->setScale(&scale);
-	model->setRotY(180);
+	model->setNextRotY(180);
 	ourModel.emplace_back(model);
 	try{
 		std::vector<Animation> animations = Animation::loadAllAnimations("models/Silly_Dancing.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
@@ -87,16 +87,16 @@ void Scenario::InitGraph(Model *main) {
 //	model->setTranslate(&translate);
 //	ourModel.emplace_back(model);
 	model = new Model("models/backpack.obj", main->cameraDetails, false, false);
-	translate = glm::vec3(20.0f, 14.0f, 0.0f);
+	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 0.0f), 0.0f);
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
-	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	ourModel.emplace_back(model);
 	model->lightColor = glm::vec3(10,0,0);
 
 	model = new CollitionBox(25.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
-	translate = glm::vec3(25.0f, 15.0f, 10.0f);
-	model->setTranslate(&translate);
+	translate = glm::vec3(25.0f, terreno->Superficie(25.0f, 10.0f), 10.0f);
+	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	ourModel.emplace_back(model);
 
@@ -139,11 +139,6 @@ Scene* Scenario::Render() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 //	glClearColor(255.0f, 255.0f, 255.0f, 255.0f);
-
-	// Actualizamos la camara
-	camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
-	this->angulo = this->angulo >= 360 ? this->angulo - 360.0 : this->angulo;
-	sky->setRotY(this->angulo);
 
 	if (this->animacion > 10) { // Timer se ejecuta cada 1000/30 = 33.333 ms
 		for (BillboardAnimation *b : billBoardAnim){

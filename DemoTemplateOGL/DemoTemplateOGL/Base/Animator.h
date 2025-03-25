@@ -14,7 +14,8 @@ public:
     void UpdateAnimation(float dt, glm::mat4 parentTransform = glm::mat4(1.0f));
 	
     void PlayAnimation(Animation pAnimation);
-	
+	void PlayAnimation();
+
     void CalculateBoneTransform(const UTILITIES_OGL::AssimpNodeData* node, const glm::mat4& parentTransform);
 	
     const glm::mat4* GetFinalBoneMatrices() ;

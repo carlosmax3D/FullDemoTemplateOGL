@@ -23,6 +23,30 @@ class Scene {
 		virtual std::vector<BillboardAnimation*> *getLoadedBillboardsAnimation() = 0;
 		virtual std::vector<Billboard2D*> *getLoadedBillboards2D() = 0;
 		virtual std::vector<Texto*> *getLoadedText() = 0;
+		virtual ~Scene(){
+		};
+
+		virtual void update(){
+			float angulo = getAngulo() + 1.5 * gameTime.deltaTime / 100;
+			angulo = angulo >= 360 ? angulo - 360.0 : angulo;
+			setAngulo(angulo);
+			getSky()->setRotY(angulo);
+			Model* camara = getMainModel();
+			for (auto &model : *getLoadedModels()){
+				Model* collider = NULL;
+				bool objInMovement = (*model->getNextTranslate()) != (*model->getTranslate());
+				glm::vec3 &posM = objInMovement ? *model->getNextTranslate() : *model->getTranslate();
+				if (model == camara) // Si es personaje principal, activa gravedad
+					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), true);
+				else 
+					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels());
+				if (collider != NULL){
+					INFO("Colisiono con " + collider->name, "COLLITION");
+				}
+			}
+			// Actualizamos la camara
+			camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
+		}
 
 		virtual Model* lookForCollition(glm::vec3 &yPos, bool collitionMovement = false) {
 			std::vector<Model*> *ourModel = getLoadedModels();

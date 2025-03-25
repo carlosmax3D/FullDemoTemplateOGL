@@ -99,7 +99,8 @@ public:
 
 		float altura;
 		float D;
-
+		if (indiceix + 1 + (indiceiz + 1) * verx > vertices.size() || indiceix + 1 + indiceiz * verx > vertices.size())
+			return 0.0f;
 		//el cuadro del terreno esta formado por dos triangulos, si difx es mayor que dify 
 		//entonces estamos en el triangulo de abajo en caso contrario arriba
 		if (difx > difz)
