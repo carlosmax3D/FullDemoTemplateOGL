@@ -21,6 +21,8 @@ public:
 		vector<Texture>      textures;
 		vector<Material> materials;
 		vector<Vertex>       vertices;
+		ModelAttributes attr{0};
+		this->getModelAttributes()->push_back(attr);
 		unsigned int planoTextura;
 		int mapAlturaComp;
 		anchof = ancho;
@@ -82,7 +84,7 @@ public:
 	}
 
 	virtual void Draw(Shader& shader) {
-		Model::Draw(shader);
+		Model::Draw(shader,0);
 	}
 
 	float Superficie(float x, float z) {

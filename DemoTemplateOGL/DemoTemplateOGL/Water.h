@@ -80,7 +80,7 @@ public:
 		static float time = 0.f;
 		time += waveSpeed;
 		shader.setFloat("time", time);
-		Model::Draw(shader);
+		Model::Draw(shader,0);
 	}
 
 };

@@ -22,6 +22,8 @@ public:
 		vector<Vertex>	vertices;
 		vector<Material> materials;
 		unsigned int esferaTextura;
+		ModelAttributes attr{0};
+		this->getModelAttributes()->push_back(attr);
 		UTILITIES_OGL::Maya cuadro = UTILITIES_OGL::Esfera(stacks, slices, radio, 0.5, 1);
 		UTILITIES_OGL::vectoresEsfera(cuadro, vertices, indices, stacks * slices * 3, (stacks - 1) * (slices - 1) * 6);
 		delete[] cuadro.maya;
@@ -67,7 +69,7 @@ public:
 
 	void Draw(Shader& shader) {
 		glDisable(GL_DEPTH_TEST);
-		Model::Draw(shader);
+		Model::Draw(shader,0);
 		glEnable(GL_DEPTH_TEST);
 	}
 

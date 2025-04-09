@@ -37,7 +37,7 @@ public:
         }
         if (getDefaultShader()) {
             gpuDemo->use();
-            Model::prepShader(*gpuDemo);
+            Model::prepShader(*gpuDemo,(*getModelAttributes())[0]);
             prepShader(*gpuDemo);
             gpuDemo->setInt("texture_diffuse1", 0);
             Draw(*gpuDemo);

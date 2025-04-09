@@ -60,6 +60,8 @@ Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, 
     long tLength = wcslen((const wchar_t*)textura);
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
+	ModelAttributes attr{0};
+	this->getModelAttributes()->push_back(attr);
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
 	Texture t;
 	t.id = glTextura;
@@ -73,6 +75,8 @@ Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y,
 	bool alpha = true;
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
+	ModelAttributes attr{0};
+	this->getModelAttributes()->push_back(attr);
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
 	texturaB = TextureFromFile(stext, this->directory, false, true, &alpha);
 	Texture t;
@@ -125,7 +129,7 @@ void Billboard::Draw() {
 	}
 	if (getDefaultShader()) {
 		gpuDemo->use();
-		Model::prepShader(*gpuDemo);
+		Model::prepShader(*gpuDemo, (*this->getModelAttributes())[0]);
 		prepShader(*gpuDemo);
 		gpuDemo->setInt("texture_diffuse1", 0);
 		Draw(*gpuDemo);
@@ -135,7 +139,7 @@ void Billboard::Draw() {
 
 void Billboard::Draw(Shader &shader) {
 //	glDisable(GL_DEPTH_TEST);
-	Model::Draw(shader);
+	Model::Draw(shader,0);
 //	glEnable(GL_DEPTH_TEST);
 }
 

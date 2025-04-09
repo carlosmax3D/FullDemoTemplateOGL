@@ -12,12 +12,16 @@ Model::Model() {
     this->cameraDetails = NULL;
     this->gammaCorrection = false;
     defaultShader = false;
+    ModelAttributes m{0};
+    this->attributes.push_back(m);
 }
 Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY, bool gamma){
     this->cameraDetails = camera;
     gammaCorrection = gamma;
     loadModel(path, rotationX, rotationY);
     defaultShader = false;
+    ModelAttributes m{0};
+    this->attributes.push_back(m);
     buildKDtree();
 }
 Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera) {
@@ -27,10 +31,14 @@ Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned
     this->defaultShader = false;
     gpuDemo = NULL;
     this->cameraDetails = camera;
+    ModelAttributes m{0};
+    this->attributes.push_back(m);
 //    buildKDtree();
 }
 Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool rotationX, bool rotationY, bool gamma) {
     cameraDetails = cam;
+    ModelAttributes m{0};
+    this->attributes.push_back(m);
     this->setTranslate(&actualPosition);
     this->gammaCorrection = gamma;
     Model::loadModel(path, rotationX, rotationY);
@@ -66,7 +74,7 @@ void Model::SetVertexBoneDataToDefault(Vertex& vertex){
 }
 
 // draws the model, and thus all its meshes
-void Model::prepShader(Shader& gpuDemo) {
+void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
 //    lightColor.x = 3;//sin(7200 * 2.0f);
 //    lightColor.y = 3;//sin(7200 * 0.7f);
 //    lightColor.z = 3;//sin(7200 * 1.3f);
@@ -85,18 +93,18 @@ void Model::prepShader(Shader& gpuDemo) {
 
     // render the loaded model
     glm::mat4 model = glm::mat4(1.0f);
-    if (hasTranslate)
-        model = glm::translate(model, translate); // translate it down so it's at the center of the scene
+    if (attributes.hasTranslate)
+        model = glm::translate(model, attributes.translate); // translate it down so it's at the center of the scene
 //			model = glm::translate(model, glm::vec3(cameraDetails.Position->x, cameraDetails.Position->y - 5, cameraDetails.Position->z)); // translate it down so it's at the center of the scene
         //model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
-    if (rotation.x != 0)
-        model = glm::rotate(model, glm::radians(this->rotX), glm::vec3(1, 0, 0));
-    if (rotation.y != 0)
-        model = glm::rotate(model, glm::radians(this->rotY), glm::vec3(0, 1, 0));
-    if (rotation.z != 0)
-        model = glm::rotate(model, glm::radians(this->rotZ), glm::vec3(0, 0, 1));
-    if (hasScale)
-        model = glm::scale(model, scale);	// it's a bit too big for our scene, so scale it down
+    if (attributes.rotation.x != 0)
+        model = glm::rotate(model, glm::radians(attributes.rotX), glm::vec3(1, 0, 0));
+    if (attributes.rotation.y != 0)
+        model = glm::rotate(model, glm::radians(attributes.rotY), glm::vec3(0, 1, 0));
+    if (attributes.rotation.z != 0)
+        model = glm::rotate(model, glm::radians(attributes.rotZ), glm::vec3(0, 0, 1));
+    if (attributes.hasScale)
+        model = glm::scale(model, attributes.scale);	// it's a bit too big for our scene, so scale it down
     gpuDemo.setMat4("model", model);
 }
 void Model::Draw() {
@@ -106,14 +114,17 @@ void Model::Draw() {
     }
     if (defaultShader) {
         gpuDemo->use();
-        prepShader(*gpuDemo);
-        Draw(*gpuDemo);
+        for (int i = 0 ; i < attributes.size() ; i++){
+            prepShader(*gpuDemo, attributes[i]);
+            Draw(*gpuDemo, i);
+        }
         gpuDemo->desuse();
     }
     else gpuDemo->desuse();
 }
-void Model::Draw(Shader& shader) {
-    if (active){
+void Model::Draw(Shader& shader, int idxAttribute) {
+    ModelAttributes &attribute = attributes[idxAttribute];
+    if (attribute.active){
         if (animatorIdx != -1){
             Animator &animator = animators[animatorIdx];
             animator.UpdateAnimation(gameTime.deltaTime / 1000, glm::mat4(1));
@@ -122,38 +133,38 @@ void Model::Draw(Shader& shader) {
         }
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i]->Draw(shader);
-        if (showHitbox && this->AABB)
-            this->AABB->Draw(shader);
+        if (idxAttribute == 0 && showHitbox && this->AABB)
+            this->AABB->Draw(shader, idxAttribute);
     }
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations) const {
     glm::mat4 model = makeTrans() * prevTransformations;
-    if (hasScale)
-        model = glm::scale(model, scale);
-    if (this->rotation.x != 0 || this->rotation.y != 0 || this->rotation.z != 0) {
-        if (this->rotation.x != 0)
-            model = glm::rotate(model, glm::radians(this->rotX), glm::vec3(1,0,0));
-        if (this->rotation.y != 0)
-            model = glm::rotate(model, glm::radians(this->rotY), glm::vec3(0,1,0));
-        if (this->rotation.z != 0)
-            model = glm::rotate(model, glm::radians(this->rotZ), glm::vec3(0,0,1));
+    if (attributes[0].hasScale)
+        model = glm::scale(model, attributes[0].scale);
+    if (this->attributes[0].rotation.x != 0 || this->attributes[0].rotation.y != 0 || this->attributes[0].rotation.z != 0) {
+        if (this->attributes[0].rotation.x != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].rotX), glm::vec3(1,0,0));
+        if (this->attributes[0].rotation.y != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].rotY), glm::vec3(0,1,0));
+        if (this->attributes[0].rotation.z != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].rotZ), glm::vec3(0,0,1));
     }
     return model;
 }
 glm::mat4 Model::makeTrans() const {
-    return  glm::translate(glm::mat4(1), translate);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
+    return  glm::translate(glm::mat4(1), attributes[0].translate);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
 }
 glm::mat4 Model::makeTransScaleNextPosition(const glm::mat4& prevTransformations) {
     glm::mat4 model = makeTransNextPosition() * prevTransformations;
-    if (hasScale)
-        model = glm::scale(model, scale);
-    if (this->nextRotation.x != 0 || this->nextRotation.y != 0 || this->nextRotation.z != 0) {
-        if (this->nextRotation.x != 0)
-            model = glm::rotate(model, glm::radians(this->nextRotX), glm::vec3(1, 0, 0));
-        if (this->nextRotation.y != 0)
-            model = glm::rotate(model, glm::radians(this->nextRotY), glm::vec3(0, 1, 0));
-        if (this->nextRotation.z != 0)
-            model = glm::rotate(model, glm::radians(this->nextRotZ), glm::vec3(0, 0, 1));
+    if (attributes[0].hasScale)
+        model = glm::scale(model, attributes[0].scale);
+    if (this->attributes[0].nextRotation.x != 0 || this->attributes[0].nextRotation.y != 0 || this->attributes[0].nextRotation.z != 0) {
+        if (this->attributes[0].nextRotation.x != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotX), glm::vec3(1, 0, 0));
+        if (this->attributes[0].nextRotation.y != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotY), glm::vec3(0, 1, 0));
+        if (this->attributes[0].nextRotation.z != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotZ), glm::vec3(0, 0, 1));
     }
     return model;
 }
@@ -161,115 +172,115 @@ glm::mat4 Model::makeTransNextPosition() {
     glm::vec3 pos = *this->getNextTranslate();
     return  glm::translate(glm::mat4(1), pos);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
 }
-bool Model::getDefaultShader() { return this->defaultShader; }
+bool Model::getDefaultShader() { return defaultShader; }
 void Model::setDefaultShader(bool defaultShader) { this->defaultShader = defaultShader; }
 
 void Model::setTranslate(glm::vec3* translate) {
     if (translate == NULL) {
-        this->translate = glm::vec3(0);
-        this->hasTranslate = false;
+        this->attributes[0].translate = glm::vec3(0);
+        this->attributes[0].hasTranslate = false;
     }
     else {
-        this->translate = *translate;
-        this->hasTranslate = true;
+        this->attributes[0].translate = *translate;
+        this->attributes[0].hasTranslate = true;
     }
     if (AABB != NULL) AABB->setTranslate(translate);
 }
 void Model::setNextTranslate(glm::vec3* translate) {
     if (translate == NULL) {
-        this->nextTranslate = glm::vec3(0);
+        this->attributes[0].nextTranslate = glm::vec3(0);
     } else {
-        this->nextTranslate = *translate;
+        this->attributes[0].nextTranslate = *translate;
     }
     if (AABB != NULL) AABB->setNextTranslate(translate);
 }
 void Model::setScale(glm::vec3* scale) {
     if (scale == NULL) {
-        this->scale = glm::vec3(0);
-        this->hasScale = false;
+        this->attributes[0].scale = glm::vec3(0);
+        this->attributes[0].hasScale = false;
     }
     else {
-        this->scale = *scale;
-        this->hasScale = true;
+        this->attributes[0].scale = *scale;
+        this->attributes[0].hasScale = true;
     }
     if (AABB != NULL) AABB->setScale(scale);
 }
 
 void Model::setRotX(float rotationAngle) {
-    this->rotX = rotationAngle;
-    this->rotation.x = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].rotX = rotationAngle;
+    this->attributes[0].rotation.x = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setRotX(rotationAngle);
 }
 void Model::setRotY(float rotationAngle) {
-    this->rotY = rotationAngle;
-    this->rotation.y = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].rotY = rotationAngle;
+    this->attributes[0].rotation.y = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setRotY(rotationAngle);
 }
 void Model::setRotZ(float rotationAngle) {
-    this->rotZ = rotationAngle;
-    this->rotation.z = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].rotZ = rotationAngle;
+    this->attributes[0].rotation.z = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setRotZ(rotationAngle);
 }
 void Model::setNextRotX(float rotationAngle) {
-    this->nextRotX = rotationAngle;
-    this->nextRotation.x = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].nextRotX = rotationAngle;
+    this->attributes[0].nextRotation.x = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setNextRotX(rotationAngle);
 }
 void Model::setNextRotY(float rotationAngle) {
-    this->nextRotY = rotationAngle;
-    this->nextRotation.y = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].nextRotY = rotationAngle;
+    this->attributes[0].nextRotation.y = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setNextRotY(rotationAngle);
 }
 void Model::setNextRotZ(float rotationAngle) {
-    this->nextRotZ = rotationAngle;
-    this->nextRotation.z = rotationAngle == 0 ? 0 : 1;
+    this->attributes[0].nextRotZ = rotationAngle;
+    this->attributes[0].nextRotation.z = rotationAngle == 0 ? 0 : 1;
     if (AABB != NULL) AABB->setNextRotZ(rotationAngle);
 }
 
 glm::vec3* Model::getTranslate() {
-    return &this->translate;
+    return &this->attributes[0].translate;
 }
 glm::vec3* Model::getNextTranslate() {
-    return &this->nextTranslate;
+    return &this->attributes[0].nextTranslate;
 }
 
 glm::vec3* Model::getScale() {
-    return &this->scale;
+    return &this->attributes[0].scale;
 }
 
 float Model::getRotX() {
-    return this->rotX;
+    return this->attributes[0].rotX;
 }
 float Model::getRotY() {
-    return this->rotY;
+    return this->attributes[0].rotY;
 }
 float Model::getRotZ() {
-    return this->rotZ;
+    return this->attributes[0].rotZ;
 }
 
 glm::vec3* Model::getRotationVector() {
-    return &this->rotation;
+    return &this->attributes[0].rotation;
 }
 float Model::getNextRotX() {
-    return this->nextRotX;
+    return this->attributes[0].nextRotX;
 }
 float Model::getNextRotY() {
-    return this->nextRotY;
+    return this->attributes[0].nextRotY;
 }
 float Model::getNextRotZ() {
-    return this->nextRotZ;
+    return this->attributes[0].nextRotZ;
 }
 
 glm::vec3* Model::getNextRotationVector() {
-    return &this->nextRotation;
+    return &this->attributes[0].nextRotation;
 }
 
 bool Model::getActive(){
-    return active;
+    return attributes[0].active;
 }
 
 void Model::setActive(bool active){
-    this->active = active;
+    this->attributes[0].active = active;
 }
 
 void Model::setAnimator(Animator animator){
@@ -295,7 +306,7 @@ glm::vec3* Model::getVelocity(){
     return &velocity;
 }
 
-Model* Model::update(float terrainY, std::vector<Model*>& models, bool gravityEnable){
+Model* Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable){
     Model *collide = NULL;
     // Apply gravity
     this->velocity.y += GRAVITY * gameTime.deltaTime/1000;
@@ -339,6 +350,7 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, bool gravityEn
             if (nextGPosition.y > (yPos.y * 0.90)){
                 nextGPosition.y = yPos.y;
                 setNextTranslate(&nextGPosition);
+                ejeColision.y = 1;
                 break;
             }
             setNextTranslate(&nextPosition);
@@ -348,6 +360,7 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, bool gravityEn
             if (nextPosition.y > (yPos.y * 0.90)) {
                 nextPosition.y = yPos.y;
                 setNextTranslate(&nextPosition);
+                ejeColision.y = 1;
                 break;
             }
             setNextTranslate(&prevGPosition);
@@ -357,6 +370,7 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, bool gravityEn
             if (prevGPosition.y > (yPos.y * 0.90)) {
                 prevGPosition.y = yPos.y;
                 setNextTranslate(&prevGPosition);
+                ejeColision.y = 1;
                 break;
             }
             setNextTranslate(&prevPosition);
@@ -378,6 +392,11 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, bool gravityEn
     setRotZ(getNextRotZ());
     return collide;
 }
+
+std::vector<ModelAttributes>* Model::getModelAttributes(){
+    return &this->attributes;
+}
+
 
 void Model::buildKDtree() {
 	if (AABB != NULL)
@@ -403,21 +422,21 @@ void Model::loadMaterial(vector<Material> &m, aiMaterial* mat) {
     float shininess;
     bool matFound = false;
     if (!mat->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {
-        material.Diffuse = glm::vec3(color.r, color.b, color.g);
+        material.Diffuse = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasDiffuse = true;
     }
     else material.hasDiffuse = false;
 
     if (!mat->Get(AI_MATKEY_COLOR_AMBIENT, color)) {
-        material.Ambient = glm::vec3(color.r, color.b, color.g);
+        material.Ambient = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasAmbient = true;
     }
     else material.hasAmbient = false;
 
     if (!mat->Get(AI_MATKEY_COLOR_SPECULAR, color)) {
-        material.Specular = glm::vec3(color.r, color.b, color.g);
+        material.Specular = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasSpecular = true;
     }
@@ -554,10 +573,22 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
     loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, "texture_diffuse", scene, rotationX, rotationY);
     // 2. specular maps
     loadMaterialTextures(textures, material, aiTextureType_SPECULAR, "texture_specular", scene, rotationX, rotationY);
-    // 3. normal maps
+    // 3. base maps
+    loadMaterialTextures(textures, material, aiTextureType_BASE_COLOR, "texture_base", scene, rotationX, rotationY);
+    // 4. metalness maps
+    loadMaterialTextures(textures, material, aiTextureType_METALNESS, "texture_metalness", scene, rotationX, rotationY);
+    // 5. roughness maps
+    loadMaterialTextures(textures, material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness", scene, rotationX, rotationY);
+    // 6. emissive maps
+    loadMaterialTextures(textures, material, aiTextureType_EMISSIVE, "texture_emissive", scene, rotationX, rotationY);
+    // 7. normals maps
+    loadMaterialTextures(textures, material, aiTextureType_NORMALS, "texture_normals", scene, rotationX, rotationY);
+    // 8. normal maps
     loadMaterialTextures(textures, material, aiTextureType_HEIGHT, "texture_normal", scene, rotationX, rotationY);
-    // 4. height maps
+    // 9. height maps
     loadMaterialTextures(textures, material, aiTextureType_AMBIENT, "texture_height", scene, rotationX, rotationY);
+    //10. UNKNOWN
+    loadMaterialTextures(textures, material, aiTextureType_UNKNOWN, "texture_unknown", scene, rotationX, rotationY);
 
     ExtractBoneWeightForVertices(vertices,mesh,scene);
     // return a mesh object created from the extracted mesh data
@@ -657,7 +688,7 @@ bool Model::colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove) {
 bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove) {
     if (objeto0.AABB == NULL || objeto.AABB == NULL)
         return false;
-    if (!(objeto0.active && objeto.active))
+    if (!(objeto0.attributes[0].active && objeto0.attributes[0].active))
         return false;
     // Obtener las matrices de transformación para ambos modelos
     // collitionMove sirve para saber si el modelo principal a comparar va avanzar(true)

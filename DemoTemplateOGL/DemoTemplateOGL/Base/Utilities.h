@@ -99,6 +99,32 @@ struct Vertex {
     float m_Weights[MAX_BONE_INFLUENCE] = { 0.0f };
 };
 
+struct ModelAttributes{
+	bool hasTranslate = false;
+	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool hasScale = false;
+	glm::vec3 scale = glm::vec3(0.0f, 0.0f, 0.0f);
+	float rotX = 0;
+	float rotY = 0;
+	float rotZ = 0;
+	glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 nextTranslate = glm::vec3(0.0f, 0.0f, 0.0f);
+	float nextRotX = 0;
+	float nextRotY = 0;
+	float nextRotZ = 0;
+	glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool active = true;
+	void setNextTranslate(glm::vec3* translate);
+	void setTranslate(glm::vec3* translate);
+	void setScale(glm::vec3* scale);
+	void setRotX(float rotationAngle);
+	void setRotY(float rotationAngle);
+	void setRotZ(float rotationAngle);
+	void setNextRotX(float rotationAngle);
+	void setNextRotY(float rotationAngle);
+	void setNextRotZ(float rotationAngle);
+};
+
 struct BoneInfo {
     /*id is index in finalBoneMatrices*/
     int id;

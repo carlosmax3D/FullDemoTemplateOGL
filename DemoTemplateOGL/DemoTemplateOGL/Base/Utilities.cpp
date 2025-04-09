@@ -611,13 +611,18 @@ unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req
 		unsigned samples = *comp / sizeof(FreeImage_GetImageType(imagen));
 		tmp = new unsigned char[(*x) * (*y) * (*comp)];
 		memcpy(tmp, (unsigned char*)FreeImage_GetBits(imagen), (*x) * (*y) * (*comp));
-		for (int j = 0; j < (*x) * (*y) && (*comp) >= 3; j++) {
-			unsigned char c = tmp[j * (*comp) + 0];
-			tmp[j * (*comp) + 0] = tmp[j * (*comp) + 2];
-			//tmp[j * (*comp) + 1] = tmp[j * (*comp) + 1];
-			tmp[j * (*comp) + 2] = c;
-			//tmp[j * (*comp) + 3] = tmp[j * (*comp) + 3];
-		}
+		if ((*comp) == 2)
+			for (int j = 0; j < (*x) * (*y); j++)  {
+				unsigned char c = tmp[j * (*comp) + 0];
+				tmp[j * (*comp) + 0] = tmp[j * (*comp) + 1];
+				tmp[j * (*comp) + 1] = c;
+			}
+		if ((*comp) >= 3)
+			for (int j = 0; j < (*x) * (*y); j++) {
+				unsigned char c = tmp[j * (*comp) + 0];
+				tmp[j * (*comp) + 0] = tmp[j * (*comp) + 2];
+				tmp[j * (*comp) + 2] = c;
+			}
 		FreeImage_Unload(imagen);
 	}
 	else {
@@ -744,9 +749,11 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 	unsigned char* data = loadFile(filename.c_str(), &width, &height, &nrComponents, 0, rotateX, rotateY);
 	GLenum format = GL_RGBA;
 	if (data) {
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3) {
+		if (nrComponents == 1 || nrComponents == 2){
+			format = nrComponents == 2 ? GL_RG : GL_RED;
+			if (nrComponents == 2)
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		} else if (nrComponents == 3) {
 			format = GL_RGB;
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		}
@@ -800,7 +807,60 @@ glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t) {
     return a + t * (b - a); // More numerically stable than glm::mix
 }
 
-void * operator new(size_t size){
-    void * p = malloc(size);
-    return p;
+void ModelAttributes::setTranslate(glm::vec3* translate) {
+    if (translate == NULL) {
+        this->translate = glm::vec3(0);
+        this->hasTranslate = false;
+    }
+    else {
+        this->translate = *translate;
+        this->hasTranslate = true;
+    }
 }
+void ModelAttributes::setNextTranslate(glm::vec3* translate) {
+    if (translate == NULL) {
+        this->nextTranslate = glm::vec3(0);
+    } else {
+        this->nextTranslate = *translate;
+    }
+}
+void ModelAttributes::setScale(glm::vec3* scale) {
+    if (scale == NULL) {
+        this->scale = glm::vec3(0);
+        this->hasScale = false;
+    }
+    else {
+        this->scale = *scale;
+        this->hasScale = true;
+    }
+}
+
+void ModelAttributes::setRotX(float rotationAngle) {
+    this->rotX = rotationAngle;
+    this->rotation.x = rotationAngle == 0 ? 0 : 1;
+}
+void ModelAttributes::setRotY(float rotationAngle) {
+    this->rotY = rotationAngle;
+    this->rotation.y = rotationAngle == 0 ? 0 : 1;
+}
+void ModelAttributes::setRotZ(float rotationAngle) {
+    this->rotZ = rotationAngle;
+    this->rotation.z = rotationAngle == 0 ? 0 : 1;
+}
+void ModelAttributes::setNextRotX(float rotationAngle) {
+    this->nextRotX = rotationAngle;
+    this->nextRotation.x = rotationAngle == 0 ? 0 : 1;
+}
+void ModelAttributes::setNextRotY(float rotationAngle) {
+    this->nextRotY = rotationAngle;
+    this->nextRotation.y = rotationAngle == 0 ? 0 : 1;
+}
+void ModelAttributes::setNextRotZ(float rotationAngle) {
+    this->nextRotZ = rotationAngle;
+    this->nextRotation.z = rotationAngle == 0 ? 0 : 1;
+}
+
+//void * operator new(size_t size){
+//    void * p = malloc(size);
+//    return p;
+//}

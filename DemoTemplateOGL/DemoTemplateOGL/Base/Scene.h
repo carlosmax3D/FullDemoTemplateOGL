@@ -26,26 +26,29 @@ class Scene {
 		virtual ~Scene(){
 		};
 
-		virtual void update(){
+		virtual int update(){
 			float angulo = getAngulo() + 1.5 * gameTime.deltaTime / 100;
 			angulo = angulo >= 360 ? angulo - 360.0 : angulo;
 			setAngulo(angulo);
 			getSky()->setRotY(angulo);
 			Model* camara = getMainModel();
-			for (auto &model : *getLoadedModels()){
-				Model* collider = NULL;
+			for (auto it = getLoadedModels()->begin(); it != getLoadedModels()->end(); ){
+				Model* collider = NULL, *model = *it;
 				bool objInMovement = (*model->getNextTranslate()) != (*model->getTranslate());
 				glm::vec3 &posM = objInMovement ? *model->getNextTranslate() : *model->getTranslate();
+				glm::vec3 ejeColision = glm::vec3(0);
 				if (model == camara) // Si es personaje principal, activa gravedad
-					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), true);
+					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision, true);
 				else 
-					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels());
-				if (collider != NULL){
-					INFO("Colisiono con " + collider->name, "COLLITION");
-				}
+					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision);
+				if (collider != NULL && ejeColision.y == 1){
+					INFO("APLASTADO!!!!", "JUMP HITBOX");
+					it = getLoadedModels()->erase(std::find(getLoadedModels()->begin(), getLoadedModels()->end(), collider));
+				} else it++;
 			}
 			// Actualizamos la camara
 			camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
+			return -1;
 		}
 
 		virtual Model* lookForCollition(glm::vec3 &yPos, bool collitionMovement = false) {
