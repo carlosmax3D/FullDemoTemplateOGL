@@ -554,10 +554,22 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
     loadMaterialTextures(textures, material, aiTextureType_DIFFUSE, "texture_diffuse", scene, rotationX, rotationY);
     // 2. specular maps
     loadMaterialTextures(textures, material, aiTextureType_SPECULAR, "texture_specular", scene, rotationX, rotationY);
-    // 3. normal maps
+    // 3. base maps
+    loadMaterialTextures(textures, material, aiTextureType_BASE_COLOR, "texture_base", scene, rotationX, rotationY);
+    // 4. metalness maps
+    loadMaterialTextures(textures, material, aiTextureType_METALNESS, "texture_metalness", scene, rotationX, rotationY);
+    // 5. roughness maps
+    loadMaterialTextures(textures, material, aiTextureType_DIFFUSE_ROUGHNESS, "texture_roughness", scene, rotationX, rotationY);
+    // 6. emissive maps
+    loadMaterialTextures(textures, material, aiTextureType_EMISSIVE, "texture_emissive", scene, rotationX, rotationY);
+    // 7. normals maps
+    loadMaterialTextures(textures, material, aiTextureType_NORMALS, "texture_normals", scene, rotationX, rotationY);
+    // 8. normal maps
     loadMaterialTextures(textures, material, aiTextureType_HEIGHT, "texture_normal", scene, rotationX, rotationY);
-    // 4. height maps
+    // 9. height maps
     loadMaterialTextures(textures, material, aiTextureType_AMBIENT, "texture_height", scene, rotationX, rotationY);
+    //10. UNKNOWN
+    loadMaterialTextures(textures, material, aiTextureType_UNKNOWN, "texture_unknown", scene, rotationX, rotationY);
 
     ExtractBoneWeightForVertices(vertices,mesh,scene);
     // return a mesh object created from the extracted mesh data
