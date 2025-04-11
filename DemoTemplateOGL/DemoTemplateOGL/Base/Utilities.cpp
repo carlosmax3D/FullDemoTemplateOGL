@@ -611,13 +611,18 @@ unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req
 		unsigned samples = *comp / sizeof(FreeImage_GetImageType(imagen));
 		tmp = new unsigned char[(*x) * (*y) * (*comp)];
 		memcpy(tmp, (unsigned char*)FreeImage_GetBits(imagen), (*x) * (*y) * (*comp));
-		for (int j = 0; j < (*x) * (*y) && (*comp) >= 3; j++) {
-			unsigned char c = tmp[j * (*comp) + 0];
-			tmp[j * (*comp) + 0] = tmp[j * (*comp) + 2];
-			//tmp[j * (*comp) + 1] = tmp[j * (*comp) + 1];
-			tmp[j * (*comp) + 2] = c;
-			//tmp[j * (*comp) + 3] = tmp[j * (*comp) + 3];
-		}
+		if ((*comp) == 2)
+			for (int j = 0; j < (*x) * (*y); j++)  {
+				unsigned char c = tmp[j * (*comp) + 0];
+				tmp[j * (*comp) + 0] = tmp[j * (*comp) + 1];
+				tmp[j * (*comp) + 1] = c;
+			}
+		if ((*comp) >= 3)
+			for (int j = 0; j < (*x) * (*y); j++) {
+				unsigned char c = tmp[j * (*comp) + 0];
+				tmp[j * (*comp) + 0] = tmp[j * (*comp) + 2];
+				tmp[j * (*comp) + 2] = c;
+			}
 		FreeImage_Unload(imagen);
 	}
 	else {
@@ -744,9 +749,11 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 	unsigned char* data = loadFile(filename.c_str(), &width, &height, &nrComponents, 0, rotateX, rotateY);
 	GLenum format = GL_RGBA;
 	if (data) {
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3) {
+		if (nrComponents == 1 || nrComponents == 2){
+			format = nrComponents == 2 ? GL_RG : GL_RED;
+			if (nrComponents == 2)
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		} else if (nrComponents == 3) {
 			format = GL_RGB;
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		}
