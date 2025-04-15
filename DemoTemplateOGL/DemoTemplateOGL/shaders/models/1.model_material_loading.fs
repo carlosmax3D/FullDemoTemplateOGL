@@ -7,7 +7,6 @@ struct Material {
 };
 struct Light {
     vec3 position;
-
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -36,21 +35,23 @@ void main()
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * (diff * material.diffuse);
+    vec3 diffuse = light.diffuse * diff * material.diffuse;
     
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * (spec * material.specular);  
+    vec3 specular = light.specular * spec * material.specular;  
         
     vec3 result = ambient + diffuse + specular;
+//    result *= color.rgb; // <--- Apply color tint here
+
     if (textureSample == 1) {
         vec4 texColor = texture(texture_diffuse1, TexCoords);
-        if(texColor.a < 0.1)
+        if (texColor.a < 0.1)
             discard;
-        FragColor = vec4(result, 1.0) * texColor; //
+        FragColor = vec4(result, 1.0) * texColor;
     } else {
-        FragColor = vec4(result, 1.0); //
+        FragColor = vec4(result, 1.0); // use color alpha if you want
     }
 }

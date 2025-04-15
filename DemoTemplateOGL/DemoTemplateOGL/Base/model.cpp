@@ -403,21 +403,21 @@ void Model::loadMaterial(vector<Material> &m, aiMaterial* mat) {
     float shininess;
     bool matFound = false;
     if (!mat->Get(AI_MATKEY_COLOR_DIFFUSE, color)) {
-        material.Diffuse = glm::vec3(color.r, color.b, color.g);
+        material.Diffuse = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasDiffuse = true;
     }
     else material.hasDiffuse = false;
 
     if (!mat->Get(AI_MATKEY_COLOR_AMBIENT, color)) {
-        material.Ambient = glm::vec3(color.r, color.b, color.g);
+        material.Ambient = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasAmbient = true;
     }
     else material.hasAmbient = false;
 
     if (!mat->Get(AI_MATKEY_COLOR_SPECULAR, color)) {
-        material.Specular = glm::vec3(color.r, color.b, color.g);
+        material.Specular = glm::vec3(color.r, color.g, color.b);
         matFound = true;
         material.hasSpecular = true;
     }
