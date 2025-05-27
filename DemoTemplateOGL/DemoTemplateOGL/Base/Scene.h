@@ -15,6 +15,7 @@ class Scene {
 		virtual float getAngulo() = 0;
 		virtual void setAngulo(float angulo) = 0;
 		virtual Model* getMainModel() = 0;
+		virtual void setMainModel(Model* mainModel) = 0;
 		virtual Scene* Render() = 0;
 		virtual SkyDome* getSky() = 0;
 		virtual Terreno* getTerreno() = 0;
@@ -43,7 +44,10 @@ class Scene {
 					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision);
 				if (collider != NULL && ejeColision.y == 1){
 					INFO("APLASTADO!!!!", "JUMP HITBOX");
-					it = getLoadedModels()->erase(std::find(getLoadedModels()->begin(), getLoadedModels()->end(), collider));
+					it = std::find(getLoadedModels()->begin(), getLoadedModels()->end(), collider);
+					Model* eliminado = *it;
+					it = getLoadedModels()->erase(it);
+					delete eliminado;
 				} else it++;
 			}
 			// Actualizamos la camara

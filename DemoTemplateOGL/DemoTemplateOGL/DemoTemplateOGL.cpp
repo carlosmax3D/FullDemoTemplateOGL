@@ -63,6 +63,7 @@ bool showHitbox = true;
 bool showStats = true;
 bool newContext = false; // Bandera para identificar si OpenGL 2.0 > esta activa
 struct GameTime gameTime;
+Camera* Camera::cameraInstance = NULL;
 
 // Objecto de escena y render
 Scene *OGLobj;
@@ -113,7 +114,7 @@ int startGameEngine(void *ptrMsg){
     translate = glm::vec3(5.0f, 10.0f, -5.0f);
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
-    Camera* camera = new Camera();
+    Camera* camera = Camera::getInstance();
     Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
@@ -159,7 +160,7 @@ int startGameEngine(void *ptrMsg){
         // render
         // ------
         bool checkCollition = checkInput(&actions, OGLobj);
-        OGLobj->update();
+        int cambio = OGLobj->update();
         Scene *escena = OGLobj->Render();
         if (escena != OGLobj) {
             delete OGLobj;
@@ -169,6 +170,7 @@ int startGameEngine(void *ptrMsg){
         }
         swapGLBuffers();
     }
+    model = OGLobj->getMainModel();
     if (OGLobj != NULL) delete OGLobj;
     if (camera != NULL) delete camera;
     if (model != NULL) delete model;

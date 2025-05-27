@@ -326,10 +326,10 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &eje
 
     bool thisInMovement = true;//(*getNextTranslate()) != (*getTranslate());
     // Check terrain collision
-    if (prevGPosition.y < terrainY) {
+    if (gravityEnable && prevGPosition.y < terrainY) {
         prevGPosition.y = terrainY;
     }
-    if (nextGPosition.y < terrainY) {
+    if (gravityEnable && nextGPosition.y < terrainY) {
         nextGPosition.y = terrainY;
         this->velocity.y = 0.0f;
     }
@@ -337,8 +337,7 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &eje
 
     glm::vec3 yPos;
     // Check collisions with objects
-    if (this->name.compare("BaseSpiderman") == 0)
-        yPos = glm::vec3(0);
+    yPos = glm::vec3(0);
     for (auto& other : models) {
         if (this != other && this->colisionaCon(*other, yPos, thisInMovement)) {
 //            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());

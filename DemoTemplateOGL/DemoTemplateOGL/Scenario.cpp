@@ -86,7 +86,13 @@ void Scenario::InitGraph(Model *main) {
 //	model->setScale(&scale);
 //	model->setTranslate(&translate);
 //	ourModel.emplace_back(model);
-
+	model = new Model("models/backpack/backpack.obj", main->cameraDetails, false, false);
+	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 0.0f) + 2, 0.0f);
+	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	ourModel.emplace_back(model);
+	model->lightColor = glm::vec3(10,0,0);
 	model = new CollitionBox(25.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
 	translate = glm::vec3(25.0f, terreno->Superficie(25.0f, 10.0f), 10.0f);
 	model->setNextTranslate(&translate);
@@ -183,6 +189,9 @@ std::vector<BillboardAnimation*> *Scenario::getLoadedBillboardsAnimation(){
 
 Model* Scenario::getMainModel() {
 	return this->camara;
+}
+void Scenario::setMainModel(Model* mainModel){
+	this->camara = mainModel;
 }
 float Scenario::getAngulo() {
 	return this->angulo;

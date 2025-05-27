@@ -48,6 +48,7 @@ public:
 	std::vector<Billboard2D*> *getLoadedBillboards2D();
 	std::vector<Texto*> *getLoadedText();
 	Model* getMainModel();
+	void setMainModel(Model* mainModel);
 	float getAngulo();
 	void setAngulo(float angulo);
 	SkyDome* getSky();
