@@ -42,7 +42,7 @@ class Scene {
 					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision, true);
 				else 
 					collider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision);
-				if (collider != NULL && ejeColision.y == 1){
+				if (collider != NULL && model == camara && ejeColision.y == 1){
 					INFO("APLASTADO!!!!", "JUMP HITBOX");
 					it = std::find(getLoadedModels()->begin(), getLoadedModels()->end(), collider);
 					Model* eliminado = *it;

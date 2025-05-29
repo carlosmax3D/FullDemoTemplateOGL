@@ -13,6 +13,7 @@ Scenario::Scenario(Camera *cam) {
 	scale = glm::vec3(0.25f, 0.25f, 0.25f);	// it's a bit too big for our scene, so scale it down
 	model->setScale(&scale);
 	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
 	InitGraph(model);
 }
 Scenario::Scenario(Model *camIni) {
@@ -39,6 +40,7 @@ void Scenario::InitGraph(Model *main) {
 	Model* model;
 	model = new Model("models/fogata/fogata.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, 10.0f, 25.0f);
+	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
 	model->setNextRotX(45); // 45� rotation
@@ -46,14 +48,17 @@ void Scenario::InitGraph(Model *main) {
 	model= new Model("models/pez/pez.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
 	model->setNextTranslate(&translate);
+	model->setTranslate(&translate);
 	ModelAttributes m;
 	m.setTranslate(&translate);
+	m.setNextTranslate(&translate);
 	m.translate.x = 5;
 	model->getModelAttributes()->push_back(m);
 	ourModel.emplace_back(model);
 	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	model->setNextRotY(90);
@@ -68,6 +73,7 @@ void Scenario::InitGraph(Model *main) {
 	model = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
 	translate = glm::vec3(10.0f, terreno->Superficie(10.0f, 60.0f) , 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	model->setNextRotY(180);
@@ -89,17 +95,16 @@ void Scenario::InitGraph(Model *main) {
 	model = new Model("models/backpack/backpack.obj", main->cameraDetails, false, false);
 	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 0.0f) + 2, 0.0f);
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	ourModel.emplace_back(model);
 	model->lightColor = glm::vec3(10,0,0);
-	model = new CollitionBox(25.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
-	translate = glm::vec3(25.0f, terreno->Superficie(25.0f, 10.0f), 10.0f);
-	model->setNextTranslate(&translate);
+	model = new CollitionBox(60.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
 	model->setScale(&scale);
 	ourModel.emplace_back(model);
-
+	
 
 	inicializaBillboards();
 	std::wstring prueba(L"Esta es una prueba");
@@ -107,7 +112,7 @@ void Scenario::InitGraph(Model *main) {
 	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
 	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
 	billBoard2D.back()->setScale(&scale);
-}
+	}
 
 void Scenario::inicializaBillboards() {
 	float ye = terreno->Superficie(0, 0);
@@ -167,7 +172,7 @@ Scene* Scenario::Render() {
 	for (int i = 0; i < ourText.size(); i++) {
 		ourText[i]->Draw();
 	}
-	// Le decimos a winapi que haga el update en la ventana
+		// Le decimos a winapi que haga el update en la ventana
 	return this;
 }
 	

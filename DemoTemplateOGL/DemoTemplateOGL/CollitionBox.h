@@ -17,6 +17,8 @@ public:
 	static int idCollition;
 	CollitionBox(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth, Camera* camera);
 	CollitionBox(glm::vec3 position, glm::vec3 halfWHD, Camera* camera);
+    void setNextTranslate(glm::vec3* translate);
+    void setTranslate(glm::vec3* translate);
 
 	~CollitionBox();
 

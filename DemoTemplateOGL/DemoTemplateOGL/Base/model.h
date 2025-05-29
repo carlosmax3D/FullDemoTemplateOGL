@@ -70,8 +70,8 @@ public:
 
     void setVelocity(glm::vec3* velocity);
     glm::vec3* getVelocity();
-    void setNextTranslate(glm::vec3* translate);
-    void setTranslate(glm::vec3* translate);
+    virtual void setNextTranslate(glm::vec3* translate);
+    virtual void setTranslate(glm::vec3* translate);
     void setScale(glm::vec3* scale);
     void setRotX(float rotationAngle);
     void setRotY(float rotationAngle);
