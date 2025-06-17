@@ -158,6 +158,7 @@
     <ClInclude Include="Base\camera.h" />
     <ClInclude Include="Base\font_atlas.h" />
     <ClInclude Include="Billboard2D.h" />
+    <ClInclude Include="Billboard2DAnimation.h" />
     <ClInclude Include="CollitionBox.h" />
     <ClInclude Include="KDTree\CollitionDetection.h" />
     <ClInclude Include="Texto.h" />

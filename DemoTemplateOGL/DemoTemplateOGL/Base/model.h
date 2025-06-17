@@ -30,16 +30,17 @@ private:
     std::vector<BoneInfo> bonesInfo;
     int m_BoneCounter = 0;
 	std::vector<Animator> animators;
+    std::string modelType;
     int animatorIdx = -1;
     bool cleanTextures = true;
-    bool defaultShader = false;;
+    bool defaultShader = false;
     glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 
 public:
     // model data 
     Camera* cameraDetails = NULL;
-    Model* AABB = NULL; // Modelo que alberga un cubo para colisiones
     Node AABBsize;
+    bool ignoreAABB = false;
 
     vector<Texture*> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Material*> material_loaded;	// stores all the materials.
@@ -57,6 +58,10 @@ public:
     Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera);
     Model(string const& path, glm::vec3& actualPosition, Camera* cam, bool rotationX = false, bool rotationY = true, bool gamma = false);
     virtual ~Model();
+
+    void setModelType(const std::string& type) { modelType = type; }
+    const std::string& getModelType() const { return modelType; }
+
     // draws the model, and thus all its meshes
     virtual void prepShader(Shader& gpuDemo, ModelAttributes &attributes);
     virtual void Draw();
@@ -95,22 +100,21 @@ public:
 
     void buildKDtree();
     void buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth);
-    bool colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
+    bool colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
     bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false);
-    static bool colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove = false);
+    static bool colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
     std::unordered_map<string, int>* GetBoneInfoMap();
     std::vector<BoneInfo>* getBonesInfo();
     int& GetBoneCount();
     void setAnimator(Animator animator);
     void setAnimator(std::vector<Animator>& animator);
+    std::vector<Animator>& getAnimator();
     void setAnimation(unsigned int id);
     void setCleanTextures(bool flag);
     std::vector<ModelAttributes>* getModelAttributes();
-    virtual Model* update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable = false);
+    virtual ModelCollider update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable = false);
 private:
-    vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth);
-    vector<unsigned int> getCubeIndex();
     void loadMaterial(vector<Material> &m, aiMaterial* mat);
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.
     void loadModel(string const& path, bool rotationX = false, bool rotationY = true);

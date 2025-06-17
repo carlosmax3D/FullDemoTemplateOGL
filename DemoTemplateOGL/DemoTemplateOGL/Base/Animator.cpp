@@ -2,7 +2,7 @@
 
 Animator::Animator(){}
 
-Animator::Animator(Animation Animation){
+Animator::Animator(Animation& Animation){
     setAnimation(Animation);
 }
 
@@ -21,7 +21,7 @@ void Animator::UpdateAnimation(float dt, glm::mat4 parentTransform) {
 void Animator::PlayAnimation() {
     m_CurrentTime = 0.0;
 }
-void Animator::PlayAnimation(Animation pAnimation) {
+void Animator::PlayAnimation(Animation& pAnimation) {
     m_CurrentAnimation = pAnimation;
     m_CurrentTime = 0.0;
 }
@@ -58,10 +58,14 @@ const glm::mat4* Animator::GetFinalBoneMatrices() {
     return &m_FinalBoneMatrices[0];
 }
 
-void Animator::setAnimation(Animation Animation){
+void Animator::setAnimation(Animation& Animation){
     m_CurrentTime = 0.0;
     m_CurrentAnimation = Animation;
 
     for (int i = 0; i < MAX_MODEL_BONES; i++)
         m_FinalBoneMatrices[i] = glm::mat4(0.0f);
+}
+
+Animation &Animator::getAnimation(){
+    return m_CurrentAnimation;
 }

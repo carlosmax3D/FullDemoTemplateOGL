@@ -231,6 +231,7 @@ public:
     bool getFirstPerson() {
         return firstPerson;
     }
+    float getAngleAroundPlayer() { return angleAroundPlayer; }
     void calculateAngleAroundPlayer(double val) {
         angleAroundPlayer -= val * 0.5;
         if ((!firstPerson) && angleAroundPlayer > 90)

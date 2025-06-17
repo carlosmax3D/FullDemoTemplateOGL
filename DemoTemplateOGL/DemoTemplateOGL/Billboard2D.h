@@ -9,18 +9,20 @@ public:
         Billboard(glTextura, textura, x, y, z, camera){
             glm::vec3 pos(x,y,0);
             this->setTranslate(&pos);
-            if (this->AABB)
-                delete AABB;
-            this->AABB = NULL;
+            ModelAttributes &attr = this->getModelAttributes()->at(0);
+            if (attr.hitbox)
+                delete (Model*)attr.hitbox;
+            attr.hitbox = NULL;
     }
 
 	Billboard2D(WCHAR textura[], float ancho, float alto, float x, float y, float z, Camera* camera):
         Billboard(textura, ancho, alto, x, y, z, camera){
             glm::vec3 pos(x,y,0);
             this->setTranslate(&pos);
-            if (this->AABB)
-                delete AABB;
-            this->AABB = NULL;
+            ModelAttributes &attr = this->getModelAttributes()->at(0);
+            if (attr.hitbox)
+                delete (Model*)attr.hitbox;
+            attr.hitbox = NULL;
     }
 
     ~Billboard2D(){

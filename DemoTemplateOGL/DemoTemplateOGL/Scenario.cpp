@@ -45,16 +45,30 @@ void Scenario::InitGraph(Model *main) {
 	rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
 	model->setNextRotX(45); // 45� rotation
 	ourModel.emplace_back(model);
-	model= new Model("models/pez/pez.obj", main->cameraDetails);
+
+	Model *pez = new Model("models/pez/pez.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
-	model->setNextTranslate(&translate);
-	model->setTranslate(&translate);
+	pez->setNextTranslate(&translate);
+	pez->setTranslate(&translate);
+	ourModel.emplace_back(pez);
 	ModelAttributes m;
 	m.setTranslate(&translate);
 	m.setNextTranslate(&translate);
 	m.translate.x = 5;
-	model->getModelAttributes()->push_back(m);
-	ourModel.emplace_back(model);
+	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
+	model->setTranslate(&m.translate);
+	model->setNextTranslate(&m.translate);
+	m.hitbox = model;
+	pez->getModelAttributes()->push_back(m);
+	m.setTranslate(&translate);
+	m.setNextTranslate(&translate);
+	m.translate.x = 10;
+	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
+	model->setTranslate(&m.translate);
+	model->setNextTranslate(&m.translate);
+	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
+	pez->getModelAttributes()->push_back(m);
+
 	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
@@ -65,28 +79,63 @@ void Scenario::InitGraph(Model *main) {
 	ourModel.emplace_back(model);
 	try{
 		std::vector<Animation> animations = Animation::loadAllAnimations("models/dancing_vampire/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::vector<Animation> animation = Animation::loadAllAnimations("models/dancing_vampire/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
 		for (Animation animation : animations)
 			model->setAnimator(Animator(animation));
+		model->setAnimation(1);
 	}catch(...){
 		ERRORL("Could not load animation!", "ANIMACION");
 	}
-	model = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
+
+	Model* silly = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
 	translate = glm::vec3(10.0f, terreno->Superficie(10.0f, 60.0f) , 60.0f);
 	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	silly->setTranslate(&translate);
+	silly->setNextTranslate(&translate);
+	silly->setScale(&scale);
+	silly->setNextRotY(180);
+	ourModel.emplace_back(silly);
+	try{
+		std::vector<Animation> animations = Animation::loadAllAnimations("models/Silly_Dancing/Silly_Dancing.fbx", silly->GetBoneInfoMap(), silly->getBonesInfo(), silly->GetBoneCount());
+		for (Animation animation : animations)
+			silly->setAnimator(Animator(animation));
+		silly->setAnimation(0);
+	}catch(...){
+		ERRORL("Could not load animation!", "ANIMACION");
+	}
+	m.setTranslate(&translate);
+	m.setNextTranslate(&translate);
+	m.translate.x += 10;
+	m.setScale(&scale);
+	m.setNextRotY(180);
+	m.setRotY(180);
+	model = CollitionBox::GenerateAABB(m.translate, silly->AABBsize, main->cameraDetails);
+	model->setTranslate(&m.translate);
+	model->setNextTranslate(&m.translate);
+	model->setScale(&scale);
+	model->setNextRotY(180);
+	model->setRotY(180);
+	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
+	silly->getModelAttributes()->push_back(m);
+	// Import model and clone with bones and animations
+	model = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
+	translate = glm::vec3(30.0f, terreno->Superficie(30.0f, 60.0f) , 60.0f);
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Silly_Dancing1";
 	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	model->setScale(&scale);
 	model->setNextRotY(180);
 	ourModel.emplace_back(model);
-	try{
-		std::vector<Animation> animations = Animation::loadAllAnimations("models/Silly_Dancing/Silly_Dancing.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		for (Animation animation : animations)
-			model->setAnimator(Animator(animation));
-		model->setAnimation(0);
-	}catch(...){
-		ERRORL("Could not load animation!", "ANIMACION");
-	}
-//	model = new Model("models/IronMan.obj", main->cameraDetails);
+	// Para clonar la animacion se eliminan los huesos del modelo actual y se copian los modelos y animators
+	model->GetBoneInfoMap()->clear();
+	model->getBonesInfo()->clear();
+	*model->GetBoneInfoMap() = *silly->GetBoneInfoMap();
+	*model->getBonesInfo() = *silly->getBonesInfo();
+	model->setAnimator(silly->getAnimator());
+
+	//	model = new Model("models/IronMan.obj", main->cameraDetails);
 //	translate = glm::vec3(0.0f, 20.0f, 30.0f);
 //	scale = glm::vec3(0.025f, 0.025f, 0.025f);	// it's a bit too big for our scene, so scale it down
 //	model->setScale(&scale);
@@ -102,6 +151,7 @@ void Scenario::InitGraph(Model *main) {
 	model->lightColor = glm::vec3(10,0,0);
 	model = new CollitionBox(60.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
 	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+	model->setNextTranslate(model->getTranslate());
 	model->setScale(&scale);
 	ourModel.emplace_back(model);
 	

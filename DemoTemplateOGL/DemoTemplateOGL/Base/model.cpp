@@ -47,8 +47,13 @@ Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool ro
 }
 
 Model::~Model() {
-    if (this->AABB != NULL)
-        delete AABB;
+    for (ModelAttributes &attr : *this->getModelAttributes()){
+        Model *AABB = (Model*)attr.hitbox;
+        if (attr.hitbox != NULL){
+            delete AABB;
+            attr.hitbox = NULL;
+        }
+    }
     if (gpuDemo != NULL) {
         delete gpuDemo;
         gpuDemo = NULL;
@@ -124,17 +129,20 @@ void Model::Draw() {
 }
 void Model::Draw(Shader& shader, int idxAttribute) {
     ModelAttributes &attribute = attributes[idxAttribute];
+    if (animatorIdx != -1 && idxAttribute == 0){
+        Animator &animator = animators[animatorIdx];
+        animator.UpdateAnimation(gameTime.deltaTime / 1000, glm::mat4(1));
+        const glm::mat4* transforms = animator.GetFinalBoneMatrices();
+        shader.setMat4Array("finalBonesMatrices", transforms, MAX_MODEL_BONES);
+    }
     if (attribute.active){
-        if (animatorIdx != -1){
-            Animator &animator = animators[animatorIdx];
-            animator.UpdateAnimation(gameTime.deltaTime / 1000, glm::mat4(1));
-            const glm::mat4* transforms = animator.GetFinalBoneMatrices();
-            shader.setMat4Array("finalBonesMatrices", transforms, MAX_MODEL_BONES);
-        }
         for (unsigned int i = 0; i < meshes.size(); i++)
             meshes[i]->Draw(shader);
-        if (idxAttribute == 0 && showHitbox && this->AABB)
-            this->AABB->Draw(shader, idxAttribute);
+        Model *AABB = (Model*)attribute.hitbox;
+        if (showHitbox && AABB){
+            AABB->prepShader(shader, AABB->getModelAttributes()->at(0));
+            AABB->Draw(shader, 0);
+        }
     }
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations) const {
@@ -184,6 +192,7 @@ void Model::setTranslate(glm::vec3* translate) {
         this->attributes[0].translate = *translate;
         this->attributes[0].hasTranslate = true;
     }
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setTranslate(translate);
 }
 void Model::setNextTranslate(glm::vec3* translate) {
@@ -192,6 +201,7 @@ void Model::setNextTranslate(glm::vec3* translate) {
     } else {
         this->attributes[0].nextTranslate = *translate;
     }
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setNextTranslate(translate);
 }
 void Model::setScale(glm::vec3* scale) {
@@ -203,37 +213,44 @@ void Model::setScale(glm::vec3* scale) {
         this->attributes[0].scale = *scale;
         this->attributes[0].hasScale = true;
     }
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setScale(scale);
 }
 
 void Model::setRotX(float rotationAngle) {
     this->attributes[0].rotX = rotationAngle;
     this->attributes[0].rotation.x = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setRotX(rotationAngle);
 }
 void Model::setRotY(float rotationAngle) {
     this->attributes[0].rotY = rotationAngle;
     this->attributes[0].rotation.y = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setRotY(rotationAngle);
 }
 void Model::setRotZ(float rotationAngle) {
     this->attributes[0].rotZ = rotationAngle;
     this->attributes[0].rotation.z = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setRotZ(rotationAngle);
 }
 void Model::setNextRotX(float rotationAngle) {
     this->attributes[0].nextRotX = rotationAngle;
     this->attributes[0].nextRotation.x = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setNextRotX(rotationAngle);
 }
 void Model::setNextRotY(float rotationAngle) {
     this->attributes[0].nextRotY = rotationAngle;
     this->attributes[0].nextRotation.y = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setNextRotY(rotationAngle);
 }
 void Model::setNextRotZ(float rotationAngle) {
     this->attributes[0].nextRotZ = rotationAngle;
     this->attributes[0].nextRotation.z = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
     if (AABB != NULL) AABB->setNextRotZ(rotationAngle);
 }
 
@@ -283,13 +300,20 @@ void Model::setActive(bool active){
     this->attributes[0].active = active;
 }
 
+std::vector<Animator>& Model::getAnimator(){
+    return this->animators;
+}
 void Model::setAnimator(Animator animator){
     this->animators.emplace_back(animator);
     animatorIdx = 0;
 }
-void Model::setAnimator(std::vector<Animator>& animator){
-    for (Animator &anim : animator)
-        this->animators.emplace_back(anim);
+void Model::setAnimator(std::vector<Animator>& animators){
+    for (Animator &animator : animators){
+        this->animators.emplace_back(animator);
+        Animation &anim = this->animators.back().getAnimation();
+        anim.setBoneInfoMap(this->GetBoneInfoMap());
+        anim.setBonesInfo(this->getBonesInfo());
+    }
     animatorIdx = 0;
 }
 void Model::setAnimation(unsigned int id){
@@ -306,8 +330,10 @@ glm::vec3* Model::getVelocity(){
     return &velocity;
 }
 
-Model* Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable){
-    Model *collide = NULL;
+ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable){
+    ModelCollider collide = { 0 };
+    if (this->ignoreAABB)
+        return collide;
     // Apply gravity
     this->velocity.y += GRAVITY * gameTime.deltaTime/1000;
     if (this->velocity.y < TERMINAL_VELOCITY) {
@@ -338,50 +364,57 @@ Model* Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &eje
     glm::vec3 yPos;
     // Check collisions with objects
     yPos = glm::vec3(0);
-    for (auto& other : models) {
-        if (this != other && this->colisionaCon(*other, yPos, thisInMovement)) {
-//            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
-            // If colliding, place object on top of the other object
-//            glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
-//            nextPosition.y = otherPos.y + other->AABBsize.m_halfHeight + this->AABBsize.m_halfHeight / 2;
-            this->velocity.y = 0.0f;  // Stop downward movement
-            collide = other;
-            if (nextGPosition.y > (yPos.y * 0.90)){
-                nextGPosition.y = yPos.y;
-                setNextTranslate(&nextGPosition);
-                ejeColision.y = 1;
-                break;
-            }
-            setNextTranslate(&nextPosition);
-            if (!this->colisionaCon(*other, yPos, thisInMovement)) {
-                break;
-            }
-            if (nextPosition.y > (yPos.y * 0.90)) {
-                nextPosition.y = yPos.y;
+    for (int i = 0; i < models.size(); i++) {
+        Model *other = models[i];
+        for (int j = 0; j < other->getModelAttributes()->size(); j++) {
+            if (this != other && this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+    //            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
+                // If colliding, place object on top of the other object
+    //            glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
+    //            nextPosition.y = otherPos.y + other->AABBsize.m_halfHeight + this->AABBsize.m_halfHeight / 2;
+                this->velocity.y = 0.0f;  // Stop downward movement
+                ejeColision.x = 1;
+                ejeColision.z = 1;
+                collide.model = other;
+                collide.attrIdx = j;
+                if (nextGPosition.y > (yPos.y * 0.90)){
+                    nextGPosition.y = yPos.y;
+                    setNextTranslate(&nextGPosition);
+                    ejeColision.y = 1;
+                    break;
+                }
                 setNextTranslate(&nextPosition);
-                ejeColision.y = 1;
-                break;
-            }
-            setNextTranslate(&prevGPosition);
-            if (!this->colisionaCon(*other, yPos, thisInMovement)) {
-                break;
-            }
-            if (prevGPosition.y > (yPos.y * 0.90)) {
-                prevGPosition.y = yPos.y;
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+                    break;
+                }
+                if (nextPosition.y > (yPos.y * 0.90)) {
+                    nextPosition.y = yPos.y;
+                    setNextTranslate(&nextPosition);
+                    ejeColision.y = 1;
+                    break;
+                }
                 setNextTranslate(&prevGPosition);
-                ejeColision.y = 1;
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+                    break;
+                }
+                if (prevGPosition.y > (yPos.y * 0.90)) {
+                    prevGPosition.y = yPos.y;
+                    setNextTranslate(&prevGPosition);
+                    ejeColision.y = 1;
+                    break;
+                }
+                setNextTranslate(&prevPosition);
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)){
+                    break;
+                }
+                setNextTranslate(getTranslate());
+                setNextRotX(getRotX());
+                setNextRotY(getRotY());
+                setNextRotZ(getRotZ());
                 break;
             }
-            setNextTranslate(&prevPosition);
-            if (!this->colisionaCon(*other, yPos, thisInMovement)){
-                break;
-            }
-            setNextTranslate(getTranslate());
-            setNextRotX(getRotX());
-            setNextRotY(getRotY());
-            setNextRotZ(getRotZ());
-            break;
         }
+        if (i < 0) i = 0;
     }
 
     // Apply final position
@@ -398,6 +431,7 @@ std::vector<ModelAttributes>* Model::getModelAttributes(){
 
 
 void Model::buildKDtree() {
+    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
 	if (AABB != NULL)
 		delete AABB;
     // Creamos el cubo AABB apartir del arbol de puntos del modelo cargado
@@ -409,8 +443,9 @@ void Model::buildKDtree() {
 void Model::buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth){
     vector<Vertex> cuboAABB = init_cube(x, y, z, halfWidth, halfHeight, halfDepth);
     vector<unsigned int> cuboIndex = getCubeIndex();
-    this->AABB = new Model(cuboAABB, cuboAABB.size(), cuboIndex, cuboIndex.size(), this->cameraDetails);
-    for (Mesh *m : this->AABB->meshes)
+    ModelAttributes& attr = this->getModelAttributes()->at(0);
+    attr.hitbox = new Model(cuboAABB, cuboAABB.size(), cuboIndex, cuboIndex.size(), this->cameraDetails);
+    for (Mesh *m : ((Model*)attr.hitbox)->meshes)
         m->VBOGLDrawType = GL_LINE_LOOP;
 }
 
@@ -681,20 +716,22 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
     }
 }
 
-bool Model::colisionaCon(Model& objeto, glm::vec3 &yPos, bool collitionMove) {
-    return Model::colisionaCon(*this, objeto, yPos, collitionMove);
+bool Model::colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
+    return Model::colisionaCon(this->getModelAttributes()->at(0), objeto, yPos, collitionMove);
 }
-bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool collitionMove) {
-    if (objeto0.AABB == NULL || objeto.AABB == NULL)
+bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
+    if (objeto0.hitbox == NULL || objeto.hitbox == NULL)
         return false;
-    if (!(objeto0.attributes[0].active && objeto0.attributes[0].active))
+    if (!(objeto0.active && objeto0.active))
         return false;
+    Model* AABB = (Model*)objeto.hitbox;
+    Model* AABB0 = (Model*)objeto0.hitbox;
     // Obtener las matrices de transformación para ambos modelos
     // collitionMove sirve para saber si el modelo principal a comparar va avanzar(true)
     // o esta quieto(false)
-    glm::mat4 transform1 = collitionMove ? objeto0.makeTransScaleNextPosition(glm::mat4(1)) : objeto0.makeTransScale(glm::mat4(1)) ; // Para el cubo A
+    glm::mat4 transform1 = collitionMove ? AABB0->makeTransScaleNextPosition(glm::mat4(1)) : AABB0->makeTransScale(glm::mat4(1)) ; // Para el cubo A
     // Asumimos que el modelo a comparar esta quieto y no se esta moviendo
-    glm::mat4 transform2 = collitionMove ? objeto.makeTransScaleNextPosition(glm::mat4(1)) : objeto.makeTransScale(glm::mat4(1)); // Para el cubo B
+    glm::mat4 transform2 = collitionMove ? AABB->makeTransScaleNextPosition(glm::mat4(1)) : AABB->makeTransScale(glm::mat4(1)); // Para el cubo B
 
     // Obtener los vértices de ambos cubos AABB
 //    vector<Vertex> verticesCubo1 = objeto0.AABB->meshes[0]->vertices;
@@ -704,17 +741,17 @@ bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool co
 
     // Transformar los vértices de cada cubo usando sus respectivas matrices de transformación
     Vertex *idx = verticesCubo1;
-    yPos.z = objeto0.AABB->meshes[0]->vertices[0].Position.y;
-    for (Vertex& vertex : objeto0.AABB->meshes[0]->vertices) {
+    yPos.z = AABB0->meshes[0]->vertices[0].Position.y;
+    for (Vertex& vertex : AABB0->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform1 * glm::vec4(vertex.Position, 1.0f));
         if (yPos.z > idx->Position.y) // Min cube position
             yPos.z = idx->Position.y;
         idx++;
     }
     idx = verticesCubo2;
-    yPos.x = objeto.AABB->meshes[0]->vertices[0].Position.y;
-    yPos.y = objeto.AABB->meshes[0]->vertices[0].Position.y;
-    for (Vertex& vertex : objeto.AABB->meshes[0]->vertices) {
+    yPos.x = AABB->meshes[0]->vertices[0].Position.y;
+    yPos.y = AABB->meshes[0]->vertices[0].Position.y;
+    for (Vertex& vertex : AABB->meshes[0]->vertices) {
         idx->Position = glm::vec3(transform2 * glm::vec4(vertex.Position, 1.0f));
         if (yPos.x > idx->Position.y) // Min cube position
             yPos.x = idx->Position.y;
@@ -736,93 +773,6 @@ bool Model::colisionaCon(Model& objeto0, Model& objeto, glm::vec3 &yPos, bool co
 
     // Si las proyecciones se solapan en todos los ejes, hay colisión
     return true;
-}
-
-vector<Vertex> Model::init_cube(float x, float y, float z, float width, float height, float depth){
-    //Vertex* myVertex = (Vertex*)malloc(sizeof(Vertex) * 24 * 44);
-    vector<Vertex> myVertex;
-    myVertex.reserve(24);
-//    Vertex t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-
-//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-
-//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-
-    return myVertex;
-}
-vector<unsigned int> Model::getCubeIndex() {
-    vector<unsigned int> indices;
-    int cubeIndexSize = 36;
-    unsigned int cubeIndex[] = { 0, 1, 2,
-    0, 2, 3,
-
-    6, 5, 4,
-    7, 6, 4,
-
-    10, 9, 8,
-    11, 10, 8,
-
-    12, 13, 14,
-    12, 14, 15,
-
-    16, 17, 18,
-    16, 18, 19,
-
-    22, 21, 20,
-    23, 22, 20
-    };
-    indices.reserve(cubeIndexSize);
-    for (unsigned int i = 0; i < cubeIndexSize; i++)
-        indices.emplace_back(cubeIndex[i]);
-    return indices;
 }
 
 void Model::setCleanTextures(bool flag){

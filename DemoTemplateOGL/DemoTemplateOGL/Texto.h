@@ -19,7 +19,7 @@ private:
 	float z;
 public:
 	std::string name = "";
-	Texto(wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera);
+	Texto(std::wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera);
 
 	Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Model* camera);
 

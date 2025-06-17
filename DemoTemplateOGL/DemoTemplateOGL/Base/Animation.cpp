@@ -47,6 +47,13 @@ void Animation::loadFromScene(const aiScene* scene, std::unordered_map<std::stri
     } else throw Animation_Exception();
 }
 
+void Animation::setBoneInfoMap(std::unordered_map<std::string, int> *m_BoneInfoMap){
+    this->m_BoneInfoMap = m_BoneInfoMap;
+}
+void Animation::setBonesInfo(std::vector<BoneInfo> *bonesInfo){
+    this->bonesInfo = bonesInfo;
+}
+
 Bone* Animation::FindBone(std::string const& name) {
     auto iter = std::find_if(m_Bones.begin(), m_Bones.end(),
             [&](Bone& bone){

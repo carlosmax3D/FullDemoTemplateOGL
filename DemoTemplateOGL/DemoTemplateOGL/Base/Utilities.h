@@ -8,6 +8,7 @@
 #include "../WinAPIHeaders/framework.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <random>
 #include <glad/glad.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -55,9 +56,10 @@ extern GameTime gameTime;
 
 struct GameActions {
 	// float /// x = 0 -> quiet; x > 0 -> move positive; x < 0 -> move negative
-	float advance = 0;
-	float hAdvance = 0;
-	float sideAdvance = 0;
+	int advance = 0;
+	int hAdvance = 0;
+	int sideAdvance = 0;
+	bool sprintPressed = false;
 	bool firstPerson = false;
 	double *jump = NULL;
 	bool action = false;
@@ -114,6 +116,7 @@ struct ModelAttributes{
 	float nextRotZ = 0;
 	glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	bool active = true;
+	void *hitbox = NULL; // possible link to hitbox
 	void setNextTranslate(glm::vec3* translate);
 	void setTranslate(glm::vec3* translate);
 	void setScale(glm::vec3* scale);
@@ -123,6 +126,11 @@ struct ModelAttributes{
 	void setNextRotX(float rotationAngle);
 	void setNextRotY(float rotationAngle);
 	void setNextRotZ(float rotationAngle);
+};
+
+struct ModelCollider{
+	void *model = NULL;
+	int attrIdx = -1;
 };
 
 struct BoneInfo {
@@ -249,6 +257,9 @@ namespace LOGGER {
 
 bool compareKeyframes(UTILITIES_OGL::KeyFrame& A, UTILITIES_OGL::KeyFrame& b);
 glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t);
+std::vector<unsigned int> getCubeIndex();
+std::vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth);
+
 //void * operator new(size_t size);
 
 #endif

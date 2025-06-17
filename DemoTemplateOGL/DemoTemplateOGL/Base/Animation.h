@@ -35,6 +35,8 @@ public:
     std::unordered_map<std::string,int>* GetBoneIDMap();
     std::vector<BoneInfo>* getBonesInfo();
     static std::vector<Animation> loadAllAnimations(std::string const& animationPath, std::unordered_map<std::string, int>* boneInfoMap, std::vector<BoneInfo>* bonesInfo, int& boneCount);
+    void setBoneInfoMap(std::unordered_map<std::string, int> *m_BoneInfoMap);
+    void setBonesInfo(std::vector<BoneInfo> *bonesInfo);
 
 private:
     void ReadMissingBones(const aiAnimation* animation, int& boneCount, const aiScene *scene);

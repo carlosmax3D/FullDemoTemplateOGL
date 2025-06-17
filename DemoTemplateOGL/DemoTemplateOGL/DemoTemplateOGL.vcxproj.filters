@@ -126,6 +126,9 @@
     <ClInclude Include="Base\BillboardAnimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Billboard2DAnimation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DemoTemplateOGL.cpp">

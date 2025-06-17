@@ -122,7 +122,7 @@ int startGameEngine(void *ptrMsg){
     scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
     model->setTranslate(&translate);
-    
+
     OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
     translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
     model->setTranslate(&translate);
@@ -468,9 +468,21 @@ void window_size_callback(GLFWwindow* window, int width, int height){
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
     char k = (key == GLFW_KEY_LEFT_SHIFT)? input.Shift : key;
-    if (action == GLFW_PRESS || action == GLFW_REPEAT || action == GLFW_RELEASE)
-        KEYS[k] = GLFW_RELEASE == action ? false : true;
-    else
+    if (action == GLFW_PRESS || action == GLFW_REPEAT || action == GLFW_RELEASE){
+        if (k > 5 && k < 10)
+            switch(k){
+                case 6: KEYS[input.Right] = GLFW_RELEASE == action ? false : true;
+                    break;
+                case 7: KEYS[input.Left] = GLFW_RELEASE == action ? false : true;
+                    break;
+                case 8: KEYS[input.Down] = GLFW_RELEASE == action ? false : true;
+                    break;
+                case 9: KEYS[input.Up] = GLFW_RELEASE == action ? false : true;
+                    break;
+            }
+        else
+            KEYS[k] = GLFW_RELEASE == action ? false : true;
+    }else
         if (k == KEYB_CAMERA || k == KEYB_HMOVEMENT)
             KEYS[k] = false;
 }

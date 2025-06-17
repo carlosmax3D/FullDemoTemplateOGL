@@ -19,7 +19,8 @@
 	};
 
 #define KEYB_CAMERA input.V
-#define KEYB_HMOVEMENT input.Shift
+#define KEYB_HMOVEMENT input.Control
+#define KEYB_SPRINT input.Shift
 
 class MouseInput {
 	private:

@@ -33,7 +33,9 @@ public:
         }
     }
 	void Draw(){
-        frames.at(current)->Draw();
+        if (!frames.empty()) {
+            frames.at(current)->Draw();
+        }
     }
 };
 
