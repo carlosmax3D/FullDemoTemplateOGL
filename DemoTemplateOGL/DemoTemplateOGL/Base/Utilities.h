@@ -48,6 +48,10 @@ extern bool showStats;
 const float GRAVITY = -9.81f; // Gravity acceleration (m/s²)
 const float TERMINAL_VELOCITY = -50.0f; // Optional: Prevents infinite acceleration
 
+extern bool mouseEnabled;
+extern bool freeMouseCamera;
+
+
 struct GameTime {
 	double lastTick = 0;
 	double deltaTime = 0;
@@ -64,6 +68,7 @@ struct GameActions {
 	double *jump = NULL;
 	bool action = false;
 	bool displayHitboxStats = false;
+    bool lockMouse = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);

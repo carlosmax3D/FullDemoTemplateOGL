@@ -135,6 +135,47 @@ public:
             Position += Right * velocity;
     }
 
+    //ZITOS
+
+    //// Procesa movimiento del mouse en primera persona (FPS)
+    //void ProcessMouseMovementFPS(float xoffset, float yoffset)
+    //{
+    //    xoffset *= MouseSensitivity;
+    //    yoffset *= MouseSensitivity;
+
+    //    Yaw += xoffset;
+    //    Pitch += yoffset;
+
+    //    if (Pitch > 89.0f) Pitch = 89.0f;
+    //    if (Pitch < -89.0f) Pitch = -89.0f;
+
+    //    updateCameraVectors(); // recalcula Front, Right y Up
+    //}
+
+    //// Procesa movimiento del mouse en tercera persona (TPP)
+    //void ProcessMouseMovementTPP(float xoffset, float yoffset)
+    //{
+    //    xoffset *= MouseSensitivity;
+    //    yoffset *= MouseSensitivity;
+
+    //    angleAroundPlayer -= xoffset; // gira alrededor del jugador
+    //    Pitch -= yoffset;
+
+    //    if (Pitch > 89.0f) Pitch = 89.0f;
+    //    if (Pitch < -89.0f) Pitch = -89.0f;
+
+    //    // la posición real se recalcula en CamaraUpdate()
+    //}
+
+    
+    //ZITOS
+
+
+
+
+
+
+
     void movePosition(glm::vec3& avance, float vel) {
         avance.x = Position.x + Front.x * vel;
         avance.y = Position.y + Front.y * vel;
@@ -232,6 +273,8 @@ public:
         return firstPerson;
     }
     float getAngleAroundPlayer() { return angleAroundPlayer; }
+
+
     void calculateAngleAroundPlayer(double val) {
         angleAroundPlayer -= val * 0.5;
         if ((!firstPerson) && angleAroundPlayer > 90)
@@ -239,6 +282,9 @@ public:
         if ((!firstPerson) && angleAroundPlayer < -90)
             angleAroundPlayer = -90;
     }
+
+
+
     void calculateZoomPlayer(float val) {
         DistanceFromPlayer -= val * 0.5f;
     }

@@ -1,5 +1,13 @@
 #include "KeyboardInput.h"
 
+#ifdef _WIN32
+extern HWND hWnd;
+#else
+extern void *hWnd;
+#endif
+extern bool mouseEnabled;//ZITOS
+bool mouseLocked;//ZITOS
+
 class MouseInput;
 MouseInput::MouseInput() {
 	prevP.x = 0;
@@ -49,7 +57,64 @@ void Init() {
 	}
 }//Initizalizes keys
 
-bool KeysEvents(GameActions *actions){
+void ForceShowCursor(bool show) {
+#ifdef _WIN32
+    if (show) {
+        // Asegura que el contador sea >= 0
+        while (ShowCursor(TRUE) < 0);
+    }
+    else {
+        // Asegura que el contador sea < 0
+        while (ShowCursor(FALSE) >= 0);
+    }
+#endif
+}
+
+bool KeysEvents(GameActions* actions) {
+
+
+    //checar esto para error del mouse
+
+//    if (KEYS[input.M]) {
+//        actions->lockMouse = true;
+//        mouseEnabled = !mouseEnabled; // alterna estado
+//
+//#ifdef _WIN32
+//        ShowCursor(!mouseEnabled);    // si mouseEnabled es true, oculta cursor
+//#else
+//        glfwSetInputMode(window, GLFW_CURSOR, mouseEnabled ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+//#endif
+//
+//        KEYS[input.M] = false; // evita que quede presionada
+//
+//
+//        
+//
+//
+//        //ZITOS
+//    }
+
+
+    //ZITOS
+    if (KEYS[input.M]) {
+		actions->lockMouse = true;
+        KEYS[input.M] = false;
+    }
+
+    //ZITOS  
+    //bool checkCollition = false;
+
+    // Teclas de juego
+    if (KEYS[input.P]) {
+        actions->firstPerson = true;
+        KEYS[input.P] = false;
+    }
+    if (KEYS[input.C]) {
+        actions->displayHitboxStats = !actions->displayHitboxStats;
+        KEYS[input.C] = false;
+    }
+
+
 	bool checkCollition = false;
 	if (KEYS[input.P]) {
 		actions->firstPerson = true;
@@ -84,12 +149,27 @@ bool KeysEvents(GameActions *actions){
 	if (KEYS[input.Space] && *actions->jump == 0){
 		*actions->jump = 20;
 	}
-	if (cDelta.getLbtn() && cDelta.getDX() != 0) {
-		actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);
-	}
-	if (cDelta.getRbtn() && cDelta.getDY() != 0) { //KEYS[KEYB_CAMERA]
-		actions->setPitch(cDelta.getDY() > 0 ? 1 : -1);
-	}
+
+
+    //ZITOS
+    if (mouseEnabled) { // Solo si est� bloqueado
+        if (cDelta.getLbtn() && cDelta.getDX() != 0)
+            actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);
+
+        if (cDelta.getRbtn() && cDelta.getDY() != 0)
+            actions->setPitch(cDelta.getDY() > 0 ? 1 : -1);
+    }
+    //ZITOS
+
+	//if (cDelta.getLbtn() && cDelta.getDX() != 0) {
+	//	actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);
+	//}
+ //   if (cDelta.getRbtn() && cDelta.getDY() != 0) { //KEYS[KEYB_CAMERA]
+ //       actions->setPitch(cDelta.getDY() > 0 ? 1 : -1);
+
+ //       
+ //   }
+	
 	if ((!KEYS[KEYB_CAMERA]) && cDelta.getMouseWheel() != 0) {
 		actions->setPlayerZoom(cDelta.getMouseWheel() > 0 ? 1 : -1);
 	}

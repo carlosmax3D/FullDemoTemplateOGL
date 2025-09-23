@@ -365,7 +365,7 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     // Check collisions with objects
     yPos = glm::vec3(0);
     for (int i = 0; i < models.size(); i++) {
-        Model *other = models[i];
+        Model *other = models[i]; break;
         for (int j = 0; j < other->getModelAttributes()->size(); j++) {
             if (this != other && this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
     //            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());

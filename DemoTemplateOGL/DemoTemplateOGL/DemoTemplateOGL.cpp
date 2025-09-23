@@ -54,8 +54,11 @@ int gamePadEvents(GameActions *actions);
 void updatePosCords(Texto* coordenadas);
 void updateFPS(Texto *fps, int totFrames);
 int startGameEngine(void* ptrMsg);
+void lockCursor(bool mouse);
 
 // Propiedades de la ventana
+//unsigned int SCR_WIDTH = 1920;
+//unsigned int SCR_HEIGHT = 1200;
 unsigned int SCR_WIDTH = 800;
 unsigned int SCR_HEIGHT = 600;
 glm::vec2 windowSize;
@@ -64,6 +67,29 @@ bool showStats = true;
 bool newContext = false; // Bandera para identificar si OpenGL 2.0 > esta activa
 struct GameTime gameTime;
 Camera* Camera::cameraInstance = NULL;
+
+//ZITOS
+bool mouseEnabled = true;
+bool freeMouseCamera = false;
+// Variables para controlar el mouse
+double lastX_cam = 0.0;
+double lastY_cam = 0.0;
+bool firstMouse_cam = true;
+
+extern bool mouseLocked; // desde KeyboardInput.cpp
+extern bool mouseEnabled;
+extern MouseInput cDelta;
+bool ignoreNextDelta = false;
+
+
+//glm::vec2 g_windowCenter(0.0f, 0.0f); // Centro de la ventana
+//bool ignoreNextDelta = true; // <-- ignorar el primer delta después de resize
+glm::vec2 g_windowCenter(0.0f, 0.0f);
+glm::vec2 g_lastMousePos(0.0f, 0.0f);
+
+bool firstMouse = true; // ignorar primer delta
+
+//ZITOS
 
 // Objecto de escena y render
 Scene *OGLobj;
@@ -87,6 +113,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gamPad = new GamePadRR(1); // Obtenemos el primer gamepad conectado
     MSG msg = { 0 };
     void *ptrMsg = (void*)&msg;
+    ShowCursor(FALSE);
 #else
 int main(int argc, char** argv){
     if (!glfwInit()){
@@ -115,11 +142,11 @@ int startGameEngine(void *ptrMsg){
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
     Camera* camera = Camera::getInstance();
-    Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
+    Model* model = new Model("models/Gonzalo/Gonzalo.fbx", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
-    scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+    scale = glm::vec3(.019f, .019f, .019f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
     model->setTranslate(&translate);
 
@@ -187,55 +214,97 @@ bool checkInput(GameActions *actions, Scene* scene) {
         mouseActions();
         KeysEvents(actions);
     }
-    Model* OGLobj = scene->getMainModel();
+    //Model* OGLobj = scene->getMainModel();
+    Model* playerModel = scene->getMainModel();  // ← CAMBIADO
+
+    //lineas a checarsa
+    if (actions->lockMouse) {
+        mouseEnabled = !mouseEnabled; // alterna estado
+        lockCursor(false);
+    }
+
+
+
     if (actions->displayHitboxStats){
         showHitbox = !showHitbox;
         showStats = !showStats;
     }
     if (actions->firstPerson) {
-        OGLobj->cameraDetails->setFirstPerson(!OGLobj->cameraDetails->getFirstPerson());
+        playerModel->cameraDetails->setFirstPerson(!playerModel->cameraDetails->getFirstPerson());
     }
-    if (actions->sideAdvance != 0) {
+    /*if (actions->sideAdvance != 0) {
         OGLobj->setNextRotY(OGLobj->getNextRotY() + ((6 * gameTime.deltaTime / 100) * actions->sideAdvance));
-    }
-    if (actions->hAdvance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotY()));
-        pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+    }*/
 
-        OGLobj->setNextTranslate(&pos);
+
+    //ZITOS
+    if (actions->sideAdvance != 0) {
+        //ZITOS
+        glm::vec3 pos = *playerModel->getTranslate();
+        float currentRotationY = playerModel->getRotY();
+
+        // MOVIMIENTO LATERAL: perpendicular a la dirección de mirada (90 grados)
+        pos.x += actions->sideAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(currentRotationY + 90.0f));
+        pos.z += actions->sideAdvance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(currentRotationY + 90.0f));
+        
+        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+        playerModel->setNextTranslate(&pos);
+        //ZITOS
     }
-    if (actions->advance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
-        pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(OGLobj->getRotY()));
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
-        OGLobj->setNextTranslate(&pos);
+    //ZITOS
+
+    if (actions->hAdvance != 0) {
+
+
+		//ZITOS
+        glm::vec3 pos = *playerModel->getTranslate();
+        float currentRotationY = playerModel->getRotY();
+
+        // MOVIMIENTO HORIZONTAL: en la dirección de mirada (o perpendicular, depende de lo que quieras)
+        pos.x += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(currentRotationY + 90.0f));
+        pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(currentRotationY + 90.0f));
+        playerModel->setNextTranslate(&pos);
+		//ZITOS
     }
+
+
     if (*actions->jump > 0){
-        glm::vec3 pos = *OGLobj->getNextTranslate();
+        glm::vec3 pos = *playerModel->getNextTranslate();
         double del = (*actions->jump) * gameTime.deltaTime / 100;
         pos.y += del;
         (*actions->jump) -= del;
         if (*actions->jump < 0.01f)
             *actions->jump = 0.0f;
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-        OGLobj->setNextTranslate(&pos);
+        playerModel->setNextTranslate(&pos);
     }
+	//ZITOS
+    if (actions->advance != 0) {
+
+
+        //ZITOS
+        glm::vec3 pos = *playerModel->getTranslate();
+        float currentRotationY = playerModel->getRotY();
+
+        // MOVIMIENTO ADELANTE/ATRÁS: en la dirección de mirada
+        pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(currentRotationY));
+        pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(currentRotationY));
+        playerModel->setNextTranslate(&pos);
+        //ZITOS
+    }
+    
     if (actions->getAngle() != NULL) {
-        OGLobj->cameraDetails->calculateAngleAroundPlayer((*actions->getAngle()) * (6 * gameTime.deltaTime / 100));
+        //ZITOS
+        //OGLobj->cameraDetails->calculateAngleAroundPlayer((*actions->getAngle()) * (6 * gameTime.deltaTime / 100));
     }
     if (actions->getPitch() != NULL) {
-        OGLobj->cameraDetails->setPitch(OGLobj->cameraDetails->getPitch() + (*actions->getPitch()) * (6 * gameTime.deltaTime / 100));
+        playerModel->cameraDetails->setPitch(playerModel->cameraDetails->getPitch() + (*actions->getPitch()) * (6 * gameTime.deltaTime / 100));
     }
     if (actions->getZoom() != NULL) {
-        OGLobj->cameraDetails->setZoom(OGLobj->cameraDetails->getZoom() + *actions->getZoom() * (6 * gameTime.deltaTime / 100));
+        playerModel->cameraDetails->setZoom(playerModel->cameraDetails->getZoom() + *actions->getZoom() * (6 * gameTime.deltaTime / 100));
     }
     if (actions->getPlayerZoom() != NULL) {
-        OGLobj->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * (6 * gameTime.deltaTime / 100));
+        playerModel->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * (6 * gameTime.deltaTime / 100));
     }
 
     return true; // siempre buscar colision
@@ -254,72 +323,173 @@ bool checkInput(GameActions *actions, Scene* scene) {
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
-        case WM_CREATE: {
-            RECT rect;
-            if (GetClientRect(hWnd, &rect)) 
+    case WM_CREATE: {
+        RECT rect;
+        if (GetClientRect(hWnd, &rect))
+            windowSize = glm::vec2(rect.right - rect.left, rect.bottom - rect.top);
+        else windowSize = glm::vec2(0);
+    } break;
+    case WM_COMMAND: {
+        switch (wParam) {
+        case 9999: memset(KEYS, 0, 256 * sizeof(bool));
+            break;
+        }
+    } break;
+    case WM_MOUSEMOVE: {
+        //int value = lParam;
+        // 
+        //ZITOS
+        //int currMouseX = LOWORD(lParam);
+        //int currMouseY = HIWORD(lParam);
+
+        //if (mouseEnabled) {
+        //    // Calcula delta solo si el mouse está bloqueado
+        //    cDelta.setPosition((float)currMouseX, (float)currMouseY, true);
+        //}
+        //else {
+        //    // Mouse libre, delta cero
+        //    cDelta.setPosition((float)currMouseX, (float)currMouseY, false);
+        //}
+        //ZITOS
+        int currMouseX = LOWORD(lParam);
+        int currMouseY = HIWORD(lParam);
+
+        if (mouseEnabled) {
+            if (ignoreNextDelta) {
+                // Ignoramos este movimiento porque proviene de SetCursorPos
+                cDelta.setPosition((float)currMouseX, (float)currMouseY, false);
+                ignoreNextDelta = false; // limpiar bandera
+            }
+            else {
+                cDelta.setPosition((float)currMouseX, (float)currMouseY, true);
+            }
+        }
+        else {
+            cDelta.setPosition((float)currMouseX, (float)currMouseY, false);
+        }
+        //ZITOS
+
+
+    }break;
+    case WM_TIMER: {
+    } break;
+    case WM_PAINT: {
+    }break;
+    case WM_DESTROY: {
+        if (newContext) {
+            ReleaseDC(hWnd, dc);
+            wglDeleteContext(rc);
+            PostQuitMessage(0);
+        }
+
+        //ZITOS
+        ClipCursor(NULL);   // Libera el cursor al sistema
+        ShowCursor(TRUE);   // Lo vuelve a mostrar      
+        //PostQuitMessage(0);
+
+        //default:
+        //return DefWindowProc(hWnd, message, wParam, lParam);
+        ////ZITOS
+    } break;
+    // 🔹 Liberar el cursor antes de cerrar el juego
+    //    ClipCursor(NULL);   // Libera el cursor al sistema
+    //    ShowCursor(TRUE);   // Lo vuelve a mostrar
+    //    PostQuitMessage(0);
+    //    break;
+
+    //default:
+    //    return DefWindowProc(hWnd, message, wParam, lParam);
+
+    //    return 0;
+    case WM_SIZE: {
+
+            //RECT rect;
+            //if (newContext) {
+            //    //checar esto pra lo del mouse 
+            //    
+            //    //esta opcion del switch se ejecuta una sola vez al arrancar y si se
+            //   // afecta el tama�o de la misma se dispara de nuevo
+            //    int height = HIWORD(lParam),
+            //        width = LOWORD(lParam);
+            //    if (height == 0)
+            //        width = 1;
+
+            //    SCR_HEIGHT = height;
+            //    SCR_WIDTH = width;
+
+            //    glViewport(0, 0, width, height);
+
+            //    //RECT rect;
+
+            //    if (GetClientRect(hWnd, &rect)) 
+            //        windowSize = glm::vec2(rect.right - rect.left, rect.bottom - rect.top);
+            //    else windowSize = glm::vec2(0);
+            //}
+
+
+
+        RECT rect;
+        if (newContext) {
+            int height = HIWORD(lParam),
+                width = LOWORD(lParam);
+            if (height == 0)
+                width = 1;
+
+            SCR_HEIGHT = height;
+            SCR_WIDTH = width;
+
+            glViewport(0, 0, width, height);
+
+            if (GetClientRect(hWnd, &rect))
                 windowSize = glm::vec2(rect.right - rect.left, rect.bottom - rect.top);
-            else windowSize = glm::vec2(0);
-        } break;
-        case WM_COMMAND: {
-            switch (wParam) {
-                case 9999: memset(KEYS, 0, 256 * sizeof(bool));
-                        break;
-            }
-        } break;
-        case WM_MOUSEMOVE: {
-            int value = lParam;
-        }break;
-        case WM_TIMER: {
-        } break;
-        case WM_PAINT: {
-        }break;
-        case WM_DESTROY: {
-            if (newContext) {
-                ReleaseDC(hWnd, dc);
-                wglDeleteContext(rc);
-                PostQuitMessage(0);
-            }
-        } break;
-        case WM_SIZE: {
-            if (newContext) {
-                //esta opcion del switch se ejecuta una sola vez al arrancar y si se
-                //afecta el tama�o de la misma se dispara de nuevo
-                int height = HIWORD(lParam),
-                    width = LOWORD(lParam);
-                if (height == 0)
-                    width = 1;
-                SCR_HEIGHT = height;
-                SCR_WIDTH = width;
-                glViewport(0, 0, width, height);
-                RECT rect;
-                if (GetClientRect(hWnd, &rect)) 
-                    windowSize = glm::vec2(rect.right - rect.left, rect.bottom - rect.top);
-                else windowSize = glm::vec2(0);
-            }
-        } break;
-        case WM_LBUTTONDOWN: {
-            cDelta.setLbtn(true);
-        }break;
-        case WM_LBUTTONUP: {
-            cDelta.setLbtn(false);
-        }break;
-        case WM_RBUTTONDOWN: {
-            cDelta.setRbtn(true);
-        }break;
-        case WM_RBUTTONUP: {
-            cDelta.setRbtn(false);
-        }break;
-        case WM_MOUSEWHEEL: {
-            char delta = HIWORD(wParam);
-            cDelta.setMouseWheel(delta);
-        }break;
-        case WM_KEYDOWN: {
-            KEYS[wParam] = true;
-        } break;
-        case WM_KEYUP: {
-//            if (wParam == KEYB_CAMERA || wParam == KEYB_HMOVEMENT)
-                KEYS[wParam] = false;
-        } break;
+            else
+                windowSize = glm::vec2(0);
+        }
+
+        // Bloquear cursor dentro de la ventana al reescalar
+        RECT clipRect = rect;
+        POINT ul = { clipRect.left, clipRect.top };
+        POINT lr = { clipRect.right, clipRect.bottom };
+        MapWindowPoints(hWnd, NULL, &ul, 1);
+        MapWindowPoints(hWnd, NULL, &lr, 1);
+        clipRect.left = ul.x; clipRect.top = ul.y;
+        clipRect.right = lr.x; clipRect.bottom = lr.y;
+        ClipCursor(&clipRect);
+
+        // Reposicionar cursor al centro
+        POINT center = { (clipRect.left + clipRect.right) / 2, (clipRect.top + clipRect.bottom) / 2 };
+        SetCursorPos(center.x, center.y);
+
+        // Evitar salto de cámara
+        cDelta.setPosition((float)center.x, (float)center.y, false);
+        ignoreNextDelta = true;
+          
+
+    } break;
+    case WM_LBUTTONDOWN: {
+        cDelta.setLbtn(true);
+    }break;
+    case WM_LBUTTONUP: {
+        cDelta.setLbtn(false);
+    }break;
+    case WM_RBUTTONDOWN: {
+        cDelta.setRbtn(true);
+    }break;
+    case WM_RBUTTONUP: {
+        cDelta.setRbtn(false);
+    }break;
+    case WM_MOUSEWHEEL: {
+        char delta = HIWORD(wParam);
+        cDelta.setMouseWheel(delta);
+    }break;
+    case WM_KEYDOWN: {
+        KEYS[wParam] = true;
+    } break;
+    case WM_KEYUP: {
+//      if (wParam == KEYB_CAMERA || wParam == KEYB_HMOVEMENT)
+        KEYS[wParam] = false;
+    } break;
+        
     }
     return DefWindowProc(hWnd, message, wParam, lParam);
 }
@@ -411,16 +581,42 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
         return 1;
     }
     gladLoadGL();
-    // create window
+     //create window
+
+
+    //ZITOS
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+    //ZITOS
+
+
+
     RECT wr = { 0, 0, SCR_WIDTH, SCR_HEIGHT };
     AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 
-    hWnd = CreateWindow(szWindowClass, szTitle,
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        100, 100,
-        wr.right - wr.left, //SCR_WIDTH, 
-        wr.bottom - wr.top, //SCR_HEIGHT,
-        NULL, NULL, hInstance, NULL);
+    //hWnd = CreateWindow(szWindowClass, szTitle,
+    //    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+    //    100, 100,
+    //    wr.right - wr.left, //SCR_WIDTH, 
+    //    wr.bottom - wr.top, //SCR_HEIGHT,
+    //    NULL, NULL, hInstance, NULL);
+
+    //ZITOS
+    hWnd = CreateWindow(
+        szWindowClass,
+        szTitle,
+        /*WS_POPUP | WS_VISIBLE,*/
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE,  // Con bordes
+        0, 0,                               // Posición inicial (arriba izquierda)
+        wr.right - wr.left,                 // Ancho ajustado
+        wr.bottom - wr.top,                 // Alto ajustado
+        NULL, NULL, hInstance, NULL
+    );
+    int posX = (screenWidth - (wr.right - wr.left)) / 2;
+    int posY = (screenHeight - (wr.bottom - wr.top)) / 2;
+    SetWindowPos(hWnd, HWND_TOP, posX, posY, wr.right - wr.left, wr.bottom - wr.top, SWP_SHOWWINDOW);
+    //ZITOS
+
     if (hWnd == NULL) {
         return 1;
     }
@@ -455,6 +651,15 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
     gladLoadGL();
     newContext = true;
     return 0;
+
+
+
+
+
+
+    return 0;
+
+
 }
 #else
 void window_size_callback(GLFWwindow* window, int width, int height){
@@ -500,7 +705,34 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
 }
 #endif
 
+//void mouseActions() {
+//    double x, y;
+//#ifdef _WIN32 
+//    POINT p;
+//    GetCursorPos(&p);
+//    ScreenToClient(hWnd, &p);
+//    x = p.x;
+//    y = p.y;
+//#else
+//    glfwGetCursorPos(window, &x, &y);
+//#endif
+//    glm::vec2 scale = glm::vec2(x, y) / windowSize;
+//    OGLobj->getMainModel()->cameraDetails->setPitch(scale.y * 70.0f - 30.f);
+//    scale = cDelta.setPosition(x, y, cDelta.getLbtn() || cDelta.getRbtn());
+////   scale = cDelta.setPosition(x, y, true);
+//    if (scale.x != 0)
+//        OGLobj->getMainModel()->cameraDetails->calculateAngleAroundPlayer((scale.x / abs(scale.x)) * -3.0);
+//}
+
+//HORIZONTAL SI
+
+
 void mouseActions() {
+
+    // Si el mouse no está habilitado, salir de la función
+    if (!mouseEnabled) {
+        return;
+    }
     double x, y;
 #ifdef _WIN32 
     POINT p;
@@ -511,13 +743,122 @@ void mouseActions() {
 #else
     glfwGetCursorPos(window, &x, &y);
 #endif
-    glm::vec2 scale = glm::vec2(x, y) / windowSize;
-    OGLobj->getMainModel()->cameraDetails->setPitch(scale.y * 70.0f - 30.f);
-    scale = cDelta.setPosition(x, y, cDelta.getLbtn() || cDelta.getRbtn());
-/*    scale = cDelta.setPosition(x, y, true);
-    if (scale.x != 0)
-        OGLobj->getMainModel()->cameraDetails->calculateAngleAroundPlayer((scale.x / abs(scale.x)) * -3.0);*/
+
+    // Obtener el centro de la ventana
+    long centerX = windowSize.x / 2;
+    long centerY = windowSize.y / 2;
+
+    // Calcular el desplazamiento del mouse desde el centro
+    double deltaX = x - centerX;
+    double deltaY = y - centerY;
+
+
+
+    // Solo procesar si el mouse se ha movido significativamente
+    if (abs(deltaX) > 0.1 || abs(deltaY) > 0.1) {
+        Scenario* scenario = dynamic_cast<Scenario*>(OGLobj);
+        if (!scenario) return;
+
+        Model* player = scenario->getMainModel();
+
+        // Factor de sensibilidad del mouse - puedes ajustar este valor
+        float sensitivity = 0.1f;
+
+        // Rotación horizontal (Yaw) - CORREGIDO: sin invertir
+        float rotationAmount = -deltaX * sensitivity;
+        float newRotationY = player->getNextRotY() + rotationAmount;
+        player->setNextRotY(newRotationY);
+
+        // Rotación vertical (Pitch) - CORREGIDO: quitado el signo negativo
+        float pitchChange = deltaY * sensitivity; // Sin negativo para corrección
+        float newPitch = player->cameraDetails->getPitch() + pitchChange;
+
+        // Limitar el ángulo de pitch para evitar volteretas
+        newPitch = glm::clamp(newPitch, -89.0f, 89.0f);
+        player->cameraDetails->setPitch(newPitch);
+
+        // Actualizar la cámara
+        player->cameraDetails->CamaraUpdate(player->getNextRotY(), player->getNextTranslate());
+
+         //Centrar el cursor nuevamente en la ventana
+#ifdef _WIN32 
+        POINT centerPoint = { static_cast<LONG>(centerX), static_cast<LONG>(centerY) };
+        ClientToScreen(hWnd, &centerPoint);
+        SetCursorPos(centerPoint.x, centerPoint.y);
+#else
+        glfwSetCursorPos(window, centerX, centerY);
+#endif
+    }
 }
+
+
+
+
+//void mouseActions() {
+//    if (!mouseEnabled) return;
+//
+//    double xpos, ypos;
+//#ifdef _WIN32
+//    POINT p;
+//    GetCursorPos(&p);
+//    ScreenToClient(hWnd, &p);
+//    xpos = p.x;
+//    ypos = p.y;
+//#else
+//    glfwGetCursorPos(window, &xpos, &ypos);
+//#endif
+//
+//    // Primer movimiento
+//    if (firstMouse_cam) {
+//        lastX_cam = xpos;
+//        lastY_cam = ypos;
+//        firstMouse_cam = false;
+//    }
+//
+//    double offsetX = xpos - lastX_cam;
+//    double offsetY = ypos - lastY_cam;
+//
+//    lastX_cam = xpos;
+//    lastY_cam = ypos;
+//
+//    float sensitivity = 0.1f;
+//    offsetX *= sensitivity;
+//    offsetY *= sensitivity;
+//
+//    Scenario* scenario = dynamic_cast<Scenario*>(OGLobj);
+//    if (!scenario) return;
+//    Model* player = scenario->getMainModel();
+//    if (!player) return;
+//
+//    // ✅ Movimiento horizontal libre como en el primer código
+//    player->setNextRotY(player->getRotY() - offsetX);
+//
+//    // ✅ Movimiento vertical limitado
+//    float newPitch = player->cameraDetails->getPitch() + offsetY;
+//    newPitch = glm::clamp(newPitch, -89.0f, 89.0f);
+//    player->cameraDetails->setPitch(newPitch);
+//
+//    // Actualizar cámara
+//    player->cameraDetails->CamaraUpdate(player->getRotY(), player->getTranslate());
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int isProgramRunning(void *ptr){
     double currentTime = get_nanos() / 1000000.0;
@@ -531,14 +872,17 @@ int isProgramRunning(void *ptr){
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
         glfwSetWindowSizeCallback(window, window_size_callback);
         glfwSetMouseButtonCallback(window, mouse_button_callback);
+        lockCursor(true);
         renderiza = true;
     }
     flag = !glfwWindowShouldClose(window);
     if (flag)
         glfwPollEvents();
 #else
-    if (!renderiza)
+    if (!renderiza){
         renderiza = true;
+        lockCursor(true);
+    }
     MSG &msg = *(MSG*)ptr;
     if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
         flag = msg.message == WM_QUIT? 0 : 1;
@@ -558,15 +902,23 @@ void swapGLBuffers(){
 
 }
 
+
+
+
+//ZITOS
 int finishProgram(void *ptr){
 #ifdef _WIN32
-    MSG &msg = *(MSG*)ptr;
+    ShowCursor(TRUE); // Siemmostrar el cursor al salir
+    MSG& msg = *(MSG*)ptr;
     return (int)msg.wParam;
 #else
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); // Restaurar cursor
     glfwTerminate();
     return 0;
 #endif
 }
+//ZITOS
+
 
 int gamePadEvents(GameActions *actions){
 #ifdef _WIN32 
@@ -613,4 +965,36 @@ void updateFPS(Texto *fps, int totFrames){
     swprintf((wchar_t*)conv, 50, L"%d", totFrames);
     wcscat_s((wchar_t*)conv, 50, L" FPS");
     fps->initTexto(conv);
+}
+
+void lockCursor(bool mouse){
+    //ZITOS
+#ifdef _WIN32
+        if (mouseEnabled) {
+            // Bloquea el mouse
+            RECT rect;
+            GetClientRect(hWnd, &rect);
+            POINT ul = { rect.left, rect.top };
+            POINT lr = { rect.right, rect.bottom };
+            MapWindowPoints(hWnd, NULL, &ul, 1);
+            MapWindowPoints(hWnd, NULL, &lr, 1);
+            rect.left = ul.x; rect.top = ul.y; rect.right = lr.x; rect.bottom = lr.y;
+            ClipCursor(&rect);
+            ShowCursor(FALSE);
+            firstMouse = mouse; // <-- importante para evitar saltos
+        }
+        else {
+            // Libera el mouse
+            ClipCursor(NULL);
+            ShowCursor(TRUE);
+        }
+#else
+// Para GLFW
+    if (mouseEnabled) {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }else{
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+#endif
+    //ZITOS
 }

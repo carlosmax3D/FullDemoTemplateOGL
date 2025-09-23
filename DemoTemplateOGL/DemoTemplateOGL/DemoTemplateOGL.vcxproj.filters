@@ -63,17 +63,8 @@
     <ClInclude Include="Base\camera.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="WinAPIHeaders\DemoTemplateOGL.h">
-      <Filter>Header Files\WinAPIHeaders</Filter>
-    </ClInclude>
-    <ClInclude Include="WinAPIHeaders\framework.h">
-      <Filter>Header Files\WinAPIHeaders</Filter>
-    </ClInclude>
     <ClInclude Include="Base\glext.h">
       <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="WinAPIHeaders\Resource.h">
-      <Filter>Header Files\WinAPIHeaders</Filter>
     </ClInclude>
     <ClInclude Include="InputDevices\GamePadRR.h">
       <Filter>Header Files\InputDevices</Filter>
@@ -83,9 +74,6 @@
     </ClInclude>
     <ClInclude Include="Base\mesh.h">
       <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="WinAPIHeaders\targetver.h">
-      <Filter>Header Files\WinAPIHeaders</Filter>
     </ClInclude>
     <ClInclude Include="Base\wglext.h">
       <Filter>Header Files\Base</Filter>
