@@ -9,6 +9,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <ctime>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "Utilities.h"
@@ -105,13 +106,23 @@ void LOGGER::LOG::question(const std::string log, const std::string title) {
 void LOGGER::LOG::question(const char* log) {
 	processLog(log, "Question", "QSTO", MB_ICONQUESTION);
 }
+void formatDate(char* result, tm* timeptr){
+  sprintf(result, "%02d/%02d/%04d %.2d:%.2d:%.2d|",
+    timeptr->tm_mday, timeptr->tm_mon,
+    1900 + timeptr->tm_year, timeptr->tm_hour,
+    timeptr->tm_min, timeptr->tm_sec);	
+}
 void LOGGER::LOG::processLog(const char* log, const char* title, const char* type, unsigned int MB_TYPE) {
 #ifdef DEBUGFILE
-	std::string filename(this->name);
+    time_t now = time(nullptr);
+	tm *timeptr = localtime(&now);
+	char datetime[26] = {0};
+	formatDate(datetime, timeptr);
+  	std::string filename(this->name);
 	filename.append(".log");
 	std::ofstream f(filename, std::ios::app);
 	if (f.is_open()) {
-		f << type << "::" << title << ":: " << log << std::endl;
+		f << datetime << type << "::" << title << ":: " << log << std::endl;
 		f.close();
 	}
 #endif
