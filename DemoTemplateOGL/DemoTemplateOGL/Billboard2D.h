@@ -59,6 +59,12 @@ public:
         glm::mat4 model = glm::mat4(1.0f);
     //	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
         model = glm::translate(model, *this->getTranslate()); // translate it down so it's at the center of the scene
+        if (this->getRotX() != 0)
+            model = glm::rotate(model, glm::radians(this->getRotX()), glm::vec3(1, 0, 0));
+        if (this->getRotY() != 0)
+            model = glm::rotate(model, glm::radians(this->getRotY()), glm::vec3(0, 1, 0));
+        if (this->getRotZ() != 0)
+            model = glm::rotate(model, glm::radians(this->getRotZ()), glm::vec3(0, 0, 1));
         if (this->getScale() != NULL)
             model = glm::scale(model, *this->getScale());	// it's a bit too big for our scene, so scale it down
 

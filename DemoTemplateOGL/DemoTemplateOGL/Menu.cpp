@@ -1,0 +1,103 @@
+#include "Menu.h"
+
+Menu::Menu(Camera *cam){
+	InitGraph(cam);
+}
+
+Menu::Menu(Model *camIni){
+    InitGraph(camIni->cameraDetails);
+}
+
+void Menu::InitGraph(Camera *camara){
+    glm::vec3 translate;
+	glm::vec3 scale;
+    glm::vec3 rotation;
+    Billboard2D* main = new Billboard2D((WCHAR*)L"textures/arrow.png", 6, 6, 690, 120, 0, camara);
+	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
+	main->setScale(&scale);
+    main->setRotZ(90);
+	this->camara = main;
+    billBoard2D.push_back(main);
+    billBoard2D.push_back(new Billboard2D((WCHAR*)L"textures/Menu.png", 6, 6, 100, 25, 0, camara));
+	scale = glm::vec3(600.0f, 600.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
+    billBoard2D.back()->setScale(&scale);
+    menuOption = 1;
+}
+
+void Menu::inicializaBillboards(){
+
+}
+
+int Menu::update(){
+    glm::vec3 translate;
+    switch(menuOption){
+        case 1: translate = glm::vec3(690,120,0);
+                break;
+        case 2: translate = glm::vec3(690,220,0);
+                break;
+        case 3: translate = glm::vec3(690,320,0);
+                break;
+        case 4: translate = glm::vec3(690,420,0);
+                break;
+        default: translate = glm::vec3(690,menuOption > 4 ? 420 : 120,0);
+                 menuOption = menuOption > 4 ? 4 : 1;
+                break;
+    }
+    camara->setTranslate(&translate);
+    camara->setNextTranslate(&translate);
+    return 0;
+}
+
+Scene* Menu::Render(){
+    for(Billboard2D *b : billBoard2D)
+        b->Draw();
+    return this;
+}
+
+std::vector<Model*> *Menu::getLoadedModels(){
+
+}
+
+std::vector<Billboard*> *Menu::getLoadedBillboards(){
+
+}
+
+std::vector<BillboardAnimation*> *Menu::getLoadedBillboardsAnimation(){
+    
+}
+std::vector<Billboard2D*> *Menu::getLoadedBillboards2D(){
+
+}
+	
+std::vector<Texto*> *Menu::getLoadedText(){
+
+}
+
+Model* Menu::getMainModel(){
+
+}
+
+void Menu::setMainModel(Model* mainModel){
+
+}
+
+float Menu::getAngulo(){
+
+}
+
+void Menu::setAngulo(float angulo){
+
+}
+
+SkyDome* Menu::getSky(){
+
+}
+
+Terreno* Menu::getTerreno(){
+}
+
+//    void update() override;
+Menu::~Menu(){
+    for(Billboard2D *b : billBoard2D)
+        delete b;
+}

@@ -42,6 +42,7 @@ enum Ejes { EjeX, EjeY, EjeZ };
 extern double get_nanos();
 extern unsigned int SCR_WIDTH;
 extern unsigned int SCR_HEIGHT;
+extern int menuOption;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
 extern bool showStats;
@@ -64,6 +65,7 @@ struct GameActions {
 	double *jump = NULL;
 	bool action = false;
 	bool displayHitboxStats = false;
+	bool menu = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);
