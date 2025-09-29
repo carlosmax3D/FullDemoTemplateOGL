@@ -15,6 +15,7 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Principal.h"
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -115,7 +116,7 @@ int startGameEngine(void *ptrMsg){
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
     Camera* camera = Camera::getInstance();
-    Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
+    Model* model = new Principal("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
