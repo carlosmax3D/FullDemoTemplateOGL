@@ -75,8 +75,10 @@ Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y,
 	bool alpha = true;
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
-	ModelAttributes attr{0};
-	this->getModelAttributes()->push_back(attr);
+	if (this->getModelAttributes()->size() == 0){
+		ModelAttributes attr{0};
+		this->getModelAttributes()->push_back(attr);
+	}
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
 	texturaB = TextureFromFile(stext, this->directory, false, true, &alpha);
 	Texture t;
@@ -129,11 +131,14 @@ void Billboard::Draw() {
 	}
 	if (getDefaultShader()) {
 		gpuDemo->use();
-		Model::prepShader(*gpuDemo, (*this->getModelAttributes())[0]);
-		prepShader(*gpuDemo);
-		gpuDemo->setInt("texture_diffuse1", 0);
-		Draw(*gpuDemo);
-		gpuDemo->desuse();
+        auto attributes = this->getModelAttributes();
+        for (int i = 0 ; i < attributes->size() ; i++){
+            Model::prepShader(*gpuDemo, attributes->at(i));
+            prepShader(*gpuDemo, i);
+            gpuDemo->setInt("texture_diffuse1", 0);
+            Model::Draw(*gpuDemo, i);
+        }
+        gpuDemo->desuse();
 	} else Draw(*gpuDemo);
 }
 
@@ -143,7 +148,7 @@ void Billboard::Draw(Shader &shader) {
 //	glEnable(GL_DEPTH_TEST);
 }
 
-void Billboard::prepShader(Shader& shader) {
+void Billboard::prepShader(Shader& shader, int idx) {
 	glm::mat4 projection = cameraDetails->getProjection();
 	glm::mat4 view = cameraDetails->getView();
 

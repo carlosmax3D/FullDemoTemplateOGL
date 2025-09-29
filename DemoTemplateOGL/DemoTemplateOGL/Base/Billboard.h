@@ -33,7 +33,7 @@ public:
 
 	virtual void Draw(Shader &shader);
 
-	virtual void prepShader(Shader& shader);
+	virtual void prepShader(Shader& shader, int idx = 0);
 
 	void setTextureCoords(float *tCoords);
 };

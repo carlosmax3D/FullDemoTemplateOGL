@@ -45,7 +45,6 @@ class MouseInput {
 		void setMouseWheel(char x);
 };
 	extern struct Input input;
-	extern bool KEYS[256];
 	extern bool KeysEvents(GameActions *obj);
 	extern void Init();
 	extern MouseInput cDelta;

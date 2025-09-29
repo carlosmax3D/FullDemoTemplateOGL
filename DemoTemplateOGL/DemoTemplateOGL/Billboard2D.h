@@ -39,10 +39,13 @@ public:
         }
         if (getDefaultShader()) {
             gpuDemo->use();
-            Model::prepShader(*gpuDemo,(*getModelAttributes())[0]);
-            prepShader(*gpuDemo);
-            gpuDemo->setInt("texture_diffuse1", 0);
-            Draw(*gpuDemo);
+            auto attributes = this->getModelAttributes();
+            for (int i = 0 ; i < attributes->size() ; i++){
+                Model::prepShader(*gpuDemo, attributes->at(i));
+                prepShader(*gpuDemo, i);
+                gpuDemo->setInt("texture_diffuse1", 0);
+                Model::Draw(*gpuDemo, i);
+            }
             gpuDemo->desuse();
         } else Draw(*gpuDemo);
     }
@@ -51,17 +54,22 @@ public:
         Billboard::Draw(shader);
     }
 
-    void prepShader(Shader& shader){
+    void prepShader(Shader& shader, int idx = 0){
     //	glm::mat4 projection = cameraDetails->cameraDetails->getProjection();
         glm::mat4 projection = glm::ortho(0.0f, (SCR_WIDTH+0.0f), (SCR_HEIGHT+0.0f), 0.0f, -1.0f, 1.0f);
         glm::mat4 view = cameraDetails->getView();
-
+        ModelAttributes &attr = this->getModelAttributes()->at(idx);
         glm::mat4 model = glm::mat4(1.0f);
     //	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-        model = glm::translate(model, *this->getTranslate()); // translate it down so it's at the center of the scene
-        if (this->getScale() != NULL)
-            model = glm::scale(model, *this->getScale());	// it's a bit too big for our scene, so scale it down
-
+        model = glm::translate(model, attr.translate);  // translate it down so it's at the center of the scene
+        if (this->getRotX() != 0) 
+            model = glm::rotate(model, glm::radians(attr.rotX), glm::vec3(1, 0, 0)); 
+        if (this->getRotY() != 0)
+            model = glm::rotate(model, glm::radians(attr.rotY), glm::vec3(0, 1, 0)); 
+        if (this->getRotZ() != 0) 
+            model = glm::rotate(model, glm::radians(attr.rotZ), glm::vec3(0, 0, 1)); 
+        if (this->getScale() != NULL) 
+            model = glm::scale(model, attr.scale);	// it's a bit too big for our scene, so scale it down 
         shader.setMat4("projection", projection);
         shader.setMat4("view", view);
         shader.setMat4("model", model);
