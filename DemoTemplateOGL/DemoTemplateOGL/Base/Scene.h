@@ -9,6 +9,7 @@
 #include "Water.h"
 #include "Animator.h"
 #include "Animation.h"
+#include "Principal.h"
 
 class Scene {
 	public:
@@ -33,6 +34,7 @@ class Scene {
             setAngulo(angulo);
             getSky()->setRotY(angulo);
             Model* camara = getMainModel();
+			bool perderVida = false;
 			for (int i = 0; i < getLoadedModels()->size(); i++){
 				auto it = getLoadedModels()->begin() + i;
 				Model *collider = NULL, *model = *it;
@@ -49,6 +51,7 @@ class Scene {
 						idxCollider = mcollider.attrIdx;
 					}
 					if (collider != NULL && model == camara){
+						perderVida = true;
 						if (ejeColision.y == 1){
 							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
 							if (removeCollideModel(collider, idxCollider))
@@ -58,6 +61,12 @@ class Scene {
 					if (j < 0) j = 0;
 				}
 				if (i < 0) i = 0;
+			}
+			if (perderVida){
+				Principal *principal = (Principal*)camara;
+				memset(KEYS, 0, 256);
+				if (principal->restaVida() == 0)
+					INFO("PERDISTE", "JEJE");
 			}
 			// Actualizamos la camara
             camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
