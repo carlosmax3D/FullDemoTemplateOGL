@@ -15,6 +15,7 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Menu.h"
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -64,9 +65,14 @@ bool showStats = true;
 bool newContext = false; // Bandera para identificar si OpenGL 2.0 > esta activa
 struct GameTime gameTime;
 Camera* Camera::cameraInstance = NULL;
+int menuOption = 1;
+bool menuActive = false;
+GameActions prevActions;
+bool gameRunning = true;
 
 // Objecto de escena y render
-Scene *OGLobj;
+Scene *OGLobj = NULL;
+Menu *menu = NULL;
 
 #ifdef _WIN32 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -147,6 +153,8 @@ int startGameEngine(void *ptrMsg){
         int totFrames = 0;
         double deltasCount = 0;
         double jump = 0;
+        prevActions.jump = &jump;
+        menu = new Menu(model);
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (isProgramRunning(ptrMsg)) {
             deltasCount += gameTime.deltaTime;
@@ -164,6 +172,10 @@ int startGameEngine(void *ptrMsg){
             bool checkCollition = checkInput(&actions, OGLobj);
             int cambio = OGLobj->update();
             Scene *escena = OGLobj->Render();
+            if (menuActive){
+                menu->update(menuOption);
+                menu->Render();
+            }
             if (escena != OGLobj) {
                 delete OGLobj;
                 OGLobj = escena;
@@ -175,6 +187,7 @@ int startGameEngine(void *ptrMsg){
     }catch(...){
     }
     model = OGLobj != NULL ? OGLobj->getMainModel() : model;
+    if (menu != NULL) delete menu;
     if (OGLobj != NULL) delete OGLobj;
     if (camera != NULL) delete camera;
     if (model != NULL) delete model;
@@ -190,6 +203,20 @@ bool checkInput(GameActions *actions, Scene* scene) {
     } else {
         mouseActions();
         KeysEvents(actions);
+    }
+    if (actions->menu){
+        menuActive = !menuActive;
+        menuOption = 1;
+    }
+    if (menuActive){
+        if (prevActions.advance != actions->advance){
+            menuOption -= actions->advance;
+            prevActions.advance = actions->advance;
+        }
+        if (actions->action && menuOption == 4){
+            gameRunning = false;
+        }
+        return true;
     }
     Model* OGLobj = scene->getMainModel();
     if (actions->displayHitboxStats){
@@ -471,10 +498,14 @@ void window_size_callback(GLFWwindow* window, int width, int height){
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-    char k = (key == GLFW_KEY_LEFT_SHIFT)? input.Shift : key;
+    unsigned char k = (key == GLFW_KEY_LEFT_SHIFT)? input.Shift : key;
     if (action == GLFW_PRESS || action == GLFW_REPEAT || action == GLFW_RELEASE){
-        if (k > 5 && k < 10)
+        if ((k > 5 && k < 10) || k <= 1)
             switch(k){
+                case 0: KEYS[input.Escape] = GLFW_RELEASE == action ? false : true;
+                        break;
+                case 1: KEYS[input.Enter] = GLFW_RELEASE == action ? false : true;
+                        break;
                 case 6: KEYS[input.Right] = GLFW_RELEASE == action ? false : true;
                     break;
                 case 7: KEYS[input.Left] = GLFW_RELEASE == action ? false : true;
@@ -550,7 +581,7 @@ int isProgramRunning(void *ptr){
         DispatchMessage(&msg);
     }
 #endif
-    return flag;
+    return flag && gameRunning;
 }
 
 void swapGLBuffers(){

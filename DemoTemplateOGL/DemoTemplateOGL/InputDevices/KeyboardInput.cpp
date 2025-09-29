@@ -51,6 +51,14 @@ void Init() {
 
 bool KeysEvents(GameActions *actions){
 	bool checkCollition = false;
+	if (KEYS[input.Escape]){
+		actions->menu = true;
+		KEYS[input.Escape] = false;
+	}
+	if (KEYS[input.Enter]){
+		actions->action = true;
+		KEYS[input.Enter] = false;
+	}
 	if (KEYS[input.P]) {
 		actions->firstPerson = true;
 		KEYS[input.P] = false;
