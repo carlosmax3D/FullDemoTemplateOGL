@@ -161,6 +161,7 @@
     <ClInclude Include="Billboard2DAnimation.h" />
     <ClInclude Include="CollitionBox.h" />
     <ClInclude Include="KDTree\CollitionDetection.h" />
+    <ClInclude Include="Principal.h" />
     <ClInclude Include="Texto.h" />
     <ClInclude Include="Water.h" />
     <ClInclude Include="WinAPIHeaders\DemoTemplateOGL.h" />
