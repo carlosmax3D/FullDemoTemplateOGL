@@ -1,0 +1,48 @@
+// ================================
+// TEXTURE & SAMPLER
+// ================================
+Texture2D texture_diffuse1 : register(t0);
+SamplerState samplerLinear : register(s0);
+
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+    float3 color;          int pad8;
+};
+
+// ================================
+// INPUT FROM VERTEX SHADER
+// ================================
+struct PS_INPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD0;
+};
+
+// ================================
+// MAIN
+// ================================
+float4 main(PS_INPUT input) : SV_TARGET
+{
+    return float4(color, 0.6); // translucen blue
+}
