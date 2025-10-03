@@ -15,6 +15,7 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Lluvia.h"
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -147,6 +148,7 @@ int startGameEngine(void *ptrMsg){
         int totFrames = 0;
         double deltasCount = 0;
         double jump = 0;
+        Lluvia lluvia(50.0f, 50.0f, 50.0f, camera);
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (isProgramRunning(ptrMsg)) {
             deltasCount += gameTime.deltaTime;
@@ -164,6 +166,8 @@ int startGameEngine(void *ptrMsg){
             bool checkCollition = checkInput(&actions, OGLobj);
             int cambio = OGLobj->update();
             Scene *escena = OGLobj->Render();
+            lluvia.Update();
+            lluvia.Draw();
             if (escena != OGLobj) {
                 delete OGLobj;
                 OGLobj = escena;
