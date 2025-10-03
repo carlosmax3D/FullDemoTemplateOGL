@@ -1,0 +1,106 @@
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+};
+
+// ================================
+// INPUT LAYOUT
+// ================================
+struct VS_INPUT
+{
+    float3 Position   : POSITION;     // aPos (quad local)
+    float2 TexCoord   : TEXCOORD0;     // aTexCoord
+    float3 aNormal    : NORMAL;
+    float3 tangent    : TANGENT;
+    float3 bitangent  : BINORMAL;
+
+    uint4 boneIds     : BLENDINDICES;
+    float4 weights    : BLENDWEIGHT;
+
+    // --- Instancing (slot 1) ---
+    float3 InstancePos: TEXCOORD1;     // mPos (location = 7)
+    float3 scale      : TEXCOORD2;
+    float  rotX       : TEXCOORD3;
+    float  rotY       : TEXCOORD4;
+    float  rotZ       : TEXCOORD5;
+    float  enabled    : TEXCOORD6;
+};
+
+struct GS_INPUT
+{
+    float3 pos : TEXCOORD0;
+};
+
+struct GS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD0;
+};
+
+[maxvertexcount(4)]
+void main(
+    point GS_INPUT input[1],
+    inout TriangleStream<GS_OUTPUT> triStream
+)
+{
+    GS_OUTPUT o;
+
+    float3 pos = input[0].pos;
+
+    float size = 0.1f;
+
+    // Dirección desde cámara a la gota
+    float3 forward = normalize(pos - cameraPos);
+
+    float3 worldUp = float3(0.0f, 1.0f, 0.0f);
+
+    // Ejes del billboard
+    float3 right = normalize(cross(worldUp, forward));
+    float3 up    = normalize(cross(forward, right));
+
+    float3 p0 = pos - right * size - up * size;
+    float3 p1 = pos + right * size - up * size;
+    float3 p2 = pos - right * size + up * size;
+    float3 p3 = pos + right * size + up * size;
+
+    o.Position = mul(mul(float4(p0,1), view), projection);
+    o.TexCoord = float2(0,0);
+    triStream.Append(o);
+
+    o.Position = mul(mul(float4(p1,1), view), projection);
+    o.TexCoord = float2(1,0);
+    triStream.Append(o);
+
+    o.Position = mul(mul(float4(p2,1), view), projection);
+    o.TexCoord = float2(0,1);
+    triStream.Append(o);
+
+    o.Position = mul(mul(float4(p3,1), view), projection);
+    o.TexCoord = float2(1,1);
+    triStream.Append(o);
+
+    triStream.RestartStrip();
+}
