@@ -60,8 +60,10 @@ Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, 
     long tLength = wcslen((const wchar_t*)textura);
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
-	ModelAttributes attr{0};
-	this->getModelAttributes()->push_back(attr);
+	if (this->getModelAttributes()->size() == 0){
+		ModelAttributes attr{0};
+		this->getModelAttributes()->push_back(attr);
+	}
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
 	Texture t;
 	t.id = glTextura;
