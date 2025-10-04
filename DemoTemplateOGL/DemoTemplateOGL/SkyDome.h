@@ -22,8 +22,10 @@ public:
 		vector<Vertex>	vertices;
 		vector<Material> materials;
 		unsigned int esferaTextura;
-		ModelAttributes attr{0};
-		this->getModelAttributes()->push_back(attr);
+		if (this->getModelAttributes()->size() == 0){
+			ModelAttributes attr{0};
+			this->getModelAttributes()->push_back(attr);
+		}
 		UTILITIES_OGL::Maya cuadro = UTILITIES_OGL::Esfera(stacks, slices, radio, 0.5, 1);
 		UTILITIES_OGL::vectoresEsfera(cuadro, vertices, indices, stacks * slices * 3, (stacks - 1) * (slices - 1) * 6);
 		delete[] cuadro.maya;

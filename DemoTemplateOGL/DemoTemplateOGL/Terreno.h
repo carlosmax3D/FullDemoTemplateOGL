@@ -21,8 +21,10 @@ public:
 		vector<Texture>      textures;
 		vector<Material> materials;
 		vector<Vertex>       vertices;
-		ModelAttributes attr{0};
-		this->getModelAttributes()->push_back(attr);
+		if (this->getModelAttributes()->size() == 0){
+			ModelAttributes attr{0};
+			this->getModelAttributes()->push_back(attr);
+		}
 		unsigned int planoTextura;
 		int mapAlturaComp;
 		anchof = ancho;

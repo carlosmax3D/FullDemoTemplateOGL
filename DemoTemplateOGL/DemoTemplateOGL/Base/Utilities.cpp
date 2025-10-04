@@ -27,13 +27,14 @@
 #define MB_ICONERROR                MB_ICONHAND
 #define MB_ICONINFORMATION          MB_ICONASTERISK
 #define MB_ICONSTOP                 MB_ICONHAND
+#define sprintf_s(a,b,c,d,e,f,g,h,i) sprintf(a,c,d,e,f,g,h,i)
 #endif
 
 std::wstring s2ws(const std::string& s) {
 #ifdef __linux__
-    std::wstring wideString = 
-        std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(s);
-    return wideString;
+	std::wstring wideString =
+		std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(s);
+	return wideString;
 #else
 	int len;
 	int slength = (int)s.length() + 1;
@@ -106,19 +107,25 @@ void LOGGER::LOG::question(const std::string log, const std::string title) {
 void LOGGER::LOG::question(const char* log) {
 	processLog(log, "Question", "QSTO", MB_ICONQUESTION);
 }
-void formatDate(char* result, tm* timeptr){
-  sprintf(result, "%02d/%02d/%04d %.2d:%.2d:%.2d|",
-    timeptr->tm_mday, timeptr->tm_mon,
-    1900 + timeptr->tm_year, timeptr->tm_hour,
-    timeptr->tm_min, timeptr->tm_sec);	
+void formatDate(char* result, tm* timeptr) {
+	sprintf_s(result, 26, "%02d/%02d/%04d %.2d:%.2d:%.2d|",
+		timeptr->tm_mday, timeptr->tm_mon,
+		1900 + timeptr->tm_year, timeptr->tm_hour,
+		timeptr->tm_min, timeptr->tm_sec);
 }
 void LOGGER::LOG::processLog(const char* log, const char* title, const char* type, unsigned int MB_TYPE) {
 #ifdef DEBUGFILE
-    time_t now = time(nullptr);
+	time_t now = time(nullptr);
+#ifdef _WIN32 
+	tm timeptr1;
+	localtime_s(&timeptr, &now);
+	tm *timeptr = &timeptr1;
+#else
 	tm *timeptr = localtime(&now);
-	char datetime[26] = {0};
+#endif
+	char datetime[26] = { 0 };
 	formatDate(datetime, timeptr);
-  	std::string filename(this->name);
+	std::string filename(this->name);
 	filename.append(".log");
 	std::ofstream f(filename, std::ios::app);
 	if (f.is_open()) {
@@ -180,15 +187,15 @@ std::vector<LOGGER::LOG> LOGGER::LOGS::log;
 void* LOGGER::LOGS::WINDOW = NULL;
 
 unsigned int GetSizeOfType(unsigned int type) {
-		//This function returns the size of a single element of this type in bytes
-		switch (type)
-		{
-		case GL_FLOAT:          return 4;
-		case GL_UNSIGNED_INT:   return 4;
-		case GL_UNSIGNED_BYTE:  return 1;
-		}
-		assert(false);
-		return 0;
+	//This function returns the size of a single element of this type in bytes
+	switch (type)
+	{
+	case GL_FLOAT:          return 4;
+	case GL_UNSIGNED_INT:   return 4;
+	case GL_UNSIGNED_BYTE:  return 1;
+	}
+	assert(false);
+	return 0;
 }
 
 // Global Variables:
@@ -252,53 +259,53 @@ struct AssimpNodeData;
 float UTILITIES_OGL::sinLUT[LUT_SIZE];
 
 glm::mat4 UTILITIES_OGL::aiMatrix4x4ToGlm(aiMatrix4x4& from) {
-    glm::mat4 to;
-    to[0][0] = (GLfloat)from.a1; to[0][1] = (GLfloat)from.b1;  to[0][2] = (GLfloat)from.c1; to[0][3] = (GLfloat)from.d1;
-    to[1][0] = (GLfloat)from.a2; to[1][1] = (GLfloat)from.b2;  to[1][2] = (GLfloat)from.c2; to[1][3] = (GLfloat)from.d2;
-    to[2][0] = (GLfloat)from.a3; to[2][1] = (GLfloat)from.b3;  to[2][2] = (GLfloat)from.c3; to[2][3] = (GLfloat)from.d3;
-    to[3][0] = (GLfloat)from.a4; to[3][1] = (GLfloat)from.b4;  to[3][2] = (GLfloat)from.c4; to[3][3] = (GLfloat)from.d4;
-    return to;
+	glm::mat4 to;
+	to[0][0] = (GLfloat)from.a1; to[0][1] = (GLfloat)from.b1;  to[0][2] = (GLfloat)from.c1; to[0][3] = (GLfloat)from.d1;
+	to[1][0] = (GLfloat)from.a2; to[1][1] = (GLfloat)from.b2;  to[1][2] = (GLfloat)from.c2; to[1][3] = (GLfloat)from.d2;
+	to[2][0] = (GLfloat)from.a3; to[2][1] = (GLfloat)from.b3;  to[2][2] = (GLfloat)from.c3; to[2][3] = (GLfloat)from.d3;
+	to[3][0] = (GLfloat)from.a4; to[3][1] = (GLfloat)from.b4;  to[3][2] = (GLfloat)from.c4; to[3][3] = (GLfloat)from.d4;
+	return to;
 }
 
-void UTILITIES_OGL::calculateNormals(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices){
-    // Reset normals to zero using memset for efficiency
-    for (Vertex& vertex : vertices) {
-        vertex.Normal = glm::vec3(0.0f);
-    }
+void UTILITIES_OGL::calculateNormals(std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices) {
+	// Reset normals to zero using memset for efficiency
+	for (Vertex& vertex : vertices) {
+		vertex.Normal = glm::vec3(0.0f);
+	}
 
-    // Calculate normals for each triangle
-    size_t numTriangles = indices.size() / 3;
-    for (size_t i = 0; i < numTriangles; i++) {
-        unsigned int idx0 = indices[i * 3];
-        unsigned int idx1 = indices[i * 3 + 1];
-        unsigned int idx2 = indices[i * 3 + 2];
+	// Calculate normals for each triangle
+	size_t numTriangles = indices.size() / 3;
+	for (size_t i = 0; i < numTriangles; i++) {
+		unsigned int idx0 = indices[i * 3];
+		unsigned int idx1 = indices[i * 3 + 1];
+		unsigned int idx2 = indices[i * 3 + 2];
 
-        // Validate indices
-        if (idx0 >= vertices.size() || idx1 >= vertices.size() || idx2 >= vertices.size()) {
-            std::cerr << "Invalid index: " << idx0 << ", " << idx1 << ", " << idx2 << " - Max: " << vertices.size() << std::endl;
-            continue;
-        }
+		// Validate indices
+		if (idx0 >= vertices.size() || idx1 >= vertices.size() || idx2 >= vertices.size()) {
+			std::cerr << "Invalid index: " << idx0 << ", " << idx1 << ", " << idx2 << " - Max: " << vertices.size() << std::endl;
+			continue;
+		}
 
-        // Load vertex positions
-        const glm::vec3& v0 = vertices[idx0].Position;
-        const glm::vec3& v1 = vertices[idx1].Position;
-        const glm::vec3& v2 = vertices[idx2].Position;
+		// Load vertex positions
+		const glm::vec3& v0 = vertices[idx0].Position;
+		const glm::vec3& v1 = vertices[idx1].Position;
+		const glm::vec3& v2 = vertices[idx2].Position;
 
-        // Compute normal using cross product
-        glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
+		// Compute normal using cross product
+		glm::vec3 normal = glm::normalize(glm::cross(v1 - v0, v2 - v0));
 
-        // Accumulate normals
-        vertices[idx0].Normal += normal;
-        vertices[idx1].Normal += normal;
-        vertices[idx2].Normal += normal;
-    }
+		// Accumulate normals
+		vertices[idx0].Normal += normal;
+		vertices[idx1].Normal += normal;
+		vertices[idx2].Normal += normal;
+	}
 
-    // Normalize all vertex normals
-    for (Vertex& vertex : vertices) {
-        if (glm::length(vertex.Normal) > 1e-6f) { // Prevent NaN issues
-            vertex.Normal = glm::normalize(vertex.Normal);
-        }
-    }
+	// Normalize all vertex normals
+	for (Vertex& vertex : vertices) {
+		if (glm::length(vertex.Normal) > 1e-6f) { // Prevent NaN issues
+			vertex.Normal = glm::normalize(vertex.Normal);
+		}
+	}
 }
 
 //generamos las normales a traves de punteros del vector, es una forma comun de manejarlos
@@ -316,13 +323,13 @@ glm::vec3 UTILITIES_OGL::genNormal(float* v1, float* v2, float* v3) {
 	return glm::cross(vec1, vec2);
 }
 
-void UTILITIES_OGL::sumaNormal(float* v1, float* v2){
+void UTILITIES_OGL::sumaNormal(float* v1, float* v2) {
 	*v1 += *v2;
 	*(v1 + 1) += *(v2 + 1);
 	*(v1 + 2) += *(v2 + 2);
 }
 
-void UTILITIES_OGL::normaliza(float* v1){
+void UTILITIES_OGL::normaliza(float* v1) {
 	float magnitud = sqrt((*v1) * (*v1) + (*(v1 + 1)) * (*(v1 + 1)) + (*(v1 + 2)) * (*(v1 + 2)));
 	*v1 /= magnitud;
 	*(v1 + 1) /= magnitud;
@@ -354,7 +361,7 @@ void UTILITIES_OGL::vectoresEsfera(Maya esfera, std::vector<Vertex>& vertices, s
 UTILITIES_OGL::Maya UTILITIES_OGL::Esfera(int stacks, int slices, float radio, float inicio, float final) {
 	//Cargamos la estructura con los espacios de memoria necesarios
 	Vertices* verticesxyzSD = new Vertices[stacks * slices * 3];
-	unsigned int* indices = new unsigned int[(stacks-1) * (slices-1) * 6]{0};
+	unsigned int* indices = new unsigned int[(stacks - 1) * (slices - 1) * 6] {0};
 	//generamos un objeto para poder transportar los punteros
 	Maya salida;
 	//a darle que es mole de olla!
@@ -404,10 +411,10 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Esfera(int stacks, int slices, float radio, f
 	return salida;
 }
 
-UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, float profz){
+UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, float profz) {
 	//Cargamos la estructura con los espacios de memoria necesarios
 	Vertices* verticesxyzSD = new Vertices[vertx * vertz * 3];
-	unsigned int* indices = new unsigned int[(vertx-1) * (vertz-1) * 6]{0};
+	unsigned int* indices = new unsigned int[(vertx - 1) * (vertz - 1) * 6] {0};
 
 	//es la separacion entre vertices, se le resta 1 para que el lado correcto
 	//imagine que el ancho es de 10 y tiene 10 vertices, entonces le daria un deltax
@@ -502,8 +509,8 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 
 UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, float profz, unsigned char* altura, int nrComponents, float tile) {
 	//Cargamos la estructura con los espacios de memoria necesarios
-	Vertices* verticesxyzSD = new Vertices[vertx * vertz * 3];
-	unsigned int* indices = new unsigned int[(vertx-1) * (vertz-1) * 6]{0};
+	Vertices* verticesxyzSD = new Vertices[vertx * vertz * nrComponents];
+	unsigned int* indices = new unsigned int[(vertx - 1) * (vertz - 1) * 6] {0};
 
 	//es la separacion entre vertices, se le resta 1 para que el lado correcto
 	//imagine que el ancho es de 10 y tiene 10 vertices, entonces le daria un deltax
@@ -518,7 +525,7 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 		for (unsigned int x = 0; x < vertx; x++)
 		{
 			verticesxyzSD[z * vertx + x].Posx = (float)x * deltax - anchof / 2.0;
-			verticesxyzSD[z * vertx + x].Posy = (float)altura[z * vertx * nrComponents + x * nrComponents] / 10.0; // nrComponents -> 4
+			verticesxyzSD[z * vertx + x].Posy = (float)altura[(z * vertx + x) * nrComponents] / 10.0; // nrComponents -> 4
 			verticesxyzSD[z * vertx + x].Posz = (float)z * deltaz - profz / 2.0;
 
 			//carga las normales con cero
@@ -578,14 +585,13 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 	{
 		for (unsigned int j = 0; j < vertx - 1; j++)
 		{
-			indices[indice++] = i * vertz + j;
-			indices[indice++] = (i + 1) * vertz + j + 1;
-			indices[indice++] = i * vertz + j + 1;
+			indices[indice++] = i * vertx + j;
+			indices[indice++] = (i + 1) * vertx + j;
+			indices[indice++] = i * vertx + j + 1;
 
-
-			indices[indice++] = (i + 1) * vertz + j;
-			indices[indice++] = (i + 1) * vertz + j + 1; 
-			indices[indice++] = i * vertz + j;
+			indices[indice++] = (i + 1) * vertx + j;
+			indices[indice++] = (i + 1) * vertx + j + 1;
+			indices[indice++] = i * vertx + j + 1;
 		}
 	}
 
@@ -601,9 +607,9 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 
 unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req_comp, bool rotateX, bool rotateY) {
 	unsigned char* data = NULL, * tmp = NULL;
-	const char *filename = fileName;
+	const char* filename = fileName;
 #ifdef __linux__ 
-	if (FreeImage_IsPluginEnabled(FIF_BMP) == -1 || FreeImage_IsPluginEnabled(FIF_BMP) == FALSE )
+	if (FreeImage_IsPluginEnabled(FIF_BMP) == -1 || FreeImage_IsPluginEnabled(FIF_BMP) == FALSE)
 		FreeImage_Initialise();
 	std::string sfilename(fileName);
 	for (int i = 0; i < sfilename.length(); i++)
@@ -625,7 +631,7 @@ unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req
 		tmp = new unsigned char[(*x) * (*y) * (*comp)];
 		memcpy(tmp, (unsigned char*)FreeImage_GetBits(imagen), (*x) * (*y) * (*comp));
 		if ((*comp) == 2)
-			for (int j = 0; j < (*x) * (*y); j++)  {
+			for (int j = 0; j < (*x) * (*y); j++) {
 				unsigned char c = tmp[j * (*comp) + 0];
 				tmp[j * (*comp) + 0] = tmp[j * (*comp) + 1];
 				tmp[j * (*comp) + 1] = c;
@@ -651,18 +657,18 @@ unsigned char* loadFile(char const* fileName, int* x, int* y, int* comp, int req
 	return tmp;
 }
 
-unsigned char* loadMemory(const aiTexture *tex, int* x, int* y, int* comp, int req_comp, bool rotateX, bool rotateY) {
+unsigned char* loadMemory(const aiTexture* tex, int* x, int* y, int* comp, int req_comp, bool rotateX, bool rotateY) {
 	unsigned char* data = NULL, * tmp = NULL;
 #ifdef __linux__ 
-	if (FreeImage_IsPluginEnabled(FIF_BMP) == -1 || FreeImage_IsPluginEnabled(FIF_BMP) == FALSE )
+	if (FreeImage_IsPluginEnabled(FIF_BMP) == -1 || FreeImage_IsPluginEnabled(FIF_BMP) == FALSE)
 		FreeImage_Initialise();
 #endif
-    // Create a memory stream from the data buffer
-    FIMEMORY* memStream = FreeImage_OpenMemory((BYTE*)tex->pcData, tex->mWidth);
-    if (!memStream) {
-        ERRORL("Failed to create memory stream for embbebed texture.", "Error at loading model");
-        return data;
-    }
+	// Create a memory stream from the data buffer
+	FIMEMORY* memStream = FreeImage_OpenMemory((BYTE*)tex->pcData, tex->mWidth);
+	if (!memStream) {
+		ERRORL("Failed to create memory stream for embbebed texture.", "Error at loading model");
+		return data;
+	}
 	FREE_IMAGE_FORMAT formato = tex->mHeight == 0 ? FreeImage_GetFileTypeFromMemory(memStream) : FIF_UNKNOWN;
 	formato = formato == FIF_UNKNOWN ? FreeImage_GetFIFFromFormat(tex->achFormatHint) : formato;
 	FIBITMAP* imagen = formato == FIF_UNKNOWN ? NULL : FreeImage_LoadFromMemory(formato, memStream);
@@ -685,7 +691,7 @@ unsigned char* loadMemory(const aiTexture *tex, int* x, int* y, int* comp, int r
 			//tmp[j * (*comp) + 3] = tmp[j * (*comp) + 3];
 		}
 		FreeImage_Unload(imagen);
-	    FreeImage_CloseMemory(memStream);
+		FreeImage_CloseMemory(memStream);
 	}
 	else {
 		if (rotateY) stbi_set_flip_vertically_on_load(false);
@@ -700,7 +706,7 @@ unsigned char* loadMemory(const aiTexture *tex, int* x, int* y, int* comp, int r
 	return tmp;
 }
 
-unsigned int TextureFromMemory(const aiTexture *texture, bool rotateX, bool rotateY, bool *alpha, struct UTILITIES_OGL::ImageDetails* img) {
+unsigned int TextureFromMemory(const aiTexture* texture, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
 
@@ -750,7 +756,7 @@ unsigned int TextureFromMemory(const aiTexture *texture, bool rotateX, bool rota
 	return textureID;
 }
 
-unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX, bool rotateY, bool *alpha, struct UTILITIES_OGL::ImageDetails* img) {
+unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
 	std::string filename = std::string(path);
 	if (!directory.empty())
 		filename = directory + '/' + filename;
@@ -762,11 +768,12 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 	unsigned char* data = loadFile(filename.c_str(), &width, &height, &nrComponents, 0, rotateX, rotateY);
 	GLenum format = GL_RGBA;
 	if (data) {
-		if (nrComponents == 1 || nrComponents == 2){
+		if (nrComponents == 1 || nrComponents == 2) {
 			format = nrComponents == 2 ? GL_RG : GL_RED;
 			if (nrComponents == 2)
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		} else if (nrComponents == 3) {
+		}
+		else if (nrComponents == 3) {
 			format = GL_RGB;
 			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		}
@@ -813,151 +820,152 @@ double get_nanos() {
 
 // Comparator function
 bool compareKeyframes(UTILITIES_OGL::KeyFrame& A, UTILITIES_OGL::KeyFrame& b) {
-    return A.timeStamp < b.timeStamp;
+	return A.timeStamp < b.timeStamp;
 }
 
 glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t) {
-    return a + t * (b - a); // More numerically stable than glm::mix
+	return a + t * (b - a); // More numerically stable than glm::mix
 }
 
 void ModelAttributes::setTranslate(glm::vec3* translate) {
-    if (translate == NULL) {
-        this->translate = glm::vec3(0);
-        this->hasTranslate = false;
-    }
-    else {
-        this->translate = *translate;
-        this->hasTranslate = true;
-    }
+	if (translate == NULL) {
+		this->translate = glm::vec3(0);
+		this->hasTranslate = false;
+	}
+	else {
+		this->translate = *translate;
+		this->hasTranslate = true;
+	}
 }
 void ModelAttributes::setNextTranslate(glm::vec3* translate) {
-    if (translate == NULL) {
-        this->nextTranslate = glm::vec3(0);
-    } else {
-        this->nextTranslate = *translate;
-    }
+	if (translate == NULL) {
+		this->nextTranslate = glm::vec3(0);
+	}
+	else {
+		this->nextTranslate = *translate;
+	}
 }
 void ModelAttributes::setScale(glm::vec3* scale) {
-    if (scale == NULL) {
-        this->scale = glm::vec3(0);
-        this->hasScale = false;
-    }
-    else {
-        this->scale = *scale;
-        this->hasScale = true;
-    }
+	if (scale == NULL) {
+		this->scale = glm::vec3(0);
+		this->hasScale = false;
+	}
+	else {
+		this->scale = *scale;
+		this->hasScale = true;
+	}
 }
 
 void ModelAttributes::setRotX(float rotationAngle) {
-    this->rotX = rotationAngle;
-    this->rotation.x = rotationAngle == 0 ? 0 : 1;
+	this->rotX = rotationAngle;
+	this->rotation.x = rotationAngle == 0 ? 0 : 1;
 }
 void ModelAttributes::setRotY(float rotationAngle) {
-    this->rotY = rotationAngle;
-    this->rotation.y = rotationAngle == 0 ? 0 : 1;
+	this->rotY = rotationAngle;
+	this->rotation.y = rotationAngle == 0 ? 0 : 1;
 }
 void ModelAttributes::setRotZ(float rotationAngle) {
-    this->rotZ = rotationAngle;
-    this->rotation.z = rotationAngle == 0 ? 0 : 1;
+	this->rotZ = rotationAngle;
+	this->rotation.z = rotationAngle == 0 ? 0 : 1;
 }
 void ModelAttributes::setNextRotX(float rotationAngle) {
-    this->nextRotX = rotationAngle;
-    this->nextRotation.x = rotationAngle == 0 ? 0 : 1;
+	this->nextRotX = rotationAngle;
+	this->nextRotation.x = rotationAngle == 0 ? 0 : 1;
 }
 void ModelAttributes::setNextRotY(float rotationAngle) {
-    this->nextRotY = rotationAngle;
-    this->nextRotation.y = rotationAngle == 0 ? 0 : 1;
+	this->nextRotY = rotationAngle;
+	this->nextRotation.y = rotationAngle == 0 ? 0 : 1;
 }
 void ModelAttributes::setNextRotZ(float rotationAngle) {
-    this->nextRotZ = rotationAngle;
-    this->nextRotation.z = rotationAngle == 0 ? 0 : 1;
+	this->nextRotZ = rotationAngle;
+	this->nextRotation.z = rotationAngle == 0 ? 0 : 1;
 }
 
-std::vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth){
-    //Vertex* myVertex = (Vertex*)malloc(sizeof(Vertex) * 24 * 44);
-    std::vector<Vertex> myVertex;
-    myVertex.reserve(24);
-//    Vertex t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+std::vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth) {
+	//Vertex* myVertex = (Vertex*)malloc(sizeof(Vertex) * 24 * 44);
+	std::vector<Vertex> myVertex;
+	myVertex.reserve(24);
+	//    Vertex t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));			//yellow
+	//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+	//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+	//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(0, 0, -1), glm::vec3(1, 1, 0));
 
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));			//white
+	//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 0, 1), glm::vec3(1, 1, 1));
 
-//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));		//orange
+	//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, -1, 0), glm::vec3(1, 0.5, 0));
 
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));			//red
+	//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(1, 1), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(1, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 0), glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
 
-//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
-//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
-    myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	//    t = Vertex(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));			//blue
+	//    t = Vertex(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	myVertex.emplace_back(glm::vec3(-width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	//    t = Vertex(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	//    t = Vertex(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
+	myVertex.emplace_back(glm::vec3(-width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(-1, 0, 0), glm::vec3(0, 0, 1));
 
-//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
-//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
-    myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	//    t = Vertex(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, -depth + z), glm::vec2(1, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));			//green
+	//    t = Vertex(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	myVertex.emplace_back(glm::vec3(width + x, -height + y, depth + z), glm::vec2(1, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	//    t = Vertex(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, depth + z), glm::vec2(0, 0), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	//    t = Vertex(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	myVertex.emplace_back(glm::vec3(width + x, height + y, -depth + z), glm::vec2(0, 1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
 
-    return myVertex;
+	return myVertex;
 }
 std::vector<unsigned int> getCubeIndex() {
-    std::vector<unsigned int> indices;
-    int cubeIndexSize = 36;
-    unsigned int cubeIndex[] = { 0, 1, 2,
-    0, 2, 3,
+	std::vector<unsigned int> indices;
+	int cubeIndexSize = 36;
+	unsigned int cubeIndex[] = { 0, 1, 2,
+	0, 2, 3,
 
-    6, 5, 4,
-    7, 6, 4,
+	6, 5, 4,
+	7, 6, 4,
 
-    10, 9, 8,
-    11, 10, 8,
+	10, 9, 8,
+	11, 10, 8,
 
-    12, 13, 14,
-    12, 14, 15,
+	12, 13, 14,
+	12, 14, 15,
 
-    16, 17, 18,
-    16, 18, 19,
+	16, 17, 18,
+	16, 18, 19,
 
-    22, 21, 20,
-    23, 22, 20
-    };
-    indices.reserve(cubeIndexSize);
-    for (unsigned int i = 0; i < cubeIndexSize; i++)
-        indices.emplace_back(cubeIndex[i]);
-    return indices;
+	22, 21, 20,
+	23, 22, 20
+	};
+	indices.reserve(cubeIndexSize);
+	for (unsigned int i = 0; i < cubeIndexSize; i++)
+		indices.emplace_back(cubeIndex[i]);
+	return indices;
 }
 
 //void * operator new(size_t size){
