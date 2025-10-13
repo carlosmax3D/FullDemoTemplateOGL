@@ -55,6 +55,10 @@ bool KeysEvents(GameActions *actions){
 		actions->firstPerson = true;
 		KEYS[input.P] = false;
 	}
+	if (KEYS[input.M]) {
+		actions->lockMouse = true;
+		KEYS[input.M] = false;
+	}
 	if (KEYS[input.C]) {
 		actions->displayHitboxStats = !actions->displayHitboxStats;
 		KEYS[input.C] = false;
