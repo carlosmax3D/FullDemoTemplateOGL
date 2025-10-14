@@ -354,10 +354,12 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     // Check terrain collision
     if (gravityEnable && prevGPosition.y < terrainY) {
         prevGPosition.y = terrainY;
+        collide.hitGround = true;
     }
     if (gravityEnable && nextGPosition.y < terrainY) {
         nextGPosition.y = terrainY;
         this->velocity.y = 0.0f;
+        collide.hitGround = true;
     }
     setNextTranslate(&nextGPosition, idx);
 
