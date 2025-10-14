@@ -372,10 +372,12 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     // Check terrain collision
     if (gravityEnable && prevGPosition.y < terrainY) {
         prevGPosition.y = terrainY;
+        collide.hitGround = true;
     }
     if (gravityEnable && nextGPosition.y < terrainY) {
         nextGPosition.y = terrainY;
         this->velocity.y = 0.0f;
+        collide.hitGround = true;
     }
     setNextTranslate(&nextGPosition, idx);
 
@@ -835,4 +837,59 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
 
 void Model::setCleanTextures(bool flag){
     cleanTextures = flag;
+}
+
+bool Model::intersectaRayo(glm::vec3 origen, glm::vec3 direccion, bool collitionMove, float& outT, int idx) {
+    ModelAttributes& mAttr = this->getModelAttributes()->at(idx);
+    if (mAttr.hitbox == NULL)
+        return false;
+
+    Model* AABB = (Model*)mAttr.hitbox;
+    glm::mat4 transform = collitionMove
+                          ? AABB->makeTransScaleNextPosition(glm::mat4(1))
+                          : AABB->makeTransScale(glm::mat4(1));
+
+    const auto& vertices = AABB->meshes[0]->vertices;
+    if (vertices.empty()) return false;
+
+    glm::vec3 min = glm::vec3(transform * glm::vec4(vertices[0].Position, 1.0f));
+    glm::vec3 max = min;
+
+    for (size_t i = 1; i < vertices.size(); ++i) {
+        glm::vec3 p = glm::vec3(transform * glm::vec4(vertices[i].Position, 1.0f));
+        min = glm::min(min, p);
+        max = glm::max(max, p);
+    }
+
+    float tmin = -FLT_MAX;
+    float tmax = FLT_MAX;
+
+    for (int i = 0; i < 3; ++i) {
+        float origin = origen[i];
+        float dir = direccion[i];
+        float minB = min[i];
+        float maxB = max[i];
+
+        if (std::abs(dir) < 1e-6f) {
+            if (origin < minB || origin > maxB)
+                return false;
+        } else {
+            float ood = 1.0f / dir;
+            float t1 = (minB - origin) * ood;
+            float t2 = (maxB - origin) * ood;
+
+            if (t1 > t2) std::swap(t1, t2);
+            tmin = std::max(tmin, t1);
+            tmax = std::min(tmax, t2);
+
+            if (tmin > tmax)
+                return false;
+        }
+    }
+
+    if (tmax < 0.0f)
+        return false;
+
+    outT = tmin > 0.0f ? tmin : tmax;  // Usar el t válido más cercano
+    return true;
 }

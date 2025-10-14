@@ -66,6 +66,7 @@ struct GameActions {
 	double *jump = NULL;
 	bool action = false;
 	bool displayHitboxStats = false;
+	bool fired = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);
@@ -118,7 +119,11 @@ struct ModelAttributes{
 	float nextRotZ = 0;
 	glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	float active = true; // GPU Friendly
-	void *hitbox = NULL; // possible link to hitbox
+	float life = 0.0f;
+	glm::vec3 forward = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
+	void *hitbox = NULL; // possible link to 
+	void *owner = NULL;
 	void setNextTranslate(glm::vec3* translate);
 	void setTranslate(glm::vec3* translate);
 	void setScale(glm::vec3* scale);
@@ -132,6 +137,7 @@ struct ModelAttributes{
 struct ModelCollider{
 	void *model = NULL;
 	int attrIdx = -1;
+	bool hitGround = false;
 };
 
 struct BoneInfo {

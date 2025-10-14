@@ -55,6 +55,15 @@ class Scene {
 								i--;
 						}
 					}
+					if (model->name.compare("bullet_9_mm") == 0 && mcollider.hitGround){
+						if (mcollider.model != NULL){
+							INFO("IMPACTO!!!! " + ((Model*)mcollider.model)->name, "Impact HITBOX_"+to_string(mcollider.attrIdx));
+						}else{
+//							INFO("IMPACTO!!!! ", "Impact HITBOX_"+to_string(mcollider.attrIdx));
+						}
+						removeCollideModel(model, j);
+						j--;
+					}
 					if (j < 0) j = 0;
 				}
 				if (i < 0) i = 0;

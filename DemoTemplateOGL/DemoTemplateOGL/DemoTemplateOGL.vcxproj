@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Ammo.h" />
     <ClInclude Include="Base\Animation.h" />
     <ClInclude Include="Base\Animator.h" />
     <ClInclude Include="Base\Billboard.h" />
