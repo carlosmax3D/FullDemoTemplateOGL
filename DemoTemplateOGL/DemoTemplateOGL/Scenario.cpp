@@ -1,4 +1,5 @@
 #include "Scenario.h"
+#include "Ammo.h"
 #ifdef __linux__ 
 #define ZeroMemory(x,y) memset(x,0,y)
 #define wcscpy_s(x,y,z) wcscpy(x,z)
@@ -64,6 +65,18 @@ void Scenario::InitGraph(Model *main) {
 	translate.x = 10;
 	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
 	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
+
+	model = new Ammo("models/bullet/bullet_9_mm.glb", main->cameraDetails);
+	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 70.0f)+5, 70.0f);
+	scale = glm::vec3(0.10f, 0.10f, 0.10f);	// it's a bit too big for our scene, so scale it down
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setRotY(-90);
+	model->setNextRotY(-90);
+	delete model->getModelAttributes()->at(0).hitbox;
+	model->getModelAttributes()->at(0).hitbox = NULL;
+	ourModel.emplace_back(model);
 
 	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
