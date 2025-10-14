@@ -196,6 +196,35 @@ bool checkInput(GameActions *actions, Scene* scene) {
         KeysEvents(actions);
     }
     Model* OGLobj = scene->getMainModel();
+    if (actions->fired && lockMouse){
+        auto models = scene->getLoadedModels();
+        for (Model *m : *models){
+            if (m->name.compare("bullet_9_mm") != 0)
+                continue;
+            auto &attr = *m->getModelAttributes();
+            ModelAttributes mattr = attr.at(0);
+            mattr.forward = -OGLobj->cameraDetails->getRight();
+            mattr.hitbox = NULL;//CollitionBox::GenerateAABB(*OGLobj->getNextTranslate(), m->AABBsize, m->cameraDetails);
+            attr.push_back(mattr);
+            int idx = attr.size() - 1;
+            glm::vec3 trans = *OGLobj->getNextTranslate();
+            trans.y += OGLobj->cameraDetails->getCharacterHeight() / 2;
+            trans = trans + mattr.forward * 1.5f;
+            attr.back().origin = trans;
+            attr.back().owner = OGLobj;
+            attr.back().life = 30.0f;
+            m->setTranslate(&trans, idx);
+            m->setNextTranslate(&trans, idx);
+            m->setNextRotX(mattr.nextRotX, idx);
+            m->setNextRotY(OGLobj->getNextRotY() + mattr.nextRotY, idx);
+            m->setNextRotZ(mattr.nextRotZ, idx);
+            m->setRotX(mattr.rotX, idx);
+            m->setRotY(OGLobj->getNextRotY() + mattr.rotY, idx);
+            m->setRotZ(mattr.rotZ, idx);
+            m->setScale(&mattr.scale, idx);
+            break;
+        }
+    }
     if (actions->displayHitboxStats){
         showHitbox = !showHitbox;
         showStats = !showStats;
