@@ -107,7 +107,7 @@ public:
     void buildKDtree();
     void buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth);
     bool colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false, int idx = 0);
-    bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false, int idx = 0);
+    bool intersectaRayo(glm::vec3 origen, glm::vec3 direccion, bool collitionMove, float& outT, int idx = 0);
     static bool colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
     std::unordered_map<string, int>* GetBoneInfoMap();

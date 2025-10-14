@@ -150,15 +150,15 @@ bool KeysEvents(GameActions* actions) {
 	if (KEYS[input.Space] && *actions->jump == 0) {
 		*actions->jump = 20;
 	}
-
-
-	//ZITOS
-	if (mouseEnabled) { // Solo si est� bloqueado
-		if (cDelta.getLbtn() && cDelta.getDX() != 0)
+	if (cDelta.getLbtn()){
+		actions->fired = true;
+		if (cDelta.getDX() != 0) {
 			actions->setAngle(cDelta.getDX() > 0 ? 1 : -1);
-
-		if (cDelta.getRbtn() && cDelta.getDY() != 0)
-			actions->setPitch(cDelta.getDY() > 0 ? 1 : -1);
+		}
+		cDelta.setLbtn(false);
+	}
+	if (cDelta.getRbtn() && cDelta.getDY() != 0) { //KEYS[KEYB_CAMERA]
+		actions->setPitch(cDelta.getDY() > 0 ? 1 : -1);
 	}
 	//ZITOS
 

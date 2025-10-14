@@ -1,4 +1,5 @@
 #include "Scenario.h"
+#include "Ammo.h"
 #ifdef __linux__ 
 #define ZeroMemory(x,y) memset(x,0,y)
 #define wcscpy_s(x,y,z) wcscpy(x,z)
@@ -583,24 +584,18 @@ void Scenario::InitGraph(Model *main) {
 
 	model->getModelAttributes()->at(0).hitbox = CollitionBox::GenerateAABB(translate, n, camera);
 
+	ModelAttributes m;
+	model = new Ammo("models/bullet/bullet_9_mm.glb", main->cameraDetails);
+	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 70.0f)+5, 70.0f);
+	scale = glm::vec3(0.10f, 0.10f, 0.10f);	// it's a bit too big for our scene, so scale it down
 	model->setTranslate(&translate);
 	model->setNextTranslate(&translate);
 	model->setScale(&scale);
-	model->setNextRotX(90);
+	model->setRotY(-90);
 	model->setNextRotY(-90);
-	model->setNextRotZ(90);
+	delete model->getModelAttributes()->at(0).hitbox;
+	model->getModelAttributes()->at(0).hitbox = NULL;
 	ourModel.emplace_back(model);
-	try {
-		std::vector<Animation> animations = Animation::loadAllAnimations("models/Zombies/ZombieE.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::vector<Animation> animation = Animation::loadAllAnimations("models/Zombies/ZombieWalk.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
-		for (Animation animation : animations)
-			model->setAnimator(Animator(animation));
-		model->setAnimation(0);
-	}
-	catch (...) {
-		ERRORL("Could not load animation!", "ANIMACION");
-	}
 
 	model = new Model("models/Zombies/ZombieE.fbx", main->cameraDetails);
 	translate = glm::vec3(-60.0f, terreno->Superficie(0.0f, 10.0f), -178.0f);

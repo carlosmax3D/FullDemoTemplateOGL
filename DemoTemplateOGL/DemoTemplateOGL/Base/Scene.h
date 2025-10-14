@@ -36,10 +36,49 @@ public:
         // Guardar llamadas cuando no exista SkyDome
         if (getSky() != nullptr) {
             getSky()->setRotY(angulo);
+            Model* camara = getMainModel();
+			for (int i = 0; i < getLoadedModels()->size(); i++){
+				auto it = getLoadedModels()->begin() + i;
+				Model *collider = NULL, *model = *it;
+				for (int j = 0; j < model->getModelAttributes()->size(); j++){
+					int idxCollider = -1;
+					bool objInMovement = (*model->getNextTranslate(j)) != (*model->getTranslate(j));
+					glm::vec3 &posM = objInMovement ? *model->getNextTranslate(j) : *model->getTranslate(j);
+					glm::vec3 ejeColision = glm::vec3(0);
+					bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
+					float terrainY = getTerreno()->Superficie(posM.x, posM.z);
+					ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
+					if (mcollider.model != NULL){
+						collider = (Model*)mcollider.model;
+						idxCollider = mcollider.attrIdx;
+					}
+					if (collider != NULL && model == camara){
+						if (ejeColision.y == 1){
+							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
+							if (removeCollideModel(collider, idxCollider))
+								i--;
+						}
+					}
+					if (model->name.compare("bullet_9_mm") == 0 && mcollider.hitGround){
+						if (mcollider.model != NULL){
+							INFO("IMPACTO!!!! " + ((Model*)mcollider.model)->name, "Impact HITBOX_"+to_string(mcollider.attrIdx));
+						}else{
+//							INFO("IMPACTO!!!! ", "Impact HITBOX_"+to_string(mcollider.attrIdx));
+						}
+						removeCollideModel(model, j);
+						j--;
+					}
+					if (j < 0) j = 0;
+				}
+				if (i < 0) i = 0;
+			}
+			// Actualizamos la camara
+            camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
+            return -1;
         }
         //OLIVER CAMBIOS---------
         Model* camara = getMainModel();
-        // Actualizar cooldown de daño del principal (si aplica)
+        // Actualizar cooldown de daï¿½o del principal (si aplica)
         if (auto principal = dynamic_cast<Principal*>(camara)) {
             principal->actualizarCooldown(gameTime.deltaTime);
         }
@@ -49,6 +88,36 @@ public:
             auto it = getLoadedModels()->begin() + i;
             Model* collider = NULL, * model = *it;
             int idxCollider = -1;
+            for (int j = 0; model->getModelAttributes()->size() > 1 && j < model->getModelAttributes()->size(); j++) {
+                bool objInMovement = (*model->getNextTranslate(j)) != (*model->getTranslate(j));
+                glm::vec3& posM = objInMovement ? *model->getNextTranslate(j) : *model->getTranslate(j);
+                glm::vec3 ejeColision = glm::vec3(0);
+                bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
+                float terrainY = getTerreno()->Superficie(posM.x, posM.z);
+                ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
+                if (mcollider.model != NULL) {
+                    collider = (Model*)mcollider.model;
+                    idxCollider = mcollider.attrIdx;
+                }
+                if (collider != NULL && model == camara) {
+                    if (ejeColision.y == 1) {
+                        INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_" + to_string(idxCollider));
+                        if (removeCollideModel(collider, idxCollider))
+                            i--;
+                    }
+                }
+                if (model->name.compare("bullet_9_mm") == 0 && mcollider.hitGround) {
+                    if (mcollider.model != NULL) {
+                        INFO("IMPACTO!!!! " + ((Model*)mcollider.model)->name, "Impact HITBOX_" + to_string(mcollider.attrIdx));
+                    }
+                    else {
+                        //							INFO("IMPACTO!!!! ", "Impact HITBOX_"+to_string(mcollider.attrIdx));
+                    }
+                    removeCollideModel(model, j);
+                    j--;
+                }
+                if (j < 0) j = 0;
+            }
             // --- IA simple: zombies siguen al modelo principal ---
             if (model != camara && (model->name == "ZombieE" || model->name == "ZombieN")) {
                 glm::vec3 target = *camara->getTranslate();
@@ -56,7 +125,7 @@ public:
                 glm::vec3 dir = target - current;
                 dir.y = 0; // ignorar altura vertical
                 float dist2 = glm::dot(dir, dir);
-                if (dist2 > 0.25f) { // pequeño umbral para evitar jitter
+                if (dist2 > 0.25f) { // pequeï¿½o umbral para evitar jitter
                     float dist = glm::sqrt(dist2);
                     glm::vec3 step = (dir / dist) * (0.8f * (float)gameTime.deltaTime / 100.0f); // velocidad * dt
                     current += step;
@@ -87,7 +156,7 @@ public:
                             gasCounter = t;
                             // Texto esperado formato "N/10"
                             WCHAR* actual = t->getTexto();
-                            // Extraer número antes de '/'
+                            // Extraer nï¿½mero antes de '/'
                             wchar_t* slash = wcschr(actual, L'/');
                             if (slash) {
                                 *slash = L'\0';
@@ -131,7 +200,7 @@ public:
                     }
                     continue; // no quitar vidas
                 }
-                // 2) Si hay >= 10 gasolinas y chocamos con el auto, cambiar control/cámara al auto
+                // 2) Si hay >= 10 gasolinas y chocamos con el auto, cambiar control/cï¿½mara al auto
                 if (collider->name == "AutoChido") {
                     long val = 0;
                     auto textos = getLoadedText();
@@ -159,7 +228,7 @@ public:
                         continue;
                     }
                 }
-                // 3) Victoria: colisión con StopFinal usando el auto
+                // 3) Victoria: colisiï¿½n con StopFinal usando el auto
                 if (collider->name == "StopFinal" && camara->name == "AutoChido") {
                     INFO("HAZ ESCAPADO!", "GAME WIN");
 #ifdef _WIN32
@@ -169,7 +238,7 @@ public:
 #endif
                     return tp; // Terminar update inmediatamente
                 }
-                // 4) Enemigos: aplicar daño (o eliminar si el principal es el cqrro)
+                // 4) Enemigos: aplicar daï¿½o (o eliminar si el principal es el cqrro)
                 if (collider->name == "ZombieE" || collider->name == "ZombieN") {
                     if (camara->name == "AutoChido") {
                         // Eliminar zombie al chocar con el auto
@@ -186,9 +255,9 @@ public:
                             }
                             models.erase(zit);
                             delete collider;
-                            i--; // ajustar índice tras borrado
+                            i--; // ajustar ï¿½ndice tras borrado
                         }
-                        continue; // no daño al auto
+                        continue; // no daï¿½o al auto
                     }
                     if (collider->name == "ZombieE")
                         tp = -1;
