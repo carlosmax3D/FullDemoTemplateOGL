@@ -118,7 +118,7 @@ void LOGGER::LOG::processLog(const char* log, const char* title, const char* typ
 	time_t now = time(nullptr);
 #ifdef _WIN32 
 	tm timeptr1;
-	localtime_s(&timeptr, &now);
+	localtime_s(&timeptr1, &now);
 	tm *timeptr = &timeptr1;
 #else
 	tm *timeptr = localtime(&now);
