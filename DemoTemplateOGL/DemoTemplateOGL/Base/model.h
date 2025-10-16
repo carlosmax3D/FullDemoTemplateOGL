@@ -75,33 +75,33 @@ public:
 
     void setVelocity(glm::vec3* velocity);
     glm::vec3* getVelocity();
-    virtual void setNextTranslate(glm::vec3* translate);
-    virtual void setTranslate(glm::vec3* translate);
-    void setScale(glm::vec3* scale);
-    void setRotX(float rotationAngle);
-    void setRotY(float rotationAngle);
-    void setRotZ(float rotationAngle);
-    glm::vec3* getTranslate();
-    glm::vec3* getNextTranslate();
-    glm::vec3* getScale();
-    float getRotX();
-    float getRotY();
-    float getRotZ();
-    glm::vec3* getRotationVector();
-    float getNextRotX();
-    float getNextRotY();
-    float getNextRotZ();
-    glm::vec3* getNextRotationVector();
-    bool getActive();
-    void setNextRotX(float rotationAngle);
-    void setNextRotY(float rotationAngle);
-    void setNextRotZ(float rotationAngle);
-    void setActive(bool active);
+    virtual void setNextTranslate(glm::vec3* translate, int idx = 0);
+    virtual void setTranslate(glm::vec3* translate, int idx = 0);
+    void setScale(glm::vec3* scale, int idx = 0);
+    void setRotX(float rotationAngle, int idx = 0);
+    void setRotY(float rotationAngle, int idx = 0);
+    void setRotZ(float rotationAngle, int idx = 0);
+    glm::vec3* getTranslate(int idx = 0);
+    glm::vec3* getNextTranslate(int idx = 0);
+    glm::vec3* getScale(int idx = 0);
+    float getRotX(int idx = 0);
+    float getRotY(int idx = 0);
+    float getRotZ(int idx = 0);
+    glm::vec3* getRotationVector(int idx = 0);
+    float getNextRotX(int idx = 0);
+    float getNextRotY(int idx = 0);
+    float getNextRotZ(int idx = 0);
+    glm::vec3* getNextRotationVector(int idx = 0);
+    bool getActive(int idx = 0);
+    void setNextRotX(float rotationAngle, int idx = 0);
+    void setNextRotY(float rotationAngle, int idx = 0);
+    void setNextRotZ(float rotationAngle, int idx = 0);
+    void setActive(bool active, int idx = 0);
 
     void buildKDtree();
     void buildCollider(float x, float y, float z, float halfWidth, float halfHeight, float halfDepth);
-    bool colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
-    bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false);
+    bool colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false, int idx = 0);
+    bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false, int idx = 0);
     static bool colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
     std::unordered_map<string, int>* GetBoneInfoMap();
@@ -113,7 +113,7 @@ public:
     void setAnimation(unsigned int id);
     void setCleanTextures(bool flag);
     std::vector<ModelAttributes>* getModelAttributes();
-    virtual ModelCollider update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable = false);
+    virtual ModelCollider update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable = false, int idx = 0);
 private:
     void loadMaterial(vector<Material> &m, aiMaterial* mat);
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.

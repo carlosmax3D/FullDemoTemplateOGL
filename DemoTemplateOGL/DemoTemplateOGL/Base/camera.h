@@ -116,6 +116,7 @@ public:
         projection = glm::perspective(glm::radians(getZoom()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         // Obtenemos la vista
         GetViewMatrix(view);
+        updateCameraVectors();
         return glm::lookAt(Position,
             Position + Front,
             glm::vec3(0, 1, 0));

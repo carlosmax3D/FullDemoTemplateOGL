@@ -183,121 +183,121 @@ glm::mat4 Model::makeTransNextPosition() {
 bool Model::getDefaultShader() { return defaultShader; }
 void Model::setDefaultShader(bool defaultShader) { this->defaultShader = defaultShader; }
 
-void Model::setTranslate(glm::vec3* translate) {
+void Model::setTranslate(glm::vec3* translate, int idx) {
     if (translate == NULL) {
-        this->attributes[0].translate = glm::vec3(0);
-        this->attributes[0].hasTranslate = false;
+        this->attributes[idx].translate = glm::vec3(0);
+        this->attributes[idx].hasTranslate = false;
     }
     else {
-        this->attributes[0].translate = *translate;
-        this->attributes[0].hasTranslate = true;
+        this->attributes[idx].translate = *translate;
+        this->attributes[idx].hasTranslate = true;
     }
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setTranslate(translate);
 }
-void Model::setNextTranslate(glm::vec3* translate) {
+void Model::setNextTranslate(glm::vec3* translate, int idx) {
     if (translate == NULL) {
-        this->attributes[0].nextTranslate = glm::vec3(0);
+        this->attributes[idx].nextTranslate = glm::vec3(0);
     } else {
-        this->attributes[0].nextTranslate = *translate;
+        this->attributes[idx].nextTranslate = *translate;
     }
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setNextTranslate(translate);
 }
-void Model::setScale(glm::vec3* scale) {
+void Model::setScale(glm::vec3* scale, int idx) {
     if (scale == NULL) {
-        this->attributes[0].scale = glm::vec3(0);
-        this->attributes[0].hasScale = false;
+        this->attributes[idx].scale = glm::vec3(0);
+        this->attributes[idx].hasScale = false;
     }
     else {
-        this->attributes[0].scale = *scale;
-        this->attributes[0].hasScale = true;
+        this->attributes[idx].scale = *scale;
+        this->attributes[idx].hasScale = true;
     }
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setScale(scale);
 }
 
-void Model::setRotX(float rotationAngle) {
-    this->attributes[0].rotX = rotationAngle;
-    this->attributes[0].rotation.x = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setRotX(float rotationAngle, int idx) {
+    this->attributes[idx].rotX = rotationAngle;
+    this->attributes[idx].rotation.x = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setRotX(rotationAngle);
 }
-void Model::setRotY(float rotationAngle) {
-    this->attributes[0].rotY = rotationAngle;
-    this->attributes[0].rotation.y = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setRotY(float rotationAngle, int idx) {
+    this->attributes[idx].rotY = rotationAngle;
+    this->attributes[idx].rotation.y = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setRotY(rotationAngle);
 }
-void Model::setRotZ(float rotationAngle) {
-    this->attributes[0].rotZ = rotationAngle;
-    this->attributes[0].rotation.z = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setRotZ(float rotationAngle, int idx) {
+    this->attributes[idx].rotZ = rotationAngle;
+    this->attributes[idx].rotation.z = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setRotZ(rotationAngle);
 }
-void Model::setNextRotX(float rotationAngle) {
-    this->attributes[0].nextRotX = rotationAngle;
-    this->attributes[0].nextRotation.x = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setNextRotX(float rotationAngle, int idx) {
+    this->attributes[idx].nextRotX = rotationAngle;
+    this->attributes[idx].nextRotation.x = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setNextRotX(rotationAngle);
 }
-void Model::setNextRotY(float rotationAngle) {
-    this->attributes[0].nextRotY = rotationAngle;
-    this->attributes[0].nextRotation.y = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setNextRotY(float rotationAngle, int idx) {
+    this->attributes[idx].nextRotY = rotationAngle;
+    this->attributes[idx].nextRotation.y = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setNextRotY(rotationAngle);
 }
-void Model::setNextRotZ(float rotationAngle) {
-    this->attributes[0].nextRotZ = rotationAngle;
-    this->attributes[0].nextRotation.z = rotationAngle == 0 ? 0 : 1;
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+void Model::setNextRotZ(float rotationAngle, int idx) {
+    this->attributes[idx].nextRotZ = rotationAngle;
+    this->attributes[idx].nextRotation.z = rotationAngle == 0 ? 0 : 1;
+    Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
     if (AABB != NULL) AABB->setNextRotZ(rotationAngle);
 }
 
-glm::vec3* Model::getTranslate() {
-    return &this->attributes[0].translate;
+glm::vec3* Model::getTranslate(int idx) {
+    return &this->attributes[idx].translate;
 }
-glm::vec3* Model::getNextTranslate() {
-    return &this->attributes[0].nextTranslate;
-}
-
-glm::vec3* Model::getScale() {
-    return &this->attributes[0].scale;
+glm::vec3* Model::getNextTranslate(int idx) {
+    return &this->attributes[idx].nextTranslate;
 }
 
-float Model::getRotX() {
-    return this->attributes[0].rotX;
-}
-float Model::getRotY() {
-    return this->attributes[0].rotY;
-}
-float Model::getRotZ() {
-    return this->attributes[0].rotZ;
+glm::vec3* Model::getScale(int idx) {
+    return &this->attributes[idx].scale;
 }
 
-glm::vec3* Model::getRotationVector() {
-    return &this->attributes[0].rotation;
+float Model::getRotX(int idx) {
+    return this->attributes[idx].rotX;
 }
-float Model::getNextRotX() {
-    return this->attributes[0].nextRotX;
+float Model::getRotY(int idx) {
+    return this->attributes[idx].rotY;
 }
-float Model::getNextRotY() {
-    return this->attributes[0].nextRotY;
-}
-float Model::getNextRotZ() {
-    return this->attributes[0].nextRotZ;
+float Model::getRotZ(int idx) {
+    return this->attributes[idx].rotZ;
 }
 
-glm::vec3* Model::getNextRotationVector() {
-    return &this->attributes[0].nextRotation;
+glm::vec3* Model::getRotationVector(int idx) {
+    return &this->attributes[idx].rotation;
+}
+float Model::getNextRotX(int idx) {
+    return this->attributes[idx].nextRotX;
+}
+float Model::getNextRotY(int idx) {
+    return this->attributes[idx].nextRotY;
+}
+float Model::getNextRotZ(int idx) {
+    return this->attributes[idx].nextRotZ;
 }
 
-bool Model::getActive(){
-    return attributes[0].active;
+glm::vec3* Model::getNextRotationVector(int idx) {
+    return &this->attributes[idx].nextRotation;
 }
 
-void Model::setActive(bool active){
-    this->attributes[0].active = active;
+bool Model::getActive(int idx){
+    return attributes[idx].active;
+}
+
+void Model::setActive(bool active, int idx){
+    this->attributes[idx].active = active;
 }
 
 std::vector<Animator>& Model::getAnimator(){
@@ -330,7 +330,7 @@ glm::vec3* Model::getVelocity(){
     return &velocity;
 }
 
-ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable){
+ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable, int idx){
     ModelCollider collide = { 0 };
     if (this->ignoreAABB)
         return collide;
@@ -341,10 +341,10 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     }
 
     // Predict next position
-    glm::vec3 nextGPosition = *this->getNextTranslate();
-    glm::vec3 prevGPosition = *this->getTranslate();
-    glm::vec3 nextPosition = *this->getNextTranslate();
-    glm::vec3 prevPosition = *this->getTranslate();
+    glm::vec3 nextGPosition = *this->getNextTranslate(idx);
+    glm::vec3 prevGPosition = *this->getTranslate(idx);
+    glm::vec3 nextPosition = *this->getNextTranslate(idx);
+    glm::vec3 prevPosition = *this->getTranslate(idx);
     if (gravityEnable) {
         nextGPosition += this->velocity;
         prevGPosition += this->velocity;
@@ -359,7 +359,7 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
         nextGPosition.y = terrainY;
         this->velocity.y = 0.0f;
     }
-    setNextTranslate(&nextGPosition);
+    setNextTranslate(&nextGPosition, idx);
 
     glm::vec3 yPos;
     // Check collisions with objects
@@ -367,7 +367,7 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     for (int i = 0; i < models.size(); i++) {
         Model *other = models[i];
         for (int j = 0; j < other->getModelAttributes()->size(); j++) {
-            if (this != other && this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+            if (this != other && this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)) {
     //            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
                 // If colliding, place object on top of the other object
     //            glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
@@ -379,38 +379,38 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
                 collide.attrIdx = j;
                 if (nextGPosition.y > (yPos.y * 0.90)){
                     nextGPosition.y = yPos.y;
-                    setNextTranslate(&nextGPosition);
+                    setNextTranslate(&nextGPosition, idx);
                     ejeColision.y = 1;
                     break;
                 }
-                setNextTranslate(&nextPosition);
-                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+                setNextTranslate(&nextPosition, idx);
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)) {
                     break;
                 }
                 if (nextPosition.y > (yPos.y * 0.90)) {
                     nextPosition.y = yPos.y;
-                    setNextTranslate(&nextPosition);
+                    setNextTranslate(&nextPosition, idx);
                     ejeColision.y = 1;
                     break;
                 }
-                setNextTranslate(&prevGPosition);
-                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)) {
+                setNextTranslate(&prevGPosition, idx);
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)) {
                     break;
                 }
                 if (prevGPosition.y > (yPos.y * 0.90)) {
                     prevGPosition.y = yPos.y;
-                    setNextTranslate(&prevGPosition);
+                    setNextTranslate(&prevGPosition, idx);
                     ejeColision.y = 1;
                     break;
                 }
-                setNextTranslate(&prevPosition);
-                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement)){
+                setNextTranslate(&prevPosition, idx);
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)){
                     break;
                 }
-                setNextTranslate(getTranslate());
-                setNextRotX(getRotX());
-                setNextRotY(getRotY());
-                setNextRotZ(getRotZ());
+                setNextTranslate(getTranslate(idx), idx);
+                setNextRotX(getRotX(idx), idx);
+                setNextRotY(getRotY(idx), idx);
+                setNextRotZ(getRotZ(idx), idx);
                 break;
             }
         }
@@ -418,10 +418,10 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     }
 
     // Apply final position
-    this->setTranslate(getNextTranslate());
-    setRotX(getNextRotX());
-    setRotY(getNextRotY());
-    setRotZ(getNextRotZ());
+    this->setTranslate(getNextTranslate(idx), idx);
+    setRotX(getNextRotX(idx), idx);
+    setRotY(getNextRotY(idx), idx);
+    setRotZ(getNextRotZ(idx), idx);
     return collide;
 }
 
@@ -716,8 +716,8 @@ void Model::ExtractBoneWeightForVertices(vector<Vertex>& vertices, aiMesh* mesh,
     }
 }
 
-bool Model::colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
-    return Model::colisionaCon(this->getModelAttributes()->at(0), objeto, yPos, collitionMove);
+bool Model::colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove, int idx) {
+    return Model::colisionaCon(this->getModelAttributes()->at(idx), objeto, yPos, collitionMove);
 }
 bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
     if (objeto0.hitbox == NULL || objeto.hitbox == NULL)

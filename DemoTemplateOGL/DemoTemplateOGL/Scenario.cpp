@@ -46,28 +46,24 @@ void Scenario::InitGraph(Model *main) {
 	model->setNextRotX(45); // 45� rotation
 	ourModel.emplace_back(model);
 
+	ModelAttributes m;
 	Model *pez = new Model("models/pez/pez.obj", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
 	pez->setNextTranslate(&translate);
 	pez->setTranslate(&translate);
 	ourModel.emplace_back(pez);
-	ModelAttributes m;
-	m.setTranslate(&translate);
-	m.setNextTranslate(&translate);
-	m.translate.x = 5;
 	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
-	model->setTranslate(&m.translate);
-	model->setNextTranslate(&m.translate);
 	m.hitbox = model;
 	pez->getModelAttributes()->push_back(m);
-	m.setTranslate(&translate);
-	m.setNextTranslate(&translate);
-	m.translate.x = 10;
+	translate.x = 5;
+	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
+	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
 	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
-	model->setTranslate(&m.translate);
-	model->setNextTranslate(&m.translate);
 	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
 	pez->getModelAttributes()->push_back(m);
+	translate.x = 10;
+	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
+	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
 
 	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
 	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
@@ -104,20 +100,15 @@ void Scenario::InitGraph(Model *main) {
 	}catch(...){
 		ERRORL("Could not load animation!", "ANIMACION");
 	}
-	m.setTranslate(&translate);
-	m.setNextTranslate(&translate);
-	m.translate.x += 10;
-	m.setScale(&scale);
-	m.setNextRotY(180);
-	m.setRotY(180);
-	model = CollitionBox::GenerateAABB(m.translate, silly->AABBsize, main->cameraDetails);
-	model->setTranslate(&m.translate);
-	model->setNextTranslate(&m.translate);
-	model->setScale(&scale);
-	model->setNextRotY(180);
-	model->setRotY(180);
+	model = CollitionBox::GenerateAABB(translate, silly->AABBsize, main->cameraDetails);
 	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
 	silly->getModelAttributes()->push_back(m);
+	translate.x += 10;
+	silly->setTranslate(&translate, silly->getModelAttributes()->size()-1);
+	silly->setNextTranslate(&translate, silly->getModelAttributes()->size()-1);
+	silly->setScale(&scale, silly->getModelAttributes()->size()-1);
+	silly->setNextRotY(180, silly->getModelAttributes()->size()-1);
+	silly->setRotY(180, silly->getModelAttributes()->size()-1);
 	// Import model and clone with bones and animations
 	model = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
 	translate = glm::vec3(30.0f, terreno->Superficie(30.0f, 60.0f) , 60.0f);

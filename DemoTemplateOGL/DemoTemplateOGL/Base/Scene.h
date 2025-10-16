@@ -36,22 +36,26 @@ class Scene {
 			for (int i = 0; i < getLoadedModels()->size(); i++){
 				auto it = getLoadedModels()->begin() + i;
 				Model *collider = NULL, *model = *it;
-				int idxCollider = -1;
-                bool objInMovement = (*model->getNextTranslate()) != (*model->getTranslate());
-				glm::vec3 &posM = objInMovement ? *model->getNextTranslate() : *model->getTranslate();
-                glm::vec3 ejeColision = glm::vec3(0);
-				bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
-				ModelCollider mcollider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision, isPrincipal);
-				if (mcollider.model != NULL){
-					collider = (Model*)mcollider.model;
-					idxCollider = mcollider.attrIdx;
-				}
-				if (collider != NULL && model == camara){
-					if (ejeColision.y == 1){
-						INFO("APLASTADO!!!!", "JUMP HITBOX");
-						if (removeCollideModel(collider, idxCollider))
-							i--;
+				for (int j = 0; j < model->getModelAttributes()->size(); j++){
+					int idxCollider = -1;
+					bool objInMovement = (*model->getNextTranslate(j)) != (*model->getTranslate(j));
+					glm::vec3 &posM = objInMovement ? *model->getNextTranslate(j) : *model->getTranslate(j);
+					glm::vec3 ejeColision = glm::vec3(0);
+					bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
+					float terrainY = getTerreno()->Superficie(posM.x, posM.z);
+					ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
+					if (mcollider.model != NULL){
+						collider = (Model*)mcollider.model;
+						idxCollider = mcollider.attrIdx;
 					}
+					if (collider != NULL && model == camara){
+						if (ejeColision.y == 1){
+							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
+							if (removeCollideModel(collider, idxCollider))
+								i--;
+						}
+					}
+					if (j < 0) j = 0;
 				}
 				if (i < 0) i = 0;
 			}
@@ -65,12 +69,14 @@ class Scene {
 			if (idxCollider == 0){
 				collider->setActive(false);
 				Model* AABB = (Model*)collider->getModelAttributes()->at(0).hitbox;
-				delete AABB;
+				if (AABB)
+					delete AABB;
 				collider->getModelAttributes()->at(0).hitbox = NULL;
 			} else {
 				ModelAttributes &attr = collider->getModelAttributes()->at(idxCollider);
 				Model *AABB = (Model*)attr.hitbox;
-				delete AABB;
+				if (AABB)
+					delete AABB;
 				collider->getModelAttributes()->erase(collider->getModelAttributes()->begin() + idxCollider);
 			}
 			if (collider->getModelAttributes()->size() == 1 && !collider->getActive()){
