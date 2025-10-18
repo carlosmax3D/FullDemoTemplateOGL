@@ -206,6 +206,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
             glm::vec3 trans = *OGLobj->getNextTranslate();
             trans.y += OGLobj->cameraDetails->getCharacterHeight() / 2;
             trans = trans + mattr.forward * 1.5f;
+            mattr.origin = trans;
             m->setTranslate(&trans, idx);
             m->setNextTranslate(&trans, idx);
             m->setNextRotX(mattr.nextRotX, idx);

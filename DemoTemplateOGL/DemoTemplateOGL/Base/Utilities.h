@@ -121,6 +121,7 @@ struct ModelAttributes{
 	bool active = true;
 	void *hitbox = NULL; // possible link to hitbox
 	glm::vec3 forward = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	void setNextTranslate(glm::vec3* translate);
 	void setTranslate(glm::vec3* translate);
 	void setScale(glm::vec3* scale);

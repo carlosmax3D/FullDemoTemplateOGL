@@ -780,3 +780,61 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
 void Model::setCleanTextures(bool flag){
     cleanTextures = flag;
 }
+
+bool Model::intersectaRayo(glm::vec3 origen, glm::vec3 direccion, bool collitionMove, int idx) {
+    ModelAttributes& mAttr = this->getModelAttributes()->at(idx);
+    if (mAttr.hitbox == NULL)
+        return false;
+
+    Model* AABB = (Model*)mAttr.hitbox;
+    glm::mat4 transform = collitionMove  // AABB transformado
+                          ? AABB->makeTransScaleNextPosition(glm::mat4(1))
+                          : AABB->makeTransScale(glm::mat4(1));
+
+    // Transformar vértices de la AABB
+    Vertex transformedVertices[24];
+    Vertex* tvIdx = transformedVertices;
+    for (Vertex& vertex : AABB->meshes[0]->vertices) {
+        tvIdx->Position = glm::vec3(transform * glm::vec4(vertex.Position, 1.0f));
+        tvIdx++;
+    }
+
+    // Obtener AABB en espacio mundo (mínimo y máximo en x, y, z)
+    glm::vec3 min = transformedVertices[0].Position;
+    glm::vec3 max = transformedVertices[0].Position;
+
+    for (int i = 1; i < 24; ++i) {
+        min = glm::min(min, transformedVertices[i].Position);
+        max = glm::max(max, transformedVertices[i].Position);
+    }
+
+    // Intersección ray-AABB usando método de slabs
+    float tmin = (min.x - origen.x) / direccion.x;
+    float tmax = (max.x - origen.x) / direccion.x;
+
+    if (tmin > tmax) std::swap(tmin, tmax);
+
+    float tymin = (min.y - origen.y) / direccion.y;
+    float tymax = (max.y - origen.y) / direccion.y;
+
+    if (tymin > tymax) std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+
+    if (tymin > tmin)
+        tmin = tymin;
+    if (tymax < tmax)
+        tmax = tymax;
+
+    float tzmin = (min.z - origen.z) / direccion.z;
+    float tzmax = (max.z - origen.z) / direccion.z;
+
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+
+    // Si llegamos aquí, hay intersección
+    return true;
+}
