@@ -145,39 +145,39 @@ void Model::Draw(Shader& shader, int idxAttribute) {
         }
     }
 }
-glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations) const {
-    glm::mat4 model = makeTrans() * prevTransformations;
-    if (attributes[0].hasScale)
-        model = glm::scale(model, attributes[0].scale);
-    if (this->attributes[0].rotation.x != 0 || this->attributes[0].rotation.y != 0 || this->attributes[0].rotation.z != 0) {
-        if (this->attributes[0].rotation.x != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].rotX), glm::vec3(1,0,0));
-        if (this->attributes[0].rotation.y != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].rotY), glm::vec3(0,1,0));
-        if (this->attributes[0].rotation.z != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].rotZ), glm::vec3(0,0,1));
+glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) const {
+    glm::mat4 model = makeTrans(idx) * prevTransformations;
+    if (attributes[idx].hasScale)
+        model = glm::scale(model, attributes[idx].scale);
+    if (this->attributes[idx].rotation.x != 0 || this->attributes[idx].rotation.y != 0 || this->attributes[idx].rotation.z != 0) {
+        if (this->attributes[idx].rotation.x != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotX), glm::vec3(1,0,0));
+        if (this->attributes[idx].rotation.y != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotY), glm::vec3(0,1,0));
+        if (this->attributes[idx].rotation.z != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotZ), glm::vec3(0,0,1));
     }
     return model;
 }
-glm::mat4 Model::makeTrans() const {
-    return  glm::translate(glm::mat4(1), attributes[0].translate);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
+glm::mat4 Model::makeTrans(int idx) const {
+    return  glm::translate(glm::mat4(1), attributes[idx].translate);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
 }
-glm::mat4 Model::makeTransScaleNextPosition(const glm::mat4& prevTransformations) {
-    glm::mat4 model = makeTransNextPosition() * prevTransformations;
-    if (attributes[0].hasScale)
-        model = glm::scale(model, attributes[0].scale);
-    if (this->attributes[0].nextRotation.x != 0 || this->attributes[0].nextRotation.y != 0 || this->attributes[0].nextRotation.z != 0) {
-        if (this->attributes[0].nextRotation.x != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotX), glm::vec3(1, 0, 0));
-        if (this->attributes[0].nextRotation.y != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotY), glm::vec3(0, 1, 0));
-        if (this->attributes[0].nextRotation.z != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[0].nextRotZ), glm::vec3(0, 0, 1));
+glm::mat4 Model::makeTransScaleNextPosition(const glm::mat4& prevTransformations, int idx) {
+    glm::mat4 model = makeTransNextPosition(idx) * prevTransformations;
+    if (attributes[idx].hasScale)
+        model = glm::scale(model, attributes[idx].scale);
+    if (this->attributes[idx].nextRotation.x != 0 || this->attributes[idx].nextRotation.y != 0 || this->attributes[idx].nextRotation.z != 0) {
+        if (this->attributes[idx].nextRotation.x != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].nextRotX), glm::vec3(1, 0, 0));
+        if (this->attributes[idx].nextRotation.y != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].nextRotY), glm::vec3(0, 1, 0));
+        if (this->attributes[idx].nextRotation.z != 0)
+            model = glm::rotate(model, glm::radians(this->attributes[idx].nextRotZ), glm::vec3(0, 0, 1));
     }
     return model;
 }
-glm::mat4 Model::makeTransNextPosition() {
-    glm::vec3 pos = *this->getNextTranslate();
+glm::mat4 Model::makeTransNextPosition(int idx) {
+    glm::vec3 pos = *this->getNextTranslate(idx);
     return  glm::translate(glm::mat4(1), pos);//glm::mat4(1) *glm::mat4(1)* glm::mat4(1);
 }
 bool Model::getDefaultShader() { return defaultShader; }

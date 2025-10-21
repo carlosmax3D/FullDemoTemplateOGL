@@ -66,10 +66,10 @@ public:
     virtual void prepShader(Shader& gpuDemo, ModelAttributes &attributes);
     virtual void Draw();
     virtual void Draw(Shader& shader, int attribute);
-    glm::mat4 makeTransScale(const glm::mat4& prevTransformations) const;
-    glm::mat4 makeTrans() const;
-    glm::mat4 makeTransNextPosition();
-    glm::mat4 makeTransScaleNextPosition(const glm::mat4& prevTransformations);
+    glm::mat4 makeTransScale(const glm::mat4& prevTransformations, int idx = 0) const;
+    glm::mat4 makeTrans(int idx = 0) const;
+    glm::mat4 makeTransNextPosition(int idx = 0);
+    glm::mat4 makeTransScaleNextPosition(const glm::mat4& prevTransformations, int idx = 0);
     bool getDefaultShader();
     void setDefaultShader(bool defaultShader);
 
