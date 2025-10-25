@@ -39,12 +39,12 @@ void main() {
             totalNormal += (mat3(boneMatrix) * aNormal) * weights[i];
         }
     }
-    totalPosition = isZeroVec4(totalPosition) ? vec4(aPos,1.0) : totalPosition;
-    totalNormal = isZeroVec3(totalNormal) ? aNormal : totalNormal;
 
-    // Final transformations
+    if (length(totalPosition) == 0.0) totalPosition = vec4(aPos, 1.0);
+    if (length(totalNormal) == 0.0) totalNormal = aNormal;
+
     FragPos = vec3(model * totalPosition);
-    Normal = normalize(mat3(model) * totalNormal);
+    Normal = normalize(mat3(transpose(inverse(model))) * totalNormal);
     TexCoords = aTexCoords;
     gl_Position = projection * view * model * totalPosition;
 }
