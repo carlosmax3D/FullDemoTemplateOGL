@@ -23,6 +23,11 @@
 #include "Animator.h"
 using namespace std;
 
+class Model_Exception : std::exception {
+    public:
+        Model_Exception();
+        const char* what();
+};
 class Model {
 private:
     std::vector<ModelAttributes> attributes;

@@ -83,7 +83,6 @@ void Texto::initTexto(){
 		                      ch_data.top_left.x + margin, ch_data.top_left.y,
 		                      ch_data.bot_right.x - margin, ch_data.top_left.y };
         letra.setTextureCoords(texCoords);
-        letra.reloadData();
 		xpos += scale;
 	}
 }

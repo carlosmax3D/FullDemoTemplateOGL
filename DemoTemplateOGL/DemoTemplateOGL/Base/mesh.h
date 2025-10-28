@@ -21,9 +21,13 @@ public:
 
     // mesh Data
     vector<Vertex>       vertices;
+    unsigned int nVertices = 0;
     vector<unsigned int> indices;
     vector<Texture>      textures;
     vector<Material>     materials;
+    vector<ModelAttributes>*
+                         modelAttributes;
+    unsigned int nModelAttributes = 0;
     unsigned int VAO;
     int EBOGLDrawType = GL_STATIC_DRAW;
     int VBOGLDrawType = GL_STATIC_DRAW;
@@ -32,6 +36,7 @@ public:
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
         glDeleteBuffers(1, &EBO);
+        if (VBOInstance != INT_MAX) glDeleteBuffers(1, &VBOInstance);
     }
     // constructor
     Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, vector<Material>& materials, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
@@ -41,6 +46,7 @@ public:
         this->materials = materials;
         this->VBOGLDrawType = VBOGLDrawType;
         this->EBOGLDrawType = EBOGLDrawType;
+        this->modelAttributes = NULL;
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
@@ -50,6 +56,7 @@ public:
         this->textures = textures;
         this->VBOGLDrawType = VBOGLDrawType;
         this->EBOGLDrawType = EBOGLDrawType;
+        this->modelAttributes = NULL;
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
@@ -115,22 +122,32 @@ public:
                 shader.setFloat("material.shininess", 1.0f);
             }
         }
-
+        int multipleInstances = this->modelAttributes != NULL && this->modelAttributes->size() > 1;
+        shader.setInt("multipleInstances", multipleInstances);
         // draw mesh
         glBindVertexArray(VAO);
         switch (this->VBOGLDrawType){
             case GL_DYNAMIC_DRAW:
                 glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                glBufferData(GL_ARRAY_BUFFER, (GLsizei)vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);
-                glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)indices[0]);
+                if (nVertices < vertices.size()){
+                    glBufferData(GL_ARRAY_BUFFER, (GLsizei)vertices.size() * sizeof(Vertex), &vertices[0], GL_DYNAMIC_DRAW);
+                    nVertices = vertices.size();
+                }else{
+                    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                    // Mapeamos todo el buffer (o solo el rango que cambia)
+                    Vertex* ptr = (Vertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(Vertex), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+                    memcpy(ptr, vertices.data(), vertices.size() * sizeof(Vertex));
+                    glUnmapBuffer(GL_ARRAY_BUFFER);
+                }
+                drawMultipleInstances(multipleInstances);
                 glDisable(GL_BLEND);
                 break;
             case GL_LINE_LOOP:
-                glDrawElements(GL_LINE_LOOP, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)indices[0]);
+                glDrawElements(GL_LINE_LOOP, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)0);
                 glBindVertexArray(0);
                 break;
             default:
-                glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)indices[0]);
+                drawMultipleInstances(multipleInstances);
                 glBindVertexArray(0);
         }
         // always good practice to set everything back to defaults once configured.
@@ -140,21 +157,24 @@ public:
 
 private:
     // render data 
-    unsigned int VBO, EBO;
+    unsigned int VBO, EBO, VBOInstance = INT_MAX;
     // initializes all the buffer objects/arrays
-    void setupMesh() {
+void setupMesh() {
         // create buffers/arrays
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
         glGenBuffers(1, &EBO);
+        glGenBuffers(1, &VBOInstance); // para instancing
 
         glBindVertexArray(VAO);
+
+        nVertices = vertices.size();
         // load data into vertex buffers
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         // A great thing about structs is that their memory layout is sequential for all its items.
         // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
         // again translates to 3/2 floats which translates to a byte array.
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], this->VBOGLDrawType);
+        glBufferData(GL_ARRAY_BUFFER, nVertices * sizeof(Vertex), &vertices[0], this->VBOGLDrawType);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], this->EBOGLDrawType);
@@ -162,27 +182,72 @@ private:
         // set the vertex attribute pointers
         // vertex Positions
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, (int)vertices[0].Position.length(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,Position));//0
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex,Position));//0
         // vertex texture coords
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, (int)vertices[0].TexCoords.length(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
         // vertex normals
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, (int)vertices[0].Normal.length(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
         // vertex tangent
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, (int)vertices[0].Tangent.length(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
         // vertex bitangent
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, (int)vertices[0].Bitangent.length(), GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
         // ids
         glEnableVertexAttribArray(5);
         glVertexAttribIPointer(5, MAX_BONE_INFLUENCE, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
         // weights
         glEnableVertexAttribArray(6);
         glVertexAttribPointer(6, MAX_BONE_INFLUENCE, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));   
+        // --- Atributos por instancia ---
+        glBindBuffer(GL_ARRAY_BUFFER, VBOInstance);
+        glEnableVertexAttribArray(7);
+        glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, translate)));
+        glVertexAttribDivisor(7, 1); // 1 → cambia por instancia
+        glEnableVertexAttribArray(8);
+        glVertexAttribPointer(8, 3, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, scale)));
+        glVertexAttribDivisor(8, 1); // 1 → cambia por instancia
+        glEnableVertexAttribArray(9);
+        glVertexAttribPointer(9, 1, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, rotX)));
+        glVertexAttribDivisor(9, 1); // 1 → cambia por instancia
+        glEnableVertexAttribArray(10);
+        glVertexAttribPointer(10, 1, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, rotY)));
+        glVertexAttribDivisor(10, 1); // 1 → cambia por instancia
+        glEnableVertexAttribArray(11);
+        glVertexAttribPointer(11, 1, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, rotZ)));
+        glVertexAttribDivisor(11, 1); // 1 → cambia por instancia
+        glEnableVertexAttribArray(12);
+        glVertexAttribPointer(12, 1, GL_FLOAT, GL_FALSE, sizeof(ModelAttributesGPU), (void*)(offsetof(ModelAttributesGPU, active)));
+        glVertexAttribDivisor(12, 1); // 1 → cambia por instancia
 
         glBindVertexArray(0);
+    }
+
+    void drawMultipleInstances(int multipleInstances){
+        if (multipleInstances == 0){
+            glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)0);
+            return;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, VBOInstance);
+        if (nModelAttributes < modelAttributes->size()){
+            glBufferData(GL_ARRAY_BUFFER, (GLsizei)modelAttributes->size() * sizeof(ModelAttributesGPU), NULL, this->VBOGLDrawType);
+            nModelAttributes = modelAttributes->size();
+        }
+        ModelAttributesGPU* ptr = (ModelAttributesGPU*)glMapBufferRange(GL_ARRAY_BUFFER, 0, modelAttributes->size() * sizeof(ModelAttributesGPU), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        for (ModelAttributes &mat : *modelAttributes){
+            ptr->translate = mat.translate;
+            ptr->scale = mat.scale;
+            ptr->rotX = mat.rotX;
+            ptr->rotY = mat.rotY;
+            ptr->rotZ = mat.rotZ;
+            ptr->active = mat.active;
+            ptr++;
+        }
+        // Mapeamos todo el buffer (o solo el rango que cambia)
+        glUnmapBuffer(GL_ARRAY_BUFFER);
+        glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0, (GLsizei)modelAttributes->size());
     }
 };
 #endif

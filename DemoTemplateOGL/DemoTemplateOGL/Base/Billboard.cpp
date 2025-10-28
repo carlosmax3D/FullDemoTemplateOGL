@@ -11,6 +11,7 @@ void Billboard::reloadData(){
 }
 
 void Billboard::reloadData(vector<Vertex> *vertices){
+	float textCoords[8] = { 1.0f,1.0f,0.0f,1.0f,0.0f,0.0f,1.0f,0.0f };
     float verts[] = {
 	// positions        // texture coords
 		1.0f, 1.0f, 0.0f, textCoords[0], textCoords[1], //bottom left
@@ -28,6 +29,7 @@ void Billboard::reloadData(vector<Vertex> *vertices){
 }
 
 void Billboard::reloadData(vector<Vertex> *vertices, glm::vec3 origin){
+	float textCoords[8] = { 1.0f,1.0f,0.0f,1.0f,0.0f,0.0f,1.0f,0.0f };
 	glm::vec3 billcam = glm::vec3(cameraDetails->getPosition().x - origin.x,
 		cameraDetails->getPosition().y - origin.y,
 		cameraDetails->getPosition().z - origin.z);
@@ -57,19 +59,13 @@ void Billboard::reloadData(vector<Vertex> *vertices, glm::vec3 origin){
 }
 
 Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera) {
-    long tLength = wcslen((const wchar_t*)textura);
-	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
 	if (this->getModelAttributes()->size() == 0){
 		ModelAttributes attr{0};
 		this->getModelAttributes()->push_back(attr);
 	}
-	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
-	Texture t;
-	t.id = glTextura;
-	strcpy_s(t.type, 255, "texture_diffuse");
-	strcpy_s(t.path, 1024, stext);
-	initBillboard(t, ancho, alto, x, y, z, camera, GL_DYNAMIC_DRAW);
+    this->alto = alto;
+    this->ancho = ancho;
 }
 
 Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y, float z, Camera* camera) {
@@ -90,31 +86,31 @@ Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y,
 	initBillboard(t, ancho, alto, x, y, z, camera, GL_DYNAMIC_DRAW);
 }
 
-void Billboard::initBillboard(Texture &texture, float ancho, float alto, float x, float y, float z, Camera* camera,  int VBOGLDrawType, int EBOGLDrawType){
-	cameraDetails = camera;
-	vector<unsigned int> indices;
-	vector<Vertex>	vertices;
-	vector<Texture>	textures;
-
-	this->alto = alto;
-	this->ancho= ancho;
+void Billboard::initBillboard(Texture &texture, float ancho, float alto, float x, float y, float z, Camera* camera, int VBOGLDrawType, int EBOGLDrawType){
+    cameraDetails = camera;
+    vector<unsigned int> indices = { 0, 1, 2, 2, 3, 0 };
+	vector<Vertex> vertices(4);
+    vector<Texture> textures;
+    this->alto = alto;
+    this->ancho = ancho;
 //		this->ancho = ancho * 2;
 //		this->alto = alto * 2;
-	glm::vec3 origin = glm::vec3(x, y, z);
-	setTranslate(&origin);
+    glm::vec3 origin = glm::vec3(x, y, z);
+    setTranslate(&origin);
+	vertices[0].Position = glm::vec3(-0.5f, -0.5f, 0.0f);
+	vertices[0].TexCoords = glm::vec2(0.0f, 0.0f);
+	vertices[1].Position = glm::vec3(0.5f, -0.5f, 0.0f);
+	vertices[1].TexCoords = glm::vec2(1.0f, 0.0f);
+	vertices[2].Position = glm::vec3(0.5f, 0.5f, 0.0f);
+	vertices[2].TexCoords = glm::vec2(1.0f, 1.0f);
+	vertices[3].Position = glm::vec3(-0.5f, 0.5f, 0.0f);
+	vertices[3].TexCoords = glm::vec2(0.0f, 1.0f);
 	textures.emplace_back(texture);
-	vertices.reserve(4);
-	for (int i = 0; i < 4; i++)
-		vertices.emplace_back();
-	reloadData(&vertices);
-	indices.reserve(6);
-	indices = {
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
-	};
 	gpuDemo = NULL;
-	meshes.emplace_back(new Mesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
+    meshes.emplace_back(new Mesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
 	textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
+	for (Mesh *m : meshes)
+		m->modelAttributes = getModelAttributes();
 }
 
 Billboard::~Billboard(){
@@ -123,7 +119,6 @@ Billboard::~Billboard(){
 
 // Usa el shader default para poder imprimir el billboard
 void Billboard::Draw() {
-	reloadData(&(meshes[0]->vertices), *getTranslate());
 	if (gpuDemo == NULL) {
 		// build and compile our shader zprogram
 		// ------------------------------------
@@ -134,7 +129,7 @@ void Billboard::Draw() {
 	if (getDefaultShader()) {
 		gpuDemo->use();
         auto attributes = this->getModelAttributes();
-        for (int i = 0 ; i < attributes->size() ; i++){
+        for (int i = 0 ; i < 1 ; i++){
             Model::prepShader(*gpuDemo, attributes->at(i));
             prepShader(*gpuDemo, i);
             gpuDemo->setInt("texture_diffuse1", 0);
@@ -151,19 +146,23 @@ void Billboard::Draw(Shader &shader) {
 }
 
 void Billboard::prepShader(Shader& shader, int idx) {
-	glm::mat4 projection = cameraDetails->getProjection();
-	glm::mat4 view = cameraDetails->getView();
+    glm::mat4 projection = cameraDetails->getProjection();
+    glm::mat4 view = cameraDetails->getView();
 
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, glm::vec3(0.0f, 1.0f, 0.0f)); // translate it down so it's at the center of the scene
-//	model = glm::scale(model, glm::vec3(3.0f,3.0f,3.0f));
+    shader.setMat4("projection", projection);
+    shader.setMat4("view", view);
 
-	shader.setMat4("projection", projection);
-	shader.setMat4("view", view);
-	shader.setMat4("model", model);
+    shader.setVec3("billboardPos", *getTranslate(idx));
+    shader.setFloat("width", ancho);
+    shader.setFloat("height", alto);
+    shader.setVec3("cameraPos", cameraDetails->getPosition());
+    shader.setVec3("camRight", cameraDetails->getRight());
 }
 
 void Billboard::setTextureCoords(float *tCoords){
-	for (int i = 0; i < 8; i++)
-		textCoords[i] = tCoords[i];
+	auto &vertices = this->meshes.at(0)->vertices;
+	for (int i = 0; i < 8; i = i+2){
+		vertices.at(i/2).TexCoords.x = tCoords[i];
+		vertices.at(i/2).TexCoords.y = tCoords[i+1];
+	}
 }

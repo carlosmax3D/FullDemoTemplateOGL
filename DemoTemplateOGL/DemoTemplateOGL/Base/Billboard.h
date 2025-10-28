@@ -14,8 +14,6 @@ class Billboard : public Model{
 
 private:
 	float alto, ancho;
-	float textCoords[8] = { 1.0f,1.0f,0.0f,1.0f,0.0f,0.0f,1.0f,0.0f };
-	void reloadData(vector<Vertex> *vertices);
 
 	void reloadData(vector<Vertex> *vertices, glm::vec3 origin);
 public:
@@ -26,6 +24,7 @@ public:
 	~Billboard();
 
 	virtual void reloadData();
+	void reloadData(vector<Vertex> *vertices);
 
 	virtual void initBillboard(Texture &texture, float ancho, float alto, float x, float y, float z, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW);
 	// Usa el shader default para poder imprimir el billboard

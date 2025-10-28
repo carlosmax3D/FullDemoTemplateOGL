@@ -128,7 +128,16 @@ struct ModelAttributes{
 	void setNextRotY(float rotationAngle);
 	void setNextRotZ(float rotationAngle);
 };
-
+#pragma pack(push, 1)
+struct ModelAttributesGPU{
+	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 scale = glm::vec3(0);
+	float rotX = 0;
+	float rotY = 0;
+	float rotZ = 0;
+	float active = true;
+};
+#pragma pack(pop)
 struct ModelCollider{
 	void *model = NULL;
 	int attrIdx = -1;

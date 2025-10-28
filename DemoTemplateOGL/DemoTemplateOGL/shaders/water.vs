@@ -2,6 +2,7 @@
 layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec2 aTexCoords;
 layout (location = 2) in vec3 aNormal;
+layout (location = 12) in float enabled;
 
 out vec2 TexCoords;
 out vec3 Normal;
@@ -20,7 +21,7 @@ void main() {
     // Apply wave function (sine-based)
     float waveFactorX = sin(0.5 * modifiedPos.x + 0.1 * time);
     float waveFactorZ = sin(0.5 * modifiedPos.z + 0.1 * time);
-    
+        
     // Calculate final Y position
     modifiedPos.y += 0.5 * (waveFactorX + waveFactorZ);
 

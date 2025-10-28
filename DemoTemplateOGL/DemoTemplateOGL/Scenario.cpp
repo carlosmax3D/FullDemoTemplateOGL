@@ -156,14 +156,25 @@ void Scenario::InitGraph(Model *main) {
 	}
 
 void Scenario::inicializaBillboards() {
-	float ye = terreno->Superficie(0, 0);
-	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye - 1, 0, camara->cameraDetails));
+	float ye = terreno->Superficie(0, 0) + 3;
+	Billboard *arbol = new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye, 0, camara->cameraDetails);
+	billBoard.emplace_back(arbol);
+	ModelAttributes mAttr;
+	glm::vec3 pos(5, ye, 0);
+	mAttr.setTranslate(&pos);
+	arbol->getModelAttributes()->push_back(mAttr);
+	pos = glm::vec3(10, ye, 0);
+	mAttr.setTranslate(&pos);
+	arbol->getModelAttributes()->push_back(mAttr);
+	pos = glm::vec3(-10, ye, 0);
+	mAttr.setTranslate(&pos);
+	arbol->getModelAttributes()->push_back(mAttr);
 
-	ye = terreno->Superficie(-9, -15);
-	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye - 1, -15, camara->cameraDetails));
+	ye = terreno->Superficie(-9, -15) + 4;
+	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye, -15, camara->cameraDetails));
 
 	BillboardAnimation *billBoardAnimated = new BillboardAnimation();
-	ye = terreno->Superficie(5, -5);
+	ye = terreno->Superficie(5, -5) + 3;
 	for (int frameArbol = 1; frameArbol < 4; frameArbol++){
 		wchar_t textura[50] = {L"billboards/Arbol"};
 		if (frameArbol != 1){
@@ -172,7 +183,7 @@ void Scenario::inicializaBillboards() {
 			wcscat_s(textura, 50, convert);
 		}
 		wcscat_s(textura, 50, L".png");
-		billBoardAnimated->pushFrame(new Billboard((WCHAR*)textura, 6, 6, 5, ye - 1, -5, camara->cameraDetails));		
+		billBoardAnimated->pushFrame(new Billboard((WCHAR*)textura, 6, 6, 5, ye, -5, camara->cameraDetails));		
 	}
 	billBoardAnim.emplace_back(billBoardAnimated);
 }

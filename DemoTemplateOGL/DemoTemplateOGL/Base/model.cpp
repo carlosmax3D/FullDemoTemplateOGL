@@ -7,6 +7,10 @@
 #define wcstombs_s(x, y, z, w, r) wcstombs(y,w,r)
 #endif
 
+Model_Exception::Model_Exception(){ }
+const char* Model_Exception::what(){
+    return "Failed at load the model";
+}
 
 Model::Model() {
     this->cameraDetails = NULL;
@@ -14,6 +18,9 @@ Model::Model() {
     defaultShader = false;
     ModelAttributes m{0};
     this->attributes.push_back(m);
+    for (Mesh *m : meshes){
+        m->modelAttributes = &this->attributes;
+    }
 }
 Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY, bool gamma){
     this->cameraDetails = camera;
@@ -23,6 +30,9 @@ Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY,
     ModelAttributes m{0};
     this->attributes.push_back(m);
     buildKDtree();
+    for (Mesh *m : meshes){
+        m->modelAttributes = &this->attributes;
+    }
 }
 Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera) {
     vector<Texture> textures;
@@ -34,6 +44,9 @@ Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned
     ModelAttributes m{0};
     this->attributes.push_back(m);
 //    buildKDtree();
+    for (Mesh *m : meshes){
+        m->modelAttributes = &this->attributes;
+    }
 }
 Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool rotationX, bool rotationY, bool gamma) {
     cameraDetails = cam;
@@ -44,6 +57,9 @@ Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool ro
     Model::loadModel(path, rotationX, rotationY);
     this->defaultShader = false;
     buildKDtree();
+    for (Mesh *m : meshes){
+        m->modelAttributes = &this->attributes;
+    }
 }
 
 Model::~Model() {
@@ -96,21 +112,23 @@ void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
     gpuDemo.setMat4("projection", cameraDetails->getProjection());
     gpuDemo.setMat4("view", cameraDetails->getView());
 
-    // render the loaded model
-    glm::mat4 model = glm::mat4(1.0f);
-    if (attributes.hasTranslate)
-        model = glm::translate(model, attributes.translate); // translate it down so it's at the center of the scene
-//			model = glm::translate(model, glm::vec3(cameraDetails.Position->x, cameraDetails.Position->y - 5, cameraDetails.Position->z)); // translate it down so it's at the center of the scene
-        //model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
-    if (attributes.rotation.x != 0)
-        model = glm::rotate(model, glm::radians(attributes.rotX), glm::vec3(1, 0, 0));
-    if (attributes.rotation.y != 0)
-        model = glm::rotate(model, glm::radians(attributes.rotY), glm::vec3(0, 1, 0));
-    if (attributes.rotation.z != 0)
-        model = glm::rotate(model, glm::radians(attributes.rotZ), glm::vec3(0, 0, 1));
-    if (attributes.hasScale)
-        model = glm::scale(model, attributes.scale);	// it's a bit too big for our scene, so scale it down
-    gpuDemo.setMat4("model", model);
+    if (getModelAttributes()->size() == 1){
+        // render the loaded model
+        glm::mat4 model = glm::mat4(1.0f);
+        if (attributes.hasTranslate)
+            model = glm::translate(model, attributes.translate); // translate it down so it's at the center of the scene
+    //			model = glm::translate(model, glm::vec3(cameraDetails.Position->x, cameraDetails.Position->y - 5, cameraDetails.Position->z)); // translate it down so it's at the center of the scene
+            //model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
+        if (attributes.rotation.x != 0)
+            model = glm::rotate(model, glm::radians(attributes.rotX), glm::vec3(1, 0, 0));
+        if (attributes.rotation.y != 0)
+            model = glm::rotate(model, glm::radians(attributes.rotY), glm::vec3(0, 1, 0));
+        if (attributes.rotation.z != 0)
+            model = glm::rotate(model, glm::radians(attributes.rotZ), glm::vec3(0, 0, 1));
+        if (attributes.hasScale)
+            model = glm::scale(model, attributes.scale);	// it's a bit too big for our scene, so scale it down
+        gpuDemo.setMat4("model", model);
+    }
 }
 void Model::Draw() {
     if (gpuDemo == NULL) {
@@ -119,9 +137,15 @@ void Model::Draw() {
     }
     if (defaultShader) {
         gpuDemo->use();
-        for (int i = 0 ; i < attributes.size() ; i++){
-            prepShader(*gpuDemo, attributes[i]);
-            Draw(*gpuDemo, i);
+        prepShader(*gpuDemo, attributes[0]);
+        Draw(*gpuDemo, 0);
+        auto modelAttributes = getModelAttributes();
+        for (int i = 0 ; i < getModelAttributes()->size() ; i++){
+            Model *AABB = (Model*)getModelAttributes()->at(i).hitbox;
+            if (showHitbox && AABB){
+                AABB->prepShader(*gpuDemo, AABB->getModelAttributes()->at(0));
+                AABB->Draw(*gpuDemo, 0);
+            }
         }
         gpuDemo->desuse();
     }
@@ -135,15 +159,8 @@ void Model::Draw(Shader& shader, int idxAttribute) {
         const glm::mat4* transforms = animator.GetFinalBoneMatrices();
         shader.setMat4Array("finalBonesMatrices", transforms, MAX_MODEL_BONES);
     }
-    if (attribute.active){
-        for (unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i]->Draw(shader);
-        Model *AABB = (Model*)attribute.hitbox;
-        if (showHitbox && AABB){
-            AABB->prepShader(shader, AABB->getModelAttributes()->at(0));
-            AABB->Draw(shader, 0);
-        }
-    }
+    for (unsigned int i = 0; i < meshes.size(); i++)
+        meshes[i]->Draw(shader);
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) const {
     glm::mat4 model = makeTrans(idx) * prevTransformations;
@@ -500,6 +517,7 @@ void Model::loadModel(string const& path, bool rotationX, bool rotationY)
         string err("ERROR::ASSIMP:: ");
         err.append(importer.GetErrorString());
         INFO(err, "ERROR LOAD OBJ");
+        throw Model_Exception();
         return;
     }
     // retrieve the directory path of the filepath
