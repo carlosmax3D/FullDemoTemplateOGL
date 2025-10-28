@@ -1,0 +1,93 @@
+// ================================
+// TEXTURE & SAMPLER
+// ================================
+Texture2D texture1 : register(t0);
+Texture2D texture2 : register(t4);
+SamplerState samplerLinear : register(s0);
+
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float blendFactor;
+    float3 lightSpecular; float pad1;
+    float3 lightDirection; float pad2;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int useBlending;
+    float3 color;             int useDynamicLighting;
+};
+
+// ================================
+// INPUT
+// ================================
+struct PS_INPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD0;
+    float3 WorldPos : TEXCOORD1;
+};
+
+// ================================
+// MAIN
+// ================================
+float4 main(PS_INPUT input) : SV_TARGET
+{
+    float4 color1 = texture1.Sample(samplerLinear, input.TexCoord);
+    float4 finalColor = color1;
+
+    if (useBlending == 1)
+    {
+        float4 color2 = texture2.Sample(samplerLinear, input.TexCoord);
+        finalColor = lerp(color1, color2, saturate(blendFactor));
+    }
+
+    // ===== TINT POR HORA =====
+    float3 tintColor = float3(1.0, 1.0, 1.0);
+
+    if (time < 8.0) // Noche
+    {
+        float t = 1.0 - (time / 8.0);
+        tintColor = lerp(float3(1,1,1), float3(0.5, 0.5, 0.8), t * 0.4);
+    }
+    else if (time < 16.0) // Día
+    {
+        tintColor = float3(1.0, 1.0, 1.05);
+    }
+    else // Tarde
+    {
+        float t = (time - 16.0) / 8.0;
+        tintColor = lerp(float3(1.0, 0.85, 0.7), float3(0.7, 0.5, 0.6), t * 0.5);
+    }
+
+    finalColor.rgb *= tintColor;
+
+    // ===== BRIGHTNESS =====
+    float brightness = 1.0;
+
+    if (time < 8.0)
+        brightness = 0.4 + (time / 8.0) * 0.6;
+    else if (time >= 16.0)
+        brightness = 1.0 - ((time - 16.0) / 8.0) * 0.6;
+
+    finalColor.rgb *= brightness;
+
+    return finalColor;
+}

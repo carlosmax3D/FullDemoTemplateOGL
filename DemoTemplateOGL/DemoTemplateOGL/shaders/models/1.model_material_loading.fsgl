@@ -26,6 +26,33 @@ uniform int textureSample = 1;
 uniform sampler2D texture_diffuse1;
 uniform vec4 color;
 
+uniform float time;
+uniform bool useDynamicLighting;
+
+// MISMAS funciones de sombra que el terreno
+float calculateTerrainShadow(vec3 normal, vec3 lightDir) {
+    float NdotL = dot(normal, lightDir);
+    float shadow = smoothstep(-0.1, 0.2, NdotL);
+    
+    // Ajuste según hora del día - IDÉNTICO al terreno
+    if (time >= 0.0 && time < 6.0) {
+        shadow *= 0.55; // Noche 
+    }
+    else if (time >= 6.0 && time < 8.0) {
+        float t = (time - 6.0) / 2.0;
+        shadow *= mix(0.25, 1.0, t); // Amanecer
+    }
+    else if (time >= 16.0 && time < 20.0) {
+        float t = (time - 16.0) / 4.0;
+        shadow *= mix(1.0, 0.4, t); // Atardecer
+    }
+    else if (time >= 20.0) {
+        shadow *= 0.4; // Noche
+    }
+    
+    return 1.0;//clamp(shadow, 0.15, 1.0);
+}
+
 void main()
 {    
     // ambient

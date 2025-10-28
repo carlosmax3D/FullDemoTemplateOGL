@@ -25,7 +25,21 @@ void Scenario::InitGraph(Model *main) {
 	angulo = 0;
 	camara = main;
 	//creamos el objeto skydome
-	sky = new SkyDome(32, 32, 20, (WCHAR*)L"skydome/earth.jpg", main->cameraDetails);
+    // Orden de texturas: DÍA, TARDE, NOCHE
+    sky = new SkyDome(32, 32, 20,
+        (WCHAR*)L"skydome/day_sky.jpg",      // Textura día
+        (WCHAR*)L"skydome/sunset_sky.jpg",   // Textura tarde
+        (WCHAR*)L"skydome/night_sky.jpg",    // Textura noche
+        main->cameraDetails,
+        0.0f);  // Inicia en hora 0 (medianoche) para ver ciclo completo
+
+/*    std::cout << "\n=== SISTEMA DIA/NOCHE INICIADO ===" << std::endl;
+    std::cout << "Ciclo completo: 6 minutos (360 segundos)" << std::endl;
+    std::cout << "Cada periodo: 2 minutos (120 segundos)" << std::endl;
+    std::cout << "NOCHE: 0:00-8:00 (0-120s)" << std::endl;
+    std::cout << "DIA: 8:00-16:00 (120-240s)" << std::endl;
+    std::cout << "TARDE: 16:00-24:00 (240-360s)" << std::endl;
+    std::cout << "===================================\n" << std::endl;*/
 	//creamos el terreno
 	terreno = new Terreno((WCHAR*)L"skydome/terreno.jpg", (WCHAR*)L"skydome/texterr2.jpg", 400, 400, main->cameraDetails);
 	water = new Water((WCHAR*)L"textures/terreno.bmp", (WCHAR*)L"textures/water.bmp", 20, 20, camara->cameraDetails);
@@ -202,6 +216,15 @@ void Scenario::inicializaBillboards() {
 	//y hace su tarea ya conocida
 Scene* Scenario::Render() {
 	clearScreen();
+	//borramos el biffer de color y el z para el control de profundidad a la 
+	//hora del render a nivel pixel.
+    // Obtener información de iluminación ANTES de limpiar
+    glm::vec3 ambient = sky->getAmbientLight();
+    glm::vec3 diffuse = sky->getDiffuseLight();
+    glm::vec3 sunDir = sky->getSunDirection();
+
+    // Color de fondo basado en iluminación ambiental
+    glm::vec3 clearColor = ambient * 0.9f;
 
 	if (this->animacion > 10) { // Timer se ejecuta cada 1000/30 = 33.333 ms
 		for (BillboardAnimation *b : billBoardAnim){
@@ -225,7 +248,29 @@ Scene* Scenario::Render() {
 		billBoard2D[i]->Draw();
 	// Dibujamos cada modelo que este cargado en nuestro arreglo de modelos
 	for (int i = 0; i < ourModel.size(); i++) {
-		ourModel[i]->Draw();
+    // APLICAR ILUMINACIÓN DINÁMICA A TODOS LOS MODELOS
+		Model* model = ourModel[i];
+        if (model->gpuDemo != NULL) {
+			model->gpuDemo->use();
+			model->prepShader(*model->gpuDemo, model->getModelAttributes()->at(0));
+            // Pasar información de iluminación dinámica
+			model->gpuDemo->setVec3("light.ambient", ambient);
+			model->gpuDemo->setVec3("light.diffuse", diffuse);
+			model->gpuDemo->setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+			model->gpuDemo->setVec3("light.position", -sunDir);
+            // Pasar hora del día
+			model->gpuDemo->setFloat("time", sky->getTimeOfDay());
+			model->gpuDemo->setBool("useDynamicLighting", true);
+			model->Draw(*ourModel[i]->gpuDemo, 0);
+			for (int i = 0; i < model->getModelAttributes()->size(); i++) {
+				Model* AABB = (Model*)model->getModelAttributes()->at(i).hitbox;
+				if (showHitbox && AABB) {
+					AABB->prepShader(*model->gpuDemo, AABB->getModelAttributes()->at(0));
+					AABB->Draw(*model->gpuDemo, 0);
+				}
+			}
+			model->gpuDemo->desuse();
+        } else model->Draw();
 	}
 	for (int i = 0; i < ourText.size(); i++) {
 		ourText[i]->Draw();
