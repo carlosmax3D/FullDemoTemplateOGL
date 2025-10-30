@@ -104,7 +104,7 @@ public:
 
 	virtual void Draw() {
 		if (gpuDemo == NULL) {
-			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
+			gpuDemo = new Shader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
 			setDefaultShader(true);
 		}
 		if (getDefaultShader()) {
@@ -148,8 +148,8 @@ public:
 		shader.setVec3("light.ambient", ambientColor);
 		shader.setVec3("light.diffuse", diffuseColor);
 		shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 		shader.setVec3("light.position", lightPos);
+		shader.setVec3("light.direction", cameraDetails->getFront());
 		shader.setVec3("viewPos", cameraDetails->getPosition());
 
 		// view/projection transformations

@@ -104,6 +104,7 @@ void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
     gpuDemo.setVec3("light.ambient", ambientColor);
     gpuDemo.setVec3("light.diffuse", diffuseColor);
     gpuDemo.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+    gpuDemo.setVec3("light.direction", cameraDetails->getFront());
     //        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
     gpuDemo.setVec3("light.position", lightPos);
     gpuDemo.setVec3("viewPos", cameraDetails->getPosition());
