@@ -122,55 +122,59 @@ int startGameEngine(void *ptrMsg){
     scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
     model->setTranslate(&translate);
+    Texto *fps = NULL;
+    Texto *coordenadas = NULL;
+    try{
+        OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
+        translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
+        model->setTranslate(&translate);
+        model->setNextTranslate(&translate);
+        renderiza = false;
 
-    OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
-    translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
-    model->setTranslate(&translate);
-    model->setNextTranslate(&translate);
-    renderiza = false;
-
-    int running = 1;
-    Texto *fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
-    fps->name = "FPSCounter";
-    OGLobj->getLoadedText()->emplace_back(fps);
-    Texto *coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
-	coordenadas->name = "Coordenadas";
-    OGLobj->getLoadedText()->emplace_back(coordenadas);
-    updatePosCords(coordenadas);
-    // configure global opengl state
-    // -----------------------------
-    glEnable(GL_DEPTH_TEST);
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-    gameTime.lastTick = get_nanos() / 1000000.0; // ms
-    int totFrames = 0;
-    double deltasCount = 0;
-    double jump = 0;
-//    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    while (isProgramRunning(ptrMsg)) {
-        deltasCount += gameTime.deltaTime;
-        totFrames++;
-        if (deltasCount >= 1000.0f){
-            updateFPS(fps, totFrames);
-            deltasCount -= 1000.0f;
-            totFrames = 1;
-        }
+        int running = 1;
+        fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
+        fps->name = "FPSCounter";
+        OGLobj->getLoadedText()->emplace_back(fps);
+        coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
+        coordenadas->name = "Coordenadas";
+        OGLobj->getLoadedText()->emplace_back(coordenadas);
         updatePosCords(coordenadas);
-        GameActions actions;
-        actions.jump = &jump;
-        // render
-        // ------
-        bool checkCollition = checkInput(&actions, OGLobj);
-        int cambio = OGLobj->update();
-        Scene *escena = OGLobj->Render();
-        if (escena != OGLobj) {
-            delete OGLobj;
-            OGLobj = escena;
-            OGLobj->getLoadedText()->emplace_back(fps);
-            OGLobj->getLoadedText()->emplace_back(coordenadas);
+        // configure global opengl state
+        // -----------------------------
+        glEnable(GL_DEPTH_TEST);
+        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+        gameTime.lastTick = get_nanos() / 1000000.0; // ms
+        int totFrames = 0;
+        double deltasCount = 0;
+        double jump = 0;
+    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        while (isProgramRunning(ptrMsg)) {
+            deltasCount += gameTime.deltaTime;
+            totFrames++;
+            if (deltasCount >= 1000.0f){
+                updateFPS(fps, totFrames);
+                deltasCount -= 1000.0f;
+                totFrames = 1;
+            }
+            updatePosCords(coordenadas);
+            GameActions actions;
+            actions.jump = &jump;
+            // render
+            // ------
+            bool checkCollition = checkInput(&actions, OGLobj);
+            int cambio = OGLobj->update();
+            Scene *escena = OGLobj->Render();
+            if (escena != OGLobj) {
+                delete OGLobj;
+                OGLobj = escena;
+                OGLobj->getLoadedText()->emplace_back(fps);
+                OGLobj->getLoadedText()->emplace_back(coordenadas);
+            }
+            swapGLBuffers();
         }
-        swapGLBuffers();
+    }catch(...){
     }
-    model = OGLobj->getMainModel();
+    model = OGLobj != NULL ? OGLobj->getMainModel() : model;
     if (OGLobj != NULL) delete OGLobj;
     if (camera != NULL) delete camera;
     if (model != NULL) delete model;
