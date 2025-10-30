@@ -159,8 +159,9 @@ void Model::Draw(Shader& shader, int idxAttribute) {
         const glm::mat4* transforms = animator.GetFinalBoneMatrices();
         shader.setMat4Array("finalBonesMatrices", transforms, MAX_MODEL_BONES);
     }
-    for (unsigned int i = 0; i < meshes.size(); i++)
-        meshes[i]->Draw(shader);
+    if ((attributes.size() == 1 && attribute.active) || attributes.size() > 1)
+        for (unsigned int i = 0; i < meshes.size(); i++)
+            meshes[i]->Draw(shader);
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) const {
     glm::mat4 model = makeTrans(idx) * prevTransformations;
