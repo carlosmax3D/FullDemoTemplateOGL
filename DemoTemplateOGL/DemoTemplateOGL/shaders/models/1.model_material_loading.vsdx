@@ -145,6 +145,23 @@ float4x4 createInstanceMatrix(VS_INPUT input)
     return T;
 }
 
+float determinant3x3(float3x3 m)
+{
+    return dot(m[0], cross(m[1], m[2]));
+}
+
+float3x3 inverse3x3(float3x3 m)
+{
+    float det = determinant3x3(m);
+    float invDet = 1.0 / det;
+
+    return float3x3(
+        cross(m[1], m[2]) * invDet,
+        cross(m[2], m[0]) * invDet,
+        cross(m[0], m[1]) * invDet
+    );
+}
+
 // ================================
 // MAIN
 // ================================
@@ -182,7 +199,8 @@ VS_OUTPUT main(VS_INPUT input)
     float4 worldPos = mul(totalPos, model1);
 
     output.FragPos = worldPos.xyz;
-    output.Normal  = normalize(mul((float3x3)model1, totalNormal));
+    float3x3 normy = (float3x3)transpose(inverse3x3(model1));
+    output.Normal  = normalize(mul(normy, totalNormal));
     output.TexCoord = input.aTexCoords;
     output.Position = mul(worldPos, mul(view, projection));
 

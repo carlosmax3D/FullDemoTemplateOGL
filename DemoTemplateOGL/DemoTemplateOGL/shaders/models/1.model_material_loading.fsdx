@@ -54,37 +54,63 @@ struct PS_INPUT
 // ================================
 float4 main(PS_INPUT input) : SV_TARGET
 {
-    // Ambient
-    float3 ambient = lightAmbient * materialAmbient;
-
-    // Diffuse
+    // Normal
     float3 norm = normalize(input.Normal);
-    float3 lightDir = normalize(lightPosition - input.FragPos);
-    float diff = max(dot(norm, lightDir), 0.0f);
-    float3 diffuse = lightDiffuse * diff * materialDiffuse;
 
+    float3 lightToFrag = normalize(input.FragPos - lightPosition);
+
+    // =========================
+    // Diffuse
+    // =========================
+    float diff = max(dot(norm, lightToFrag), 0.0f);
+
+    // =========================
     // Specular
+    // =========================
     float3 viewDir = normalize(viewPos - input.FragPos);
-    float3 reflectDir = reflect(-lightDir, norm);
+    float3 reflectDir = reflect(-lightToFrag, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0f), shininess);
+
+    // =========================
+    // Attenuation
+    // =========================
+    float distance = length(input.FragPos - lightPosition);
+    float attenuation = 1.0f /
+        (1.0f + 0.09f * distance + 0.032f * distance * distance);
+
+    // =========================
+    // Spotlight intensity
+    // =========================
+    float3 lightDir = normalize(lightDirection);
+
+    float theta = dot(lightToFrag, lightDir);
+    float epsilon = cos(radians(12.5f)) - cos(radians(5.5f));
+    float intensity = saturate((theta - cos(radians(5.5f))) / epsilon);
+
+    // =========================
+    // Lighting components
+    // =========================
+    float3 ambient  = lightAmbient  * materialAmbient;
+    float3 diffuse  = lightDiffuse  * diff * materialDiffuse;
     float3 specular = lightSpecular * spec * materialSpecular;
+
+    ambient  *= attenuation;
+    diffuse  *= intensity * attenuation;
+    specular *= intensity * attenuation;
 
     float3 result = ambient + diffuse + specular;
 
-    // ================================
-    // Texture sampling (igual que GLSL)
-    // ================================
+    // =========================
+    // Texture
+    // =========================
     if (textureSample == 1)
     {
         float4 texColor = texture_diffuse1.Sample(samplerLinear, input.TexCoords);
-
-        // discard
-        clip(texColor.a - 0.1f);
+        if (texColor.a < 0.1f)
+            discard;
 
         return float4(result, 1.0f) * texColor;
     }
-    else
-    {
-        return float4(result, 1.0f);
-    }
+
+    return float4(result, 1.0f);
 }

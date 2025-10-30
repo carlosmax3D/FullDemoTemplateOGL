@@ -112,7 +112,7 @@ void main() {
         // Final transformations
         vec4 worldPos = model1 * totalPosition;
         FragPos = vec3(worldPos);
-        Normal = normalize(mat3(model1) * totalNormal);
+        Normal = normalize(mat3(transpose(inverse(model1))) * totalNormal);
         TexCoords = aTexCoords;
         gl_Position = projection * view * worldPos;
     }
