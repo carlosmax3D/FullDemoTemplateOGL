@@ -33,9 +33,11 @@ class Scene {
             setAngulo(angulo);
             getSky()->setRotY(angulo);
             Model* camara = getMainModel();
+			getTerreno()->lightPos = *camara->getNextTranslate();
 			for (int i = 0; i < getLoadedModels()->size(); i++){
 				auto it = getLoadedModels()->begin() + i;
 				Model *collider = NULL, *model = *it;
+				model->lightPos = *camara->getNextTranslate();
 				for (int j = 0; j < model->getModelAttributes()->size(); j++){
 					int idxCollider = -1;
 					bool objInMovement = (*model->getNextTranslate(j)) != (*model->getTranslate(j));
