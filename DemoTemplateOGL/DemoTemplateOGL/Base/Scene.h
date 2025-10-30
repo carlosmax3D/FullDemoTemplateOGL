@@ -43,6 +43,15 @@ class Scene {
 					glm::vec3 ejeColision = glm::vec3(0);
 					bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
 					float terrainY = getTerreno()->Superficie(posM.x, posM.z);
+					if (model->name.compare("fogata") == 0 && j == 0) {
+						glm::vec3 positionA = *camara->getNextTranslate(); // extrae la traslación de A
+						glm::vec3 positionB = posM;
+						float followSpeed = 1.0f * gameTime.deltaTime / 1000;
+						positionB = glm::mix(positionB, positionA, followSpeed);
+						positionB.y =
+							getTerreno()->Superficie(positionB.x, positionB.z);
+						model->setNextTranslate(&positionB);
+					}
 					ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
 					if (mcollider.model != NULL){
 						collider = (Model*)mcollider.model;
@@ -53,6 +62,22 @@ class Scene {
 							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
 							if (removeCollideModel(collider, idxCollider))
 								i--;
+						}
+					} else if (collider != NULL) {
+						if (model->name.compare("fogata") == 0 && j == 0
+							&& collider == camara) {
+							bool agregar = true;
+							for (Texto* a : *getLoadedText()) {
+								if (a->name.compare("GAMEOVER") == 0) {
+									agregar = false;
+									break;
+								}
+							}
+							if (agregar) {
+								Texto* coordenadas = new Texto((WCHAR*)L"PERDISTE", 100, 0, 0, 44, 0, model);;
+								coordenadas->name = "GAMEOVER";
+								getLoadedText()->emplace_back(coordenadas);
+							}
 						}
 					}
 					if (j < 0) j = 0;
