@@ -116,7 +116,7 @@ struct ModelAttributes{
 	float nextRotY = 0;
 	float nextRotZ = 0;
 	glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
-	bool active = true;
+	float active = true; // GPU Friendly
 	void *hitbox = NULL; // possible link to hitbox
 	void setNextTranslate(glm::vec3* translate);
 	void setTranslate(glm::vec3* translate);
@@ -128,16 +128,6 @@ struct ModelAttributes{
 	void setNextRotY(float rotationAngle);
 	void setNextRotZ(float rotationAngle);
 };
-#pragma pack(push, 1)
-struct ModelAttributesGPU{
-	glm::vec3 translate = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 scale = glm::vec3(0);
-	float rotX = 0;
-	float rotY = 0;
-	float rotZ = 0;
-	float active = true;
-};
-#pragma pack(pop)
 struct ModelCollider{
 	void *model = NULL;
 	int attrIdx = -1;
