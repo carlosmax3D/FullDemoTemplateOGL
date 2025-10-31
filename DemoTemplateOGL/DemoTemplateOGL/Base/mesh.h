@@ -31,6 +31,7 @@ public:
     unsigned int VAO;
     int EBOGLDrawType = GL_STATIC_DRAW;
     int VBOGLDrawType = GL_STATIC_DRAW;
+    int TYPEGLDrawType = GL_TRIANGLES;
 
     ~Mesh(){
         glDeleteVertexArrays(1, &VAO);
@@ -39,23 +40,25 @@ public:
         if (VBOInstance != INT_MAX) glDeleteBuffers(1, &VBOInstance);
     }
     // constructor
-    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, vector<Material>& materials, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, vector<Material>& materials, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW, int TYPEGLDrawType = GL_TRIANGLES){
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
         this->materials = materials;
         this->VBOGLDrawType = VBOGLDrawType;
         this->EBOGLDrawType = EBOGLDrawType;
+        this->TYPEGLDrawType = TYPEGLDrawType;
         this->modelAttributes = NULL;
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
-    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+    Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW, int TYPEGLDrawType = GL_TRIANGLES) {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
         this->VBOGLDrawType = VBOGLDrawType;
         this->EBOGLDrawType = EBOGLDrawType;
+        this->TYPEGLDrawType = TYPEGLDrawType;
         this->modelAttributes = NULL;
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -173,8 +176,10 @@ void setupMesh() {
         // again translates to 3/2 floats which translates to a byte array.
         glBufferData(GL_ARRAY_BUFFER, nVertices * sizeof(Vertex), &vertices[0], this->VBOGLDrawType);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], this->EBOGLDrawType);
+        if (indices.size() > 0){
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], this->EBOGLDrawType);
+        }
 
         // set the vertex attribute pointers
         // vertex Positions
@@ -224,7 +229,10 @@ void setupMesh() {
 
     void drawMultipleInstances(int multipleInstances){
         if (multipleInstances == 0){
-            glDrawElements(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)0);
+            if (indices.size() == 0)
+                glDrawArrays(TYPEGLDrawType, 0, (GLsizei)vertices.size());
+            else
+                glDrawElements(TYPEGLDrawType, (GLsizei)indices.size(), GL_UNSIGNED_INT, (const void*)0);
             return;
         }
         glBindBuffer(GL_ARRAY_BUFFER, VBOInstance);
@@ -235,7 +243,7 @@ void setupMesh() {
             // Subir todos los datos al VBO (reemplazando lo que había)
             glBufferSubData(GL_ARRAY_BUFFER, 0, modelAttributes->size() * sizeof(ModelAttributes), modelAttributes->data());
         }
-        glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0, (GLsizei)modelAttributes->size());
+        glDrawElementsInstanced(TYPEGLDrawType, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0, (GLsizei)modelAttributes->size());
     }
 };
 #endif
