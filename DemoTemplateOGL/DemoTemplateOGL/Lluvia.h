@@ -2,6 +2,7 @@
 #define LLUVIA_H
 
 #include "Base/Utilities.h"
+#include "Base/Billboard.h"
 #include "Base/camera.h"
 #include <glm/glm.hpp>
 #include "Base/shader.h"
@@ -11,56 +12,43 @@
 
 #define NUM_GOTAS 750
 
-class Lluvia {
+class Lluvia : public Billboard{
 private:
-    struct Gota {
-        glm::vec3 pos;
-        float velocidad;
-    };
-
-    std::vector<Gota> gotas;
-    unsigned int VAO, VBO;
     float anchoEscena, largoEscena, alturaMaxima;
-    Shader *gpuDemo = NULL;
-    Camera *cam = NULL;
+    vector<float> velocidad;
 public:
     Lluvia(float ancho, float largo, float altura = 90.0f, Camera *camDetails = NULL)
-        : anchoEscena(ancho), largoEscena(largo), alturaMaxima(altura)
+        : Billboard(0, (WCHAR*)L"Lluvia", 0, 0, 0, camDetails)
     {
-        cam = camDetails;
+        this->cameraDetails = camDetails;
+        anchoEscena = ancho;
+        largoEscena = largo;
+        alturaMaxima = altura;
         srand(static_cast<unsigned int>(time(nullptr)));
-        gotas.resize(NUM_GOTAS);
-        for (int i = 0; i < NUM_GOTAS; ++i) {
-            gotas[i].pos.x = static_cast<float>(rand() % (int)anchoEscena) - anchoEscena / 2;
-            gotas[i].pos.y = static_cast<float>(rand() % (int)alturaMaxima);
-            gotas[i].pos.z = static_cast<float>(rand() % (int)largoEscena) - largoEscena / 2;
-            gotas[i].velocidad = 0.75f + static_cast<float>(rand() % 100) / 500.0f * (gameTime.deltaTime / 10000);
+        vector<Vertex> gotas;
+        vector<unsigned int> indices;
+        vector<Texture> textures;
+        gotas.resize(NUM_GOTAS * 2);
+        velocidad.resize(NUM_GOTAS);
+        for (int i = 0; i < NUM_GOTAS * 2; i = i + 2) {
+            gotas[i].Position.x = static_cast<float>(rand() % (int)anchoEscena) - anchoEscena / 2;
+            gotas[i].Position.y = static_cast<float>(rand() % (int)alturaMaxima);
+            gotas[i].Position.z = static_cast<float>(rand() % (int)largoEscena) - largoEscena / 2;
+            velocidad[i/2] = 0.75f + static_cast<float>(rand() % 100) / 500.0f * (gameTime.deltaTime / 10000);
         }
-
-        // OpenGL setup
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-        // Each drop has 2 vertices (start + end of line)
-        glBufferData(GL_ARRAY_BUFFER, NUM_GOTAS * 2 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-
-        glBindVertexArray(0);
+        meshes.push_back(new Mesh(gotas, indices, textures, GL_DYNAMIC_DRAW, GL_STATIC_DRAW, GL_LINES));
     }
 
     void Update() {
-        for (int i = 0; i < NUM_GOTAS; ++i) {
-            gotas[i].pos.y -= gotas[i].velocidad;
-            if (gotas[i].pos.y < 0) {
-                gotas[i].pos.y = alturaMaxima;
-                gotas[i].pos.x = static_cast<float>(rand() % (int)anchoEscena) - anchoEscena / 2;
-                gotas[i].pos.z = static_cast<float>(rand() % (int)largoEscena) - largoEscena / 2;
+        vector<Vertex>& gotas = meshes.at(0)->vertices;
+        for (int i = 0; i < NUM_GOTAS * 2; i = i + 2) {
+            gotas[i].Position.y -= velocidad[i/2];
+            if (gotas[i].Position.y < 0) {
+                gotas[i].Position.y = alturaMaxima;
+                gotas[i].Position.x = static_cast<float>(rand() % (int)anchoEscena) - anchoEscena / 2;
+                gotas[i].Position.z = static_cast<float>(rand() % (int)largoEscena) - largoEscena / 2;
             }
+            gotas[i+1].Position = (gotas[i].Position + glm::vec3(0.0f, -0.5f, 0.0f)); // short line down
         }
     }
 
@@ -72,31 +60,18 @@ public:
     }
 
     void Draw(Shader& shader) {
-        std::vector<glm::vec3> lineVertices;
-        lineVertices.reserve(NUM_GOTAS * 2);
-
-        for (auto& g : gotas) {
-            lineVertices.push_back(g.pos);
-            lineVertices.push_back(g.pos + glm::vec3(0.0f, -0.5f, 0.0f)); // short line down
-        }
-
-        // Upload updated positions
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, lineVertices.size() * sizeof(glm::vec3), lineVertices.data());
-
         // Draw
         shader.use();
-        glm::mat4 proj = cam->getProjection();
-        glm::mat4 view = cam->getView();
+        glm::mat4 proj = cameraDetails->getProjection();
+        glm::mat4 view = cameraDetails->getView();
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "view"), 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(glGetUniformLocation(shader.ID, "proj"), 1, GL_FALSE, &proj[0][0]);
         shader.setVec3("rainColor", glm::vec3(0.5f, 0.5f, 1.0f));
 
-        glBindVertexArray(VAO);
         glLineWidth(3.0f); // grosor de lluvia
-        glDrawArrays(GL_LINES, 0, (GLsizei)lineVertices.size());
-        glBindVertexArray(0);
+        Model::Draw(shader, 0);
         glLineWidth(1.0f); // grosor de lluvia
+        shader.desuse();
     }
 };
 
