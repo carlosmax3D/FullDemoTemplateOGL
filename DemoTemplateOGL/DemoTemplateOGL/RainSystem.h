@@ -8,22 +8,24 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-class Splash : Billboard {
+class Splash : public Billboard {
 private:
-    float life;   // remaining time
 public:
+    vector<float> life;   // remaining time
     Splash(int maxDrops, Camera *cameraDetails);
     void respawn(glm::vec3 &pos, int idx = 0);
+    void Draw();
 };
 
 class RainDrop : public Billboard {
 private:
-    vector<glm::vec3> velocity;
+public:
     int areaSize;
     int height;
-public:
+    vector<glm::vec3> velocity;
     RainDrop(int maxDrops, int areaSize, int height, Camera *cameraDetails);
-    void respawn(Vertex& drop, int idx = 0);
+    void respawn(ModelAttributes& drop, int idx = 0);
+    void Draw();
 };
 
 class RainSystem {
@@ -34,23 +36,11 @@ public:
     void render();
 
 private:
-    std::vector<RainDrop> drops;
-    std::vector<Splash> splashes;
+    RainDrop drops;
+    Splash splashes;
     Camera *cam;
-
-    unsigned int dropVAO, dropVBO;
-    unsigned int splashVAO, splashVBO;
 
     int maxDrops;
     float areaSize;
     float height;
-
-    Shader *dropShader = NULL;
-    Shader *splashShader = NULL;
-    unsigned int dropTexture;
-    unsigned int splashTexture;
-
-    void initGL();
-    void respawn(RainDrop& drop);
-    void spawnSplash(const glm::vec3& pos, int idx);
 };
