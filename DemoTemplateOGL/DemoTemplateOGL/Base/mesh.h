@@ -205,6 +205,7 @@ void setupMesh() {
         glVertexAttribPointer(6, MAX_BONE_INFLUENCE, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));   
         // --- Atributos por instancia ---
         glBindBuffer(GL_ARRAY_BUFFER, VBOInstance);
+        glBufferData(GL_ARRAY_BUFFER, (GLsizei)sizeof(ModelAttributes), NULL, this->VBOGLDrawType);
         glEnableVertexAttribArray(7);
         glVertexAttribPointer(7, 3, GL_FLOAT, GL_FALSE, sizeof(ModelAttributes), (void*)(offsetof(ModelAttributes, translate)));
         glVertexAttribDivisor(7, 1); // 1 → cambia por instancia
