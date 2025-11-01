@@ -1,5 +1,6 @@
 #pragma once
 #include "Base/Utilities.h"
+#include "Base/Billboard.h"
 #include "Base/camera.h"
 #include "Base/shader.h"
 #include "Terreno.h"
@@ -7,9 +8,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-struct RainDrop {
-    glm::vec3 position;
-    glm::vec3 velocity;
+class RainDrop : public Billboard {
+private:
+    vector<glm::vec3> velocity;
+public:
+    RainDrop(int maxDrops, Camera *cameraDetails);
 };
 
 struct Splash {

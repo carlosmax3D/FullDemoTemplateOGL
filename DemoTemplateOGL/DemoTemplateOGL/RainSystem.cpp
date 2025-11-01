@@ -3,6 +3,12 @@
 #include <glad/glad.h>
 #include <random>
 
+RainDrop::RainDrop(int maxDrops, Camera *cameraDetails)
+ : Billboard(0, (WCHAR*)"DROPS", 0, 0, 0, cameraDetails)
+{
+    
+}
+
 RainSystem::RainSystem(int maxDrops, float areaSize, float height, Camera *cameraDetails)
     : maxDrops(maxDrops), areaSize(areaSize), height(height) {
     cam = cameraDetails;

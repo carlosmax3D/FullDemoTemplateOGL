@@ -4,7 +4,6 @@ layout(triangle_strip, max_vertices = 4) out;
 
 in VS_OUT {
     vec3 pos;
-    vec3 vel;
 } gs_in[];
 
 uniform mat4 view;
