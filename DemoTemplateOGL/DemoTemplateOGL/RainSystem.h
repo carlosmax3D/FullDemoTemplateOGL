@@ -8,18 +8,22 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
+class Splash : Billboard {
+private:
+    float life;   // remaining time
+public:
+    Splash(int maxDrops, Camera *cameraDetails);
+    void respawn(glm::vec3 &pos, int idx = 0);
+};
+
 class RainDrop : public Billboard {
 private:
     vector<glm::vec3> velocity;
+    int areaSize;
+    int height;
 public:
-    RainDrop(int maxDrops, Camera *cameraDetails);
-};
-
-struct Splash {
-    glm::vec3 position;
-    float life;   // remaining time
-    float size;
-    int actived = false;
+    RainDrop(int maxDrops, int areaSize, int height, Camera *cameraDetails);
+    void respawn(Vertex& drop, int idx = 0);
 };
 
 class RainSystem {

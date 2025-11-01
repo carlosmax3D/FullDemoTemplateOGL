@@ -3,10 +3,35 @@
 #include <glad/glad.h>
 #include <random>
 
-RainDrop::RainDrop(int maxDrops, Camera *cameraDetails)
+RainDrop::RainDrop(int maxDrops, int areaSize, int height, Camera *cameraDetails)
  : Billboard(0, (WCHAR*)"DROPS", 0, 0, 0, cameraDetails)
 {
-    
+    this->areaSize = areaSize;
+    this->height = height;
+    this->velocity.reserve(maxDrops);
+    vector<Vertex> drops;
+    vector<unsigned int> indices;
+    vector<Texture> texture;
+    drops.reserve(maxDrops);
+
+    for (int i = 0; i < drops.size(); i++){
+        auto &drop = drops[i];
+        respawn(drop, i);
+    }
+}
+
+void RainDrop::respawn(Vertex& drop, int idx){
+    static std::default_random_engine eng;
+    static std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+
+    float x = static_cast<float>(rand() % (int)areaSize) - areaSize / 2;
+    float z = static_cast<float>(rand() % (int)areaSize) - areaSize / 2;
+    float y = static_cast<float>(rand() % (int)height);
+
+    drop.Position = glm::vec3(x, y, z);
+
+    // downward velocity with small random wind
+    velocity[idx] = glm::vec3(dist(eng) * 2.0f, 0.75f + static_cast<float>(rand() % 100) / 500.0f * (gameTime.deltaTime / 10000), dist(eng) * 2.0f);
 }
 
 RainSystem::RainSystem(int maxDrops, float areaSize, float height, Camera *cameraDetails)
