@@ -14,7 +14,6 @@ class SkyDome : public Model {
 	//El constructor llama al metodo Esfera de la clase geometrias que generara los vertices
 	//normales y uvs de la misma, nos regresa la estructura Maya.
 public:
-	Camera* cameraDetails = NULL;
 	SkyDome(int stacks, int slices, float radio, WCHAR *nombre, Camera* camera) {
 		cameraDetails = camera;
 		vector<unsigned int> indices;

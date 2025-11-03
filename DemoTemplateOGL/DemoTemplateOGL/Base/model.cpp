@@ -395,6 +395,13 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
                 ejeColision.z = 1;
                 collide.model = other;
                 collide.attrIdx = j;
+                if (!other->walkeable){
+                    setNextTranslate(getTranslate(idx), idx);
+                    setNextRotX(getRotX(idx), idx);
+                    setNextRotY(getRotY(idx), idx);
+                    setNextRotZ(getRotZ(idx), idx);
+                    break;
+                }
                 if (nextGPosition.y > (yPos.y * 0.90)){
                     nextGPosition.y = yPos.y;
                     setNextTranslate(&nextGPosition, idx);
@@ -431,6 +438,8 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
                 setNextRotZ(getRotZ(idx), idx);
                 break;
             }
+            if (collide.model != NULL)
+                break;
         }
         if (i < 0) i = 0;
     }

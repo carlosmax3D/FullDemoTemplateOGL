@@ -71,12 +71,16 @@ public:
         unsigned int specularNr = 1;
         unsigned int normalNr = 1;
         unsigned int heightNr = 1;
-        glEnable(GL_CULL_FACE);
-        if (this->VBOGLDrawType == GL_DYNAMIC_DRAW) {
-            glCullFace(GL_FRONT);
-            glEnable(GL_BLEND);
-        }else
-            glCullFace(GL_BACK);
+        if (this->VBOGLDrawType == GL_STATIC_DRAW && this->TYPEGLDrawType == GL_POINTS)
+            glEnable(GL_PROGRAM_POINT_SIZE);
+        else{
+            glEnable(GL_CULL_FACE);
+            if (this->VBOGLDrawType == GL_DYNAMIC_DRAW) {
+                glCullFace(GL_FRONT);
+                glEnable(GL_BLEND);
+            }else
+                glCullFace(GL_BACK);
+        }
         //        glEnable(GL_TEXTURE_2D);
         for (unsigned int i = 0; i < textures.size() || i < materials.size(); i++) {
             if (i < textures.size()) {
@@ -152,6 +156,8 @@ public:
         }
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
+        if (this->VBOGLDrawType == GL_STATIC_DRAW && this->TYPEGLDrawType == GL_POINTS)
+            glDisable(GL_PROGRAM_POINT_SIZE);
         //        glDisable(GL_TEXTURE_2D);
     }
 
@@ -244,7 +250,10 @@ void setupMesh() {
             // Subir todos los datos al VBO (reemplazando lo que había)
             glBufferSubData(GL_ARRAY_BUFFER, 0, modelAttributes->size() * sizeof(ModelAttributes), modelAttributes->data());
         }
-        glDrawElementsInstanced(TYPEGLDrawType, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0, (GLsizei)modelAttributes->size());
+        if (indices.size() == 0)
+            glDrawArraysInstanced(TYPEGLDrawType, 0, 1, (GLsizei)modelAttributes->size());
+        else
+            glDrawElementsInstanced(TYPEGLDrawType, (GLsizei)indices.size(), GL_UNSIGNED_INT, 0, (GLsizei)modelAttributes->size());
     }
 };
 #endif

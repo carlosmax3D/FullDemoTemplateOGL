@@ -5,14 +5,43 @@
 class Terreno : public Model {
 
 private:
+	struct Plano {
+		float A, B, C, D;
+	};
+
+	std::vector<Plano> planos1; // para triángulos donde difx > difz
+	std::vector<Plano> planos2; // para triángulos donde difx <= difz
 	float anchof;
 	float proff;
 	float deltax, deltaz;
 	int mapAlturaX, mapAlturaY;
 
+	void PrecalcularPlanos() {
+		std::vector<Vertex>& vertices = meshes[0]->vertices;
+		planos1.resize((verx - 1) * (verz - 1));
+		planos2.resize((verx - 1) * (verz - 1));
+
+		for (int iz = 0; iz < verz - 1; ++iz) {
+			for (int ix = 0; ix < verx - 1; ++ix) {
+				int base = ix + iz * (verx - 1);
+
+				glm::vec3 p0 = vertices[ix + iz * verx].Position;
+				glm::vec3 p1 = vertices[(ix + 1) + iz * verx].Position;
+				glm::vec3 p2 = vertices[(ix + 1) + (iz + 1) * verx].Position;
+				glm::vec3 n1 = glm::cross(p2 - p0, p1 - p0);
+				float D1 = -glm::dot(n1, p0);
+				planos1[base] = { n1.x, n1.y, n1.z, D1 };
+
+				glm::vec3 p3 = vertices[ix + (iz + 1) * verx].Position;
+				glm::vec3 n2 = glm::cross(p3 - p0, p2 - p0);
+				float D2 = -glm::dot(n2, p0);
+				planos2[base] = { n2.x, n2.y, n2.z, D2 };
+			}
+		}
+	}
+
 public:
 	int verx, verz;
-	Camera* cameraDetails = NULL;
 	//el nombre numerico de la textura en cuestion, por lo pronto una
 
 	Terreno(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
@@ -66,6 +95,7 @@ public:
 		meshes.emplace_back(new Mesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
 		setDefaultShader(false);
 		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
+		PrecalcularPlanos();
 	}
 
 	~Terreno() {
@@ -90,65 +120,23 @@ public:
 	}
 
 	float Superficie(float x, float z) {
-		vector<Vertex> &vertices = meshes[0]->vertices;
-		//obtenemos el indice pero podria incluir una fraccion
-		float indicefx = (x + anchof / 2) / deltax;
-		float indicefz = (z + proff / 2) / deltaz;
-		//nos quedamos con solo la parte entera del indice
-		int indiceix = (int)indicefx;
-		int indiceiz = (int)indicefz;
-		//nos quedamos con solo la fraccion del indice
-		float difx = indicefx - indiceix;
-		float difz = indicefz - indiceiz;
+		float fx = (x + anchof / 2) / deltax;
+		float fz = (z + proff / 2) / deltaz;
+		int ix = (int)fx;
+		int iz = (int)fz;
 
-		float altura;
-		float D;
-		if (indiceix + 1 + (indiceiz + 1) * verx > vertices.size() || indiceix + 1 + indiceiz * verx > vertices.size())
+		if (ix < 0 || iz < 0 || ix >= verx - 1 || iz >= verz - 1)
 			return 0.0f;
-		//el cuadro del terreno esta formado por dos triangulos, si difx es mayor que dify 
-		//entonces estamos en el triangulo de abajo en caso contrario arriba
-		if (difx > difz)
-		{
-			//obtenemos el vector 1 de dos que se necesitan
-			glm::vec3 v1(vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.x - vertices[indiceix + indiceiz * verx].Position.x,
-				vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.y - vertices[indiceix + indiceiz * verx].Position.y,
-				vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.z - vertices[indiceix + indiceiz * verx].Position.z);
-			//obtenemos el vector 2 de dos
-			glm::vec3 v2(vertices[indiceix + 1 + indiceiz * verx].Position.x - vertices[indiceix + indiceiz * verx].Position.x,
-				vertices[indiceix + 1 + indiceiz * verx].Position.y - vertices[indiceix + indiceiz * verx].Position.y,
-				vertices[indiceix + 1 + indiceiz * verx].Position.z - vertices[indiceix + indiceiz * verx].Position.z);
 
-			//con el producto punto obtenemos la normal y podremos obtener la ecuacion del plano
-			//la parte x de la normal nos da A, la parte y nos da B y la parte z nos da C
-			glm::vec3 normalPlano = glm::cross(v1, v2);
-			//entonces solo falta calcular D
-			D = -1 * (normalPlano.x * vertices[indiceix + indiceiz * verx].Position.x +
-				normalPlano.y * vertices[indiceix + indiceiz * verx].Position.y +
-				normalPlano.z * vertices[indiceix + indiceiz * verx].Position.z);
-			//sustituyendo obtenemos la altura de contacto en el terreno
-			altura = ((-normalPlano.x * x - normalPlano.z * z - D) / normalPlano.y);
-		}
-		else
-		{
-			glm::vec3 v1(vertices[indiceix + (indiceiz + 1) * verx].Position.x - vertices[indiceix + indiceiz * verx].Position.x,
-				vertices[indiceix + (indiceiz + 1) * verx].Position.y - vertices[indiceix + indiceiz * verx].Position.y,
-				vertices[indiceix + (indiceiz + 1) * verx].Position.z - vertices[indiceix + indiceiz * verx].Position.z);
+		float dx = fx - ix;
+		float dz = fz - iz;
 
-			glm::vec3 v2(vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.x - vertices[indiceix + indiceiz * verx].Position.x,
-				vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.y - vertices[indiceix + indiceiz * verx].Position.y,
-				vertices[indiceix + 1 + (indiceiz + 1) * verx].Position.z - vertices[indiceix + indiceiz * verx].Position.z);
+		int base = ix + iz * (verx - 1);
 
-
-			glm::vec3 normalPlano = glm::cross(v1, v2);
-
-			D = -1 * (normalPlano.x * vertices[indiceix + indiceiz * verx].Position.x +
-				normalPlano.y * vertices[indiceix + indiceiz * verx].Position.y +
-				normalPlano.z * vertices[indiceix + indiceiz * verx].Position.z);
-
-			altura = ((-normalPlano.x * x - normalPlano.z * z - D) / normalPlano.y);
-		}
-		return altura;
+		const Plano& P = (dx > dz) ? planos1[base] : planos2[base];
+		return (-P.A * x - P.C * z - P.D) / P.B;
 	}
+
 
 	virtual void prepShader(Shader& shader) {
 		glm::vec3 lightColor;
