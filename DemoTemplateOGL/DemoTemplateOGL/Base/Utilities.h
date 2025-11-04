@@ -64,6 +64,9 @@ struct GameActions {
 	bool firstPerson = false;
 	double *jump = NULL;
 	bool action = false;
+
+	//creo un boolean para el menu
+	bool menu = false;
 	bool displayHitboxStats = false;
 	void setZoom(float value);
 	float* getZoom();

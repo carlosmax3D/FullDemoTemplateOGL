@@ -15,6 +15,10 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Scenario1.h"
+
+//hechas por mi
+#include "Menu.h"
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -63,6 +67,12 @@ bool showHitbox = true;
 bool showStats = true;
 bool newContext = false; // Bandera para identificar si OpenGL 2.0 > esta activa
 struct GameTime gameTime;
+
+//variable para la flecha del menu
+int menuOp = 1;
+bool menuActivo = false;
+bool GameOver = false;
+
 Camera* Camera::cameraInstance = NULL;
 
 // Objecto de escena y render
@@ -115,17 +125,95 @@ int startGameEngine(void *ptrMsg){
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
     Camera* camera = Camera::getInstance();
+
+    //probar a cambiar al jugador
+    /*
     Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
     model->setTranslate(&translate);
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
     scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
+    model->setTranslate(&translate);*/
+
+
+    /*
+    //intentar importar al jugador, revisar pq no cargan las animaciones ni las texturas
+    Model* model = new Model("models/Jugador/jugador.fbx", translate, camera);
+    //translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
+    model->setTranslate(&translate);
+    camera->setFront(v);
+    camera->setCharacterHeight(4.0);
+    //scale = glm::vec3(0.005f, 0.005f, 0.005f);	// it's a bit too big for our scene, so scale it down
+    scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    model->setTranslate(&translate);
+    model->setScale(&scale);
+   
+    model->setRotX(270); 
+    //model->setNextRotZ(90);
+    model->setNextRotX(270);
+    //hacer el try para la animacion
+
+    try {
+        std::vector<Animation> animations = Animation::loadAllAnimations("models/Jugador/Walking.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::vector<Animation> animation = Animation::loadAllAnimations("models/Jugador/standing_player.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::move(animation.begin(), animation.end(), std::back_inserter(animations));
+        for (Animation animation : animations)
+            model->setAnimator(Animator(animation));
+        model->setAnimation(0);
+    }
+    catch (...) {
+        ERRORL("Could not load animation!", "ANIMACION");
+    }
+
+    */
+
+    Model* model = new Model("models/Jugador/Walking.fbx", translate, camera);
+    model->setTranslate(&translate);
+    camera->setFront(v);
+    camera->setCharacterHeight(4.0);
+    scale = glm::vec3(0.005f, 0.005f, 0.005f); // it's a bit too big for our scene, so scale it down
     model->setTranslate(&translate);
     Texto *fps = NULL;
     Texto *coordenadas = NULL;
+    model->setScale(&scale);
+    //    model->setNextRotX(270);
+    //    model->setRotX(270);
+    //    model->setNextRotZ(90);
+    //    model->setRotZ(90);
+
+    try {
+        std::vector<Animation> animations = Animation::loadAllAnimations("models/Jugador/Walking.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::vector<Animation> animation = Animation::loadAllAnimations("models/Jugador/standing_player.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::move(animation.begin(), animation.end(), std::back_inserter(animations));
+        for (Animation animation : animations)
+            model->setAnimator(Animator(animation));
+        model->setAnimation(0);
+    }
+    catch (...) {
+        ERRORL("Could not load animation!", "ANIMACION");
+    }
     try{
         OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
+
+        //OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
+
+        model->setNextTranslate(&translate);
+        Node size = model->AABBsize;
+        float tmp = size.m_halfWidth;
+        size.m_halfDepth = size.m_halfHeight * (1 / scale.x) / 2;
+        size.m_halfWidth = size.m_halfWidth * (1 / scale.z) / 2;
+        size.m_halfHeight = tmp * (1 / scale.y) / 2 + 10;
+        size.m_center.y += 300;
+        Model* collider = CollitionBox::GenerateAABB(translate, size, camera);
+        ModelAttributes& attr = model->getModelAttributes()->at(0);
+        delete attr.hitbox;
+        attr.hitbox = collider;
+        model->setScale(&scale);
+        renderiza = false;
+
+    // int running = 1;
+
         translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
         model->setTranslate(&translate);
         model->setNextTranslate(&translate);
@@ -148,7 +236,11 @@ int startGameEngine(void *ptrMsg){
         double deltasCount = 0;
         double jump = 0;
     //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        while (isProgramRunning(ptrMsg)) {
+
+        //importar menu
+        Menu menu(camera);
+
+        while (isProgramRunning(ptrMsg) && !GameOver) {
             deltasCount += gameTime.deltaTime;
             totFrames++;
             if (deltasCount >= 1000.0f){
@@ -163,7 +255,26 @@ int startGameEngine(void *ptrMsg){
             // ------
             bool checkCollition = checkInput(&actions, OGLobj);
             int cambio = OGLobj->update();
+            if (cambio == 1) {
+                delete OGLobj;
+                //cambiar posicion
+                OGLobj = new Scenario1(model);
+                translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
+                model->setNextTranslate(&translate);
+                model->setTranslate(&translate);
+                OGLobj->getLoadedText()->emplace_back(fps);
+                OGLobj->getLoadedText()->emplace_back(coordenadas);
+            }
+
             Scene *escena = OGLobj->Render();
+
+            //mostrar el menu
+            if (menuActivo) {
+                menu.Update(menuOp);
+                menu.Draw();
+            }
+
+            
             if (escena != OGLobj) {
                 delete OGLobj;
                 OGLobj = escena;
@@ -192,6 +303,35 @@ bool checkInput(GameActions *actions, Scene* scene) {
         KeysEvents(actions);
     }
     Model* OGLobj = scene->getMainModel();
+    //añadir lo del menu
+    if (actions->menu) {
+        menuActivo = !menuActivo;
+
+    }
+    if (menuActivo) {
+        menuOp -= actions->advance;
+        memset(KEYS, 0, 256);
+
+        //opciones del menu
+        if (menuOp == 1 && actions->action) {
+            //volvemos al juego
+            menuActivo = false;
+        }
+
+        if (menuOp == 2 && actions->action) {
+            //cargar el inventario del jugador
+
+        }
+
+        if (menuOp == 3 && actions->action) {
+            //cerramos el juego
+            GameOver = true;
+        }
+
+        return true;
+    }
+
+
     if (actions->displayHitboxStats){
         showHitbox = !showHitbox;
         showStats = !showStats;
@@ -200,23 +340,34 @@ bool checkInput(GameActions *actions, Scene* scene) {
         OGLobj->cameraDetails->setFirstPerson(!OGLobj->cameraDetails->getFirstPerson());
     }
     if (actions->sideAdvance != 0) {
+        //OGLobj->setNextRotZ(OGLobj->getNextRotZ() + ((6 * gameTime.deltaTime / 100) * actions->sideAdvance));
         OGLobj->setNextRotY(OGLobj->getNextRotY() + ((6 * gameTime.deltaTime / 100) * actions->sideAdvance));
+        changeAnimation = true;
     }
     if (actions->hAdvance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
+        glm::vec3 pos = *OGLobj->getNextTranslate();
+        //pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotZ()));
+        //pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotZ()));
         pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotY()));
         pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
 //        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
-
+        changeAnimation = true;
         OGLobj->setNextTranslate(&pos);
     }
     if (actions->advance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
+        //generar el valor para el menu
+        menuOp -= actions->advance;
+
+        //continuar con el movimiento
+        glm::vec3 pos = *OGLobj->getNextTranslate();
+        //pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(OGLobj->getRotZ()));
+        //pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotZ()));
         pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(OGLobj->getRotY()));
+        pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
 //        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
+        changeAnimation = true;
         OGLobj->setNextTranslate(&pos);
     }
     if (*actions->jump > 0){
@@ -227,6 +378,7 @@ bool checkInput(GameActions *actions, Scene* scene) {
         if (*actions->jump < 0.01f)
             *actions->jump = 0.0f;
         // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
+        changeAnimation = true;
         OGLobj->setNextTranslate(&pos);
     }
     if (actions->getAngle() != NULL) {
@@ -241,7 +393,13 @@ bool checkInput(GameActions *actions, Scene* scene) {
     if (actions->getPlayerZoom() != NULL) {
         OGLobj->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * (6 * gameTime.deltaTime / 100));
     }
-
+    
+    if (!changeAnimation) {
+        OGLobj->setAnimation(1);
+    }
+    else {
+        OGLobj->setAnimation(0);
+    }
     return true; // siempre buscar colision
 }
 
@@ -517,10 +675,10 @@ void mouseActions() {
 #endif
     glm::vec2 scale = glm::vec2(x, y) / windowSize;
     OGLobj->getMainModel()->cameraDetails->setPitch(scale.y * 70.0f - 30.f);
-    scale = cDelta.setPosition(x, y, cDelta.getLbtn() || cDelta.getRbtn());
-/*    scale = cDelta.setPosition(x, y, true);
+    //scale = cDelta.setPosition(x, y, cDelta.getLbtn() || cDelta.getRbtn());
+    scale = cDelta.setPosition(x, y, true);
     if (scale.x != 0)
-        OGLobj->getMainModel()->cameraDetails->calculateAngleAroundPlayer((scale.x / abs(scale.x)) * -3.0);*/
+        OGLobj->getMainModel()->cameraDetails->calculateAngleAroundPlayer((scale.x / abs(scale.x)) * -3.0);
 }
 
 int isProgramRunning(void *ptr){

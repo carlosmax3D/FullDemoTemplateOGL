@@ -51,6 +51,21 @@ void Init() {
 
 bool KeysEvents(GameActions *actions){
 	bool checkCollition = false;
+
+	//añadir la accion del menu
+	if (KEYS[input.Escape]) {
+		actions->menu = true;
+		KEYS[input.Escape] = false;
+	}
+
+	//accion para el enter de las opciones
+	if (KEYS[input.Enter]) {
+		actions->action = true;
+		KEYS[input.Enter] = false;
+	}
+
+	//acciones por defecto
+
 	if (KEYS[input.P]) {
 		actions->firstPerson = true;
 		KEYS[input.P] = false;

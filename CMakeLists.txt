@@ -35,6 +35,8 @@ add_executable(FullDemoTemplateOGL
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/font_atlas.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/CollitionBox.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Texto.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Menu.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Scenario1.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Scenario.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/DemoTemplateOGL.cpp
 )

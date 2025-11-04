@@ -33,6 +33,14 @@ class Scene {
             setAngulo(angulo);
             getSky()->setRotY(angulo);
             Model* camara = getMainModel();
+
+			//creamos una variable para hacer el tp
+			int tp = -1;
+
+			//creamos unas variables para el acumulo de objetos
+			bool objetos[5] = { false,false,false,false,false };
+			//el 1 es la pelota, el 2 es el triciclo, el tercero es el libro, el cuarto es el oso y el quinto es el coche
+
 			for (int i = 0; i < getLoadedModels()->size(); i++){
 				auto it = getLoadedModels()->begin() + i;
 				Model *collider = NULL, *model = *it;
@@ -42,26 +50,77 @@ class Scene {
 					glm::vec3 &posM = objInMovement ? *model->getNextTranslate(j) : *model->getTranslate(j);
 					glm::vec3 ejeColision = glm::vec3(0);
 					bool isPrincipal = model == camara; // Si es personaje principal, activa gravedad
-					float terrainY = getTerreno()->Superficie(posM.x, posM.z);
-					ModelCollider mcollider = model->update(terrainY, *getLoadedModels(), ejeColision, isPrincipal, j);
+					if (isPrincipal && model->name.compare("Walking") == 0) {
+						isPrincipal = model->name.compare("Walking") == 0;
+					}
+					ModelCollider mcollider = model->update(getTerreno()->Superficie(posM.x, posM.z), *getLoadedModels(), ejeColision, isPrincipal, j);
 					if (mcollider.model != NULL){
 						collider = (Model*)mcollider.model;
 						idxCollider = mcollider.attrIdx;
 					}
+
+					//seguimiento del modelo
+
+					if (model->name.compare("monstruo") == 0) {
+						glm::vec3 positionA = *camara->getNextTranslate();
+						glm::vec3 positionB = *model->getNextTranslate();
+
+
+						glm::vec3 dir = positionA - positionB;
+						dir.y = 0.0f;
+						float distancia = glm::length(dir);
+						if (distancia > 0.1f) dir = glm::normalize(dir);
+						float rotY = atan2(dir.x, dir.z) * (180.0f * M_PI) + 180.0f;
+						model->setNextRotZ(rotY);
+
+						float followSpeed = 0.5f * gameTime.deltaTime / 1000;
+						//positionB = glm::vec3(foatamat[3]);
+
+						positionB = glm::mix(positionB, positionA, followSpeed);
+
+						//para que respete la altura del terreno debemos mover en y
+						positionB.y = getTerreno()->Superficie(positionB.x, positionB.z);
+						model->setNextTranslate(&positionB);
+						//model->setTranslate(&positionB);
+					}
+					
+					//sacar el collider del monstruo 
+					//preguntar por el nombre del modelo para sacar la colision y hacer el tp al otro escenario
 					if (collider != NULL && model == camara){
+						if (collider->name.compare("casa") == 0) {
+							tp = 1;
+						}
 						if (ejeColision.y == 1){
 							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
 							if (removeCollideModel(collider, idxCollider))
 								i--;
 						}
+						
 					}
-					if (j < 0) j = 0;
+					else if (collider != NULL) {
+						if (model->name.compare("monstruo") == 0 && collider == camara) {
+							bool agregar = true;
+							for (Texto* a : *getLoadedText()) {
+								if (a->name.compare("GAMEOVER") == 0) {
+									agregar = false;
+									break;
+								}
+							}
+							if (agregar) {
+								Texto* coordenadas = new Texto((WCHAR*)L"PERDISTE", 40, 0, 0, 44, 0, model);
+								coordenadas->name = "GAMEOVER";
+								getLoadedText()->emplace_back(coordenadas);
+							}
+						}
 				}
+					if (j < 0) j = 0;
+			}
 				if (i < 0) i = 0;
 			}
 			// Actualizamos la camara
-            camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
-            return -1;
+            //camara->cameraDetails->CamaraUpdate(camara->getRotZ(), camara->getTranslate());
+			camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
+            return tp;
         }
 
 		virtual bool removeCollideModel(Model* collider, int idxCollider){
