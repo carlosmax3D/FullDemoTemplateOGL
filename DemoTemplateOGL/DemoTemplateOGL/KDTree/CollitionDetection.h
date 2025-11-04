@@ -14,4 +14,5 @@ extern void obtenerEjesSeparacion(glm::vec3* ejes, const glm::mat4& M1, const gl
 extern bool proyectarYComprobarSolapamiento(Vertex* verticesCubo1, 
                                      Vertex* verticesCubo2, 
                                      const glm::vec3& eje);
+extern bool rayIntersectsOBB(const glm::vec3& rayOrigin, const glm::vec3& rayDir, const vector<Vertex>& verticesCubo1, const glm::mat4& M1, float& tMin, float& tMax);
 #endif

@@ -165,8 +165,6 @@ void Model::Draw(Shader& shader, int idxAttribute) {
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) const {
     glm::mat4 model = makeTrans(idx) * prevTransformations;
-    if (attributes[idx].hasScale)
-        model = glm::scale(model, attributes[idx].scale);
     if (this->attributes[idx].rotation.x != 0 || this->attributes[idx].rotation.y != 0 || this->attributes[idx].rotation.z != 0) {
         if (this->attributes[idx].rotation.x != 0)
             model = glm::rotate(model, glm::radians(this->attributes[idx].rotX), glm::vec3(1,0,0));
@@ -175,6 +173,8 @@ glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) c
         if (this->attributes[idx].rotation.z != 0)
             model = glm::rotate(model, glm::radians(this->attributes[idx].rotZ), glm::vec3(0,0,1));
     }
+    if (attributes[idx].hasScale)
+        model = glm::scale(model, attributes[idx].scale);
     return model;
 }
 glm::mat4 Model::makeTrans(int idx) const {
@@ -182,8 +182,6 @@ glm::mat4 Model::makeTrans(int idx) const {
 }
 glm::mat4 Model::makeTransScaleNextPosition(const glm::mat4& prevTransformations, int idx) {
     glm::mat4 model = makeTransNextPosition(idx) * prevTransformations;
-    if (attributes[idx].hasScale)
-        model = glm::scale(model, attributes[idx].scale);
     if (this->attributes[idx].nextRotation.x != 0 || this->attributes[idx].nextRotation.y != 0 || this->attributes[idx].nextRotation.z != 0) {
         if (this->attributes[idx].nextRotation.x != 0)
             model = glm::rotate(model, glm::radians(this->attributes[idx].nextRotX), glm::vec3(1, 0, 0));
@@ -192,6 +190,8 @@ glm::mat4 Model::makeTransScaleNextPosition(const glm::mat4& prevTransformations
         if (this->attributes[idx].nextRotation.z != 0)
             model = glm::rotate(model, glm::radians(this->attributes[idx].nextRotZ), glm::vec3(0, 0, 1));
     }
+    if (attributes[idx].hasScale)
+        model = glm::scale(model, attributes[idx].scale);
     return model;
 }
 glm::mat4 Model::makeTransNextPosition(int idx) {
@@ -438,9 +438,9 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
                 setNextRotZ(getRotZ(idx), idx);
                 break;
             }
-            if (collide.model != NULL)
-                break;
         }
+        if (collide.model != NULL)
+            break;
         if (i < 0) i = 0;
     }
 
@@ -472,6 +472,7 @@ void Model::buildCollider(float x, float y, float z, float halfWidth, float half
     vector<unsigned int> cuboIndex = getCubeIndex();
     ModelAttributes& attr = this->getModelAttributes()->at(0);
     attr.hitbox = new Model(cuboAABB, cuboAABB.size(), cuboIndex, cuboIndex.size(), this->cameraDetails);
+    ((Model*)attr.hitbox)->name = this->name;
     for (Mesh *m : ((Model*)attr.hitbox)->meshes)
         m->VBOGLDrawType = GL_LINE_LOOP;
 }
@@ -748,9 +749,10 @@ bool Model::colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitio
     return Model::colisionaCon(this->getModelAttributes()->at(idx), objeto, yPos, collitionMove);
 }
 bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove) {
+    bool collide = false;
     if (objeto0.hitbox == NULL || objeto.hitbox == NULL)
         return false;
-    if (!(objeto0.active && objeto0.active))
+    if (!(objeto0.active && objeto.active))
         return false;
     Model* AABB = (Model*)objeto.hitbox;
     Model* AABB0 = (Model*)objeto0.hitbox;
@@ -760,6 +762,32 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
     glm::mat4 transform1 = collitionMove ? AABB0->makeTransScaleNextPosition(glm::mat4(1)) : AABB0->makeTransScale(glm::mat4(1)) ; // Para el cubo A
     // Asumimos que el modelo a comparar esta quieto y no se esta moviendo
     glm::mat4 transform2 = collitionMove ? AABB->makeTransScaleNextPosition(glm::mat4(1)) : AABB->makeTransScale(glm::mat4(1)); // Para el cubo B
+    if (collitionMove) {
+        glm::vec3 prev = *AABB0->getTranslate();      // posición actual
+        glm::vec3 next = *AABB0->getNextTranslate();  // posición siguiente
+        glm::vec3 dir  = next - prev;
+        float dist = glm::length(dir);
+
+        if (dist > 0.0001f) {
+            // Determinar cantidad de subpasos dinámicamente
+            // (cada 0.1 unidades de distancia = 1 substep, hasta 10 máx)
+            int steps = glm::clamp(int(dist / 0.1f), 1, 10);
+            glm::vec3 stepDir = dir / float(steps);
+
+            for (int s = 0; s < steps; ++s) {
+                glm::vec3 partialPos = prev + stepDir * float(s);
+                float tMin, tMax;
+
+                // Test de ray vs OBB con el modelo de destino
+                if (rayIntersectsOBB(partialPos, stepDir, AABB->meshes.at(0)->vertices, transform2, tMin, tMax)) {
+                    if (tMin <= 1.0f && tMax >= 0.0f) {
+                        collide = true; // colisión durante el trayecto
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     // Obtener los vértices de ambos cubos AABB
 //    vector<Vertex> verticesCubo1 = objeto0.AABB->meshes[0]->vertices;
@@ -787,6 +815,8 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
             yPos.y = idx->Position.y;
         idx++;
     }
+    if (collide)
+        return collide;
 
     // Obtener los ejes de separación
 //            std::vector<glm::vec3> ejes = obtenerEjesSeparacion(transform1, transform2);

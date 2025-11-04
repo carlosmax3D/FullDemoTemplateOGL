@@ -29,32 +29,6 @@ void CollitionBox::initCollitionBox(float x, float y, float z, float centerx, fl
         mesh->materials.push_back(m);
 }
 
-void CollitionBox::setTranslate(glm::vec3* translate) {
-    if (translate == NULL) {
-        this->getModelAttributes()->at(0).translate = glm::vec3(0);
-        this->getModelAttributes()->at(0).hasTranslate = false;
-        this->getModelAttributes()->at(0).nextTranslate = glm::vec3(0);
-    }
-    else {
-        this->getModelAttributes()->at(0).translate = *translate;
-        this->getModelAttributes()->at(0).nextTranslate = *translate;
-        this->getModelAttributes()->at(0).hasTranslate = true;
-    }
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
-    if (AABB != NULL) AABB->setTranslate(translate);
-}
-void CollitionBox::setNextTranslate(glm::vec3* translate) {
-    if (translate == NULL) {
-        this->getModelAttributes()->at(0).translate = glm::vec3(0);
-        this->getModelAttributes()->at(0).nextTranslate = glm::vec3(0);
-    } else {
-        this->getModelAttributes()->at(0).translate = *translate;
-        this->getModelAttributes()->at(0).nextTranslate = *translate;
-    }
-    Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
-    if (AABB != NULL) AABB->setNextTranslate(translate);
-}
-
 CollitionBox::~CollitionBox() {
     //nos aseguramos de disponer de los recursos previamente reservados
 }

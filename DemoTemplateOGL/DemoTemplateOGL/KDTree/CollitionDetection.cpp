@@ -245,3 +245,50 @@ bool proyectarYComprobarSolapamiento(Vertex* verticesCubo1,
     // Comprobar si las proyecciones se solapan
     return !(maxCubo1 < minCubo2 || maxCubo2 < minCubo1);
 }
+
+bool rayIntersectsOBB(
+    const glm::vec3& rayOrigin,
+    const glm::vec3& rayDir,
+    const std::vector<Vertex>& vertices,
+    const glm::mat4& obbTransform,
+    float& tMin, float& tMax)
+{
+    if (vertices.empty())
+        return false;
+
+    // Calcular límites AABB locales del modelo
+    glm::vec3 minExtents(FLT_MAX);
+    glm::vec3 maxExtents(-FLT_MAX);
+    for (const Vertex& v : vertices) {
+        minExtents = glm::min(minExtents, v.Position);
+        maxExtents = glm::max(maxExtents, v.Position);
+    }
+
+    // Invertir la matriz del OBB
+    glm::mat4 invModel = glm::inverse(obbTransform);
+
+    // Transformar el rayo al espacio local
+    glm::vec3 localOrigin = glm::vec3(invModel * glm::vec4(rayOrigin, 1.0f));
+    glm::vec3 localDir = glm::normalize(glm::vec3(invModel * glm::vec4(rayDir, 0.0f)));
+
+    // Test rayo vs AABB (en el espacio local del OBB)
+    tMin = -FLT_MAX;
+    tMax =  FLT_MAX;
+
+    for (int i = 0; i < 3; i++) {
+        if (fabs(localDir[i]) < 1e-6f) {
+            if (localOrigin[i] < minExtents[i] || localOrigin[i] > maxExtents[i])
+                return false;
+        } else {
+            float t1 = (minExtents[i] - localOrigin[i]) / localDir[i];
+            float t2 = (maxExtents[i] - localOrigin[i]) / localDir[i];
+            if (t1 > t2) std::swap(t1, t2);
+            tMin = std::max(tMin, t1);
+            tMax = std::min(tMax, t2);
+            if (tMin > tMax)
+                return false;
+        }
+    }
+
+    return true;
+}
