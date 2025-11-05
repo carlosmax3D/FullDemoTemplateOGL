@@ -129,6 +129,9 @@
     <ClInclude Include="Billboard2DAnimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Principal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DemoTemplateOGL.cpp">
@@ -175,6 +178,15 @@
     </ClCompile>
     <ClCompile Include="CollitionBox.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interior.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Interior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Principal.cpp">
+      <Filter>Source Files\Base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -75,10 +75,10 @@ public:
 	}
 
 	void prepShader(Shader& shader) {
-		glm::vec3 lightColor;
-		lightColor.x = 1;// sin(7200 * 2.0f);
-		lightColor.y = 1;// sin(7200 * 0.7f);
-		lightColor.z = 1;// sin(7200 * 1.3f);
+		glm::vec3 lightColor(1.0f, 1.0f, 1.0f);           // glm::vec3 lightColor;
+		lightColor.x = 1;// sin(7200 * 2.0f);           lightColor.x = 1;
+		lightColor.y = 1;// sin(7200 * 0.7f);			  lightColor.y = 1;
+		lightColor.z = 1;// sin(7200 * 1.3f);			  lightColor.z = 1;
 		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
 		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
 		shader.setVec3("light.ambient", ambientColor);

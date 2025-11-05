@@ -15,6 +15,8 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Interior.h"
+#include "Principal.h"
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -115,13 +117,36 @@ int startGameEngine(void *ptrMsg){
     //5, ye - 1,-5
     //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
     Camera* camera = Camera::getInstance();
-    Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
+    Model* model = new Principal("models/Hombre/amigo.fbx", translate, camera);     // Modelo #1 - Animación #1
     model->setTranslate(&translate);
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
-    scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
+    scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
     model->setScale(&scale);
     model->setTranslate(&translate);
+    /*delete model->getModelAttributes()->at(0).hitbox;
+    Node n = model -> AABBsize;
+    n.m_center.x = 0;
+    n.m_center.y = 0;
+    n.m_center.z = 0;
+    n.m_halfWidth = 0.5;
+    n.m_halfHeight = 1.5;
+    n.m_halfDepth = 0.5;
+    model->getModelAttributes()->at(0).hitbox = CollitionBox::GenerateAABB(translate, n, camera);*/
+    try {
+        std::vector<Animation> animations = Animation::loadAllAnimations("models/Hombre/idle.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::vector<Animation> animation1 = Animation::loadAllAnimations("models/Hombre/correr.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+      //std::vector<Animation> animation2 = Animation::loadAllAnimations("models/Hombre/patear.fbx", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
+        std::move(animation1.begin(), animation1.end(), std::back_inserter(animations));
+      //std::move(animation2.begin(), animation2.end(), std::back_inserter(animations));
+        for (Animation animation : animations)
+            model->setAnimator(Animator(animation));
+        model->setAnimation(0);
+    }
+    catch (...) {
+        ERRORL("Could not load animation!", "ANIMACION");
+    }
+    
     Texto *fps = NULL;
     Texto *coordenadas = NULL;
     try{
@@ -163,6 +188,15 @@ int startGameEngine(void *ptrMsg){
             // ------
             bool checkCollition = checkInput(&actions, OGLobj);
             int cambio = OGLobj->update();
+            if (cambio == 1) {
+                delete OGLobj;
+                OGLobj = new Interior(model);
+                translate = glm::vec3(0.0f, OGLobj->getTerreno()->Superficie(0.0, 25.0f), 25.0f);
+                model->setNextTranslate(&translate);
+                model->setTranslate(&translate);
+                OGLobj->getLoadedText()->emplace_back(fps);
+                OGLobj->getLoadedText()->emplace_back(coordenadas);
+            }
             Scene *escena = OGLobj->Render();
             if (escena != OGLobj) {
                 delete OGLobj;

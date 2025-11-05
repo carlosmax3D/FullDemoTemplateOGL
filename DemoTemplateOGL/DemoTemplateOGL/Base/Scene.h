@@ -9,6 +9,9 @@
 #include "Water.h"
 #include "Animator.h"
 #include "Animation.h"
+#include "Principal.h"
+#include <GLFW/glfw3.h>
+
 
 class Scene {
 	public:
@@ -28,11 +31,20 @@ class Scene {
 		};
 
 		virtual int update(){
+			Principal* principal = (Principal*)getMainModel();                   //Tal vez
+			if (principal->enInvulnerable) {									 //Tal vez
+				principal->tiempoInvulnerable -= gameTime.deltaTime;			 //Tal vez
+				if (principal->tiempoInvulnerable <= 0) {						 //Tal vez
+					principal->enInvulnerable = false;                           //Tal vez
+				}																 //Tal vez
+			}
             float angulo = getAngulo() + 1.5 * gameTime.deltaTime / 100;
             angulo = angulo >= 360 ? angulo - 360.0 : angulo;
             setAngulo(angulo);
             getSky()->setRotY(angulo);
             Model* camara = getMainModel();
+			int tp = -1;
+			bool choque = false;
 			for (int i = 0; i < getLoadedModels()->size(); i++){
 				auto it = getLoadedModels()->begin() + i;
 				Model *collider = NULL, *model = *it;
@@ -48,21 +60,92 @@ class Scene {
 						collider = (Model*)mcollider.model;
 						idxCollider = mcollider.attrIdx;
 					}
+					//////////////////
+					/*if (model->name.compare("Arana") == 0 && j == 0) {
+						glm::vec3 posJugador = *camara->getNextTranslate();
+						glm::vec3 posArana = posM;
+
+						glm::vec3 dir = posJugador - posArana;					//
+						dir.y = 0.0f;											//
+						float distancia = glm::length(dir);						//
+						if (distancia > 0.1f) dir = glm::normalize(dir);		//
+						float rotY = atan2(dir.x, dir.z) * (180.0f / M_PI) + 180.0f;	//
+						model->setNextRotY(rotY);								//
+
+						float followSpeed = 1.0f * gameTime.deltaTime / 1000;
+						posArana = glm::mix(posArana, posJugador, followSpeed);
+						posArana.y = getTerreno()->Superficie(posArana.x, posArana.z) + 1;
+						model->setNextTranslate(&posArana);
+
+						if (distancia < 5.0f)									//
+							model->setAnimation(2); // atacar					//
+						else if (distancia < 25.0f)								//
+							model->setAnimation(1); // caminar					//
+						//else                                                  //
+						//	model->setAnimation(0); // idle						//
+						/////////////////	
+					}*/
 					if (collider != NULL && model == camara){
-						if (ejeColision.y == 1){
-							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
+						if (ejeColision.y == 1 && collider->name == "Arana"){
+							INFO("¡¡APLASTADA!!", "Adiós, araña");
 							if (removeCollideModel(collider, idxCollider))
 								i--;
+						} else {
+							choque = true;
+						}
+						if (collider->name == "PuertaCabana") {
+							static bool esperandoRespuesta = false;
+							static bool yaMostrado = false;
+
+							int respuesta = MessageBoxA(NULL, "¿Refugiarte en la cabaña?", "Entrar", MB_YESNO | MB_ICONQUESTION);
+							if (respuesta == IDYES) {
+								tp = 1;
+								entrarAlEdificio();
+							} 
+							else {
+								INFO("Entonces quédate afuera.", "Entrar");
+							}
+
 						}
 					}
 					if (j < 0) j = 0;
-				}
-				if (i < 0) i = 0;
+				}	
 			}
+			if (choque) {
+				Principal* principal = (Principal*)camara;
+				if (!principal->enInvulnerable) {                               //Tal vez
+					if (principal->vidas.size() > 0) {
+						delete principal->vidas.back();
+						principal->vidas.pop_back();
+						principal->enInvulnerable = true;                       //Tal vez
+						principal->tiempoInvulnerable = 2000.0f;                //Tal vez
+						//INFO("¡Has recibido daño!", "Ouch");				    //Tal vez
+					}
+					else {
+						INFO("TE HAS MUERTO.", "GAMEOVER");
+						choque = false;
+					}
+				}
+			}
+
 			// Actualizamos la camara
             camara->cameraDetails->CamaraUpdate(camara->getRotY(), camara->getTranslate());
-            return -1;
+            return tp;
         }
+
+		void entrarAlEdificio() {
+			Model* camara = getMainModel();	
+			glm::vec3 posInterior = glm::vec3(0.0f, 0.0f, 25.0f); // interior de la cabaña
+			camara->setTranslate(&posInterior);
+			camara->setNextTranslate(&posInterior);
+			float nuevaRotY = camara->getRotY() + 180.0f;
+			if (nuevaRotY >= 360.0f) nuevaRotY -= 360.0f; // eo
+			camara->setRotY(nuevaRotY);
+			camara->setNextRotY(nuevaRotY);
+			camara->cameraDetails->CamaraUpdate(nuevaRotY, camara->getTranslate());
+			INFO("Has entrado a la cabaña.", "Entrar");
+		}
+
 
 		virtual bool removeCollideModel(Model* collider, int idxCollider){
 			auto it = std::find(getLoadedModels()->begin(), getLoadedModels()->end(), collider);

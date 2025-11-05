@@ -161,6 +161,7 @@
     <ClInclude Include="Billboard2DAnimation.h" />
     <ClInclude Include="CollitionBox.h" />
     <ClInclude Include="KDTree\CollitionDetection.h" />
+    <ClInclude Include="Principal.h" />
     <ClInclude Include="Texto.h" />
     <ClInclude Include="Water.h" />
     <ClInclude Include="WinAPIHeaders\DemoTemplateOGL.h" />
@@ -189,6 +190,8 @@
     <ClCompile Include="Base\Bone.cpp" />
     <ClCompile Include="Base\font_atlas.cpp" />
     <ClCompile Include="CollitionBox.cpp" />
+    <ClCompile Include="Interior.cpp" />
+    <ClCompile Include="Interior.h" />
     <ClCompile Include="KDTree\CollitionDetection.cpp" />
     <ClCompile Include="DemoTemplateOGL.cpp" />
     <ClCompile Include="Base\glad.c" />
@@ -196,6 +199,7 @@
     <ClCompile Include="InputDevices\KeyboardInput.cpp" />
     <ClCompile Include="Base\Model.cpp" />
     <ClCompile Include="Base\Utilities.cpp" />
+    <ClCompile Include="Principal.cpp" />
     <ClCompile Include="Scenario.cpp" />
     <ClCompile Include="Texto.cpp" />
   </ItemGroup>
