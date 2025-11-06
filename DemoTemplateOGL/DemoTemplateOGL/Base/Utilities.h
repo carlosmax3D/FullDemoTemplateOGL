@@ -203,6 +203,8 @@ struct KeyFrame {
 	extern Maya Esfera(int stacks, int slices, float radio, float inicio, float final);
 	extern Maya Plano(int vertx, int vertz, float anchof, float profz);
 	extern Maya Plano(int vertx, int vertz, float anchof, float profz, unsigned char* altura, int nrComponents = 4, float tile = 1);
+	extern Maya PlanoTerreno(int vertx, int vertz, float anchof, float profz,
+		unsigned char* altura, int nrComponents);
 	extern glm::vec3 genNormal(float* v1, float* v2, float* v3);
 	extern float sinLUT[LUT_SIZE];  // Sine Lookup Table
 }

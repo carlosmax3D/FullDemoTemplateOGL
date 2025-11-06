@@ -15,6 +15,7 @@
 #include "Base/model.h"
 #include "Base/Scene.h"
 #include "Scenario.h"
+#include "Musica.h" //para manejar musica
 
 #define MAX_LOADSTRING 100
 #ifdef _WIN32 
@@ -47,12 +48,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 bool renderiza;                     // Variable para controlar el render
 bool checkInput(GameActions* actions, Scene* scene);
 void mouseActions();
-int isProgramRunning(void *ptr);
+int isProgramRunning(void* ptr);
 void swapGLBuffers();
-int finishProgram(void *ptr);
-int gamePadEvents(GameActions *actions);
+int finishProgram(void* ptr);
+int gamePadEvents(GameActions* actions);
 void updatePosCords(Texto* coordenadas);
-void updateFPS(Texto *fps, int totFrames);
+void updateFPS(Texto* fps, int totFrames);
 int startGameEngine(void* ptrMsg);
 
 // Propiedades de la ventana
@@ -66,13 +67,97 @@ struct GameTime gameTime;
 Camera* Camera::cameraInstance = NULL;
 
 // Objecto de escena y render
-Scene *OGLobj;
+Scene* OGLobj;
+
+// Sistema de audio
+Musica musica;
+
+// Variables para control de animaciones
+double lastMoveTime = 0.0;
+bool isMoving = false;
+
+// Definiciones de índices de animación
+#define ANIM_IDLE_STOP 0
+#define ANIM_WALK_FRONT 1
+#define ANIM_WALK_BACK 2
+#define ANIM_RUN_FRONT 3
+#define ANIM_RUN_BACK 4
+#define ANIM_IDLE_MOVE 5
+
+// Función para cambiar animaciones
+bool setAnimation(Model* model, int animationId) {
+    if (model->getAnimator().size() > animationId) {
+        model->setAnimation(animationId);
+        return true;
+    }
+    else {
+        WARNING("Animation index " + std::to_string(animationId) + " not found!", "ANIMATION");
+        return false;
+    }
+}
+
+// Función para cargar todas las animaciones del jugador
+void loadPlayerAnimations(Model* playerModel) {
+    try {
+        // Cargar animación Idle Stop (ya está cargada con el modelo base)
+        std::vector<Animation> idleStopAnim = Animation::loadAllAnimations("models/Jugador/Idle Stop.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!idleStopAnim.empty()) {
+            playerModel->setAnimator(Animator(idleStopAnim[0]));
+        }
+
+        // Cargar Walk Front
+        std::vector<Animation> walkFrontAnim = Animation::loadAllAnimations("models/Jugador/Walk Front.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!walkFrontAnim.empty()) {
+            playerModel->setAnimator(Animator(walkFrontAnim[0]));
+        }
+
+        // Cargar Walk Back
+        std::vector<Animation> walkBackAnim = Animation::loadAllAnimations("models/Jugador/Walk Back.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!walkBackAnim.empty()) {
+            playerModel->setAnimator(Animator(walkBackAnim[0]));
+        }
+
+        // Cargar Run Front
+        std::vector<Animation> runFrontAnim = Animation::loadAllAnimations("models/Jugador/Run Front.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!runFrontAnim.empty()) {
+            playerModel->setAnimator(Animator(runFrontAnim[0]));
+        }
+
+        // Cargar Run Back
+        std::vector<Animation> runBackAnim = Animation::loadAllAnimations("models/Jugador/Run Back.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!runBackAnim.empty()) {
+            playerModel->setAnimator(Animator(runBackAnim[0]));
+        }
+
+        // Cargar Idle Move
+        std::vector<Animation> idleMoveAnim = Animation::loadAllAnimations("models/Jugador/Idle Move.fbx",
+            playerModel->GetBoneInfoMap(), playerModel->getBonesInfo(), playerModel->GetBoneCount());
+        if (!idleMoveAnim.empty()) {
+            playerModel->setAnimator(Animator(idleMoveAnim[0]));
+        }
+
+        // Iniciar con animación Idle Stop
+        playerModel->setAnimation(ANIM_IDLE_STOP);
+
+    }
+    catch (const std::exception& e) {
+        ERRORL("Could not load animations: " + std::string(e.what()), "ANIMACION_JUGADOR");
+    }
+    catch (...) {
+        ERRORL("Unknown error loading animations!", "ANIMACION_JUGADOR");
+    }
+}
 
 #ifdef _WIN32 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPWSTR    lpCmdLine,
+    _In_ int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
@@ -86,50 +171,132 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // game loop
     gamPad = new GamePadRR(1); // Obtenemos el primer gamepad conectado
     MSG msg = { 0 };
-    void *ptrMsg = (void*)&msg;
+    void* ptrMsg = (void*)&msg;
 #else
-int main(int argc, char** argv){
-    if (!glfwInit()){
+int main(int argc, char** argv) {
+    if (!glfwInit()) {
         return -1;
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    window = glfwCreateWindow(SCR_WIDTH,SCR_HEIGHT, "DemoTemplateOGL", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "DemoTemplateOGL", NULL, NULL);
     windowSize = glm::vec2(SCR_WIDTH, SCR_HEIGHT);
     glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         ERRORL("No opengl load", "OPENGL");
         glfwTerminate();
         return -1;
     }
-    void *ptrMsg = NULL;
+    void* ptrMsg = NULL;
 #endif
     return startGameEngine(ptrMsg);
 }
 
-int startGameEngine(void *ptrMsg){
+int startGameEngine(void* ptrMsg) {
+    // INICIALIZAR AUDIO
+    if (!musica.iniciar()) {
+        ERRORL("No se pudo inicializar el sistema de audio", "AUDIO");
+    }
+    if (!musica.cargarListaMusica("Musica")) {
+        ERRORL("No se encontraron archivos de música", "AUDIO");
+    }
+    else {
+        musica.reproducirMusicaAleatoria();
+    }
+
     // Main character with it's camera
     glm::vec3 translate, scale, v(0, 0, -1);
     translate = glm::vec3(5.0f, 10.0f, -5.0f);
-    //5, ye - 1,-5
-    //MainModel *model = new MainModel(hWnd, "models/Cube.obj", translate);
+
+    // Cargar el modelo base del jugador
     Camera* camera = Camera::getInstance();
-    Model* model = new Model("models/BaseSpiderman/BaseSpiderman.obj", translate, camera);
+    Model* model = new Model("models/Jugador/Idle Stop.fbx", translate, camera);
     model->setTranslate(&translate);
+
+    // INICIALIZAR ROTACIÓN A 0 grados en todos los ejes
+    model->setRotY(0.0f);
+    model->setNextRotY(0.0f);
+    model->setRotX(0.0f);
+    model->setNextRotX(0.0f);
+    model->setRotZ(0.0f);
+    model->setNextRotZ(0.0f);
+
+    // También inicializar la cámara a 0 grados (TERCERA PERSONA por defecto)
+    camera->setPitch(0.0f);
+    camera->calculateAngleAroundPlayer(0.0f);
+    camera->setFirstPerson(false); // Iniciar en tercera persona
+
+    // Aplicar escala visual
+    glm::vec3 desiredScale(0.05f, 0.05f, 0.05f);
+    model->setScale(&desiredScale);
+
+    // Construir KDtree normal
+    model->buildKDtree();
+
+    // ESCALAR MANUALMENTE LA COLISIÓN
+    model->AABBsize.m_halfWidth *= 0.03f;
+    model->AABBsize.m_halfHeight *= 0.22f;
+    model->AABBsize.m_halfDepth *= 0.020f;
+
+    // TRASLADAR LA COLISIÓN
+    glm::vec3 collisionOffset(0.0f, -0.5f, 35.7f);
+    model->AABBsize.m_center.x += collisionOffset.x;
+    model->AABBsize.m_center.y += collisionOffset.y;
+    model->AABBsize.m_center.z += collisionOffset.z;
+
+    // Reconstruir el collider
+    model->buildCollider(
+        model->AABBsize.m_center.x,
+        model->AABBsize.m_center.y,
+        model->AABBsize.m_center.z,
+        model->AABBsize.m_halfWidth,
+        model->AABBsize.m_halfHeight,
+        model->AABBsize.m_halfDepth
+    );
+
     camera->setFront(v);
     camera->setCharacterHeight(4.0);
-    scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
-    model->setScale(&scale);
     model->setTranslate(&translate);
+
+    // Cargar todas las animaciones del jugador
+    loadPlayerAnimations(model);
     Texto *fps = NULL;
     Texto *coordenadas = NULL;
     try{
-        OGLobj = new Scenario(model); // Creamos nuestra escena con esa posicion de inicio
+
+        OGLobj = new Scenario(model);
         translate = glm::vec3(5.0f, OGLobj->getTerreno()->Superficie(5.0, -5.0), -5.0f);
         model->setTranslate(&translate);
         model->setNextTranslate(&translate);
         renderiza = false;
+
+        // Inicializar timer de movimiento
+        lastMoveTime = get_nanos() / 1000000.0;
+
+        // === CONFIGURACIÓN DEL DRONE (UNA SOLA VEZ) ===
+        Scenario* scenario = dynamic_cast<Scenario*>(OGLobj);
+        if (scenario != nullptr) {
+            Model* drone = new Model("models/Drone/Drone.obj", camera);
+            glm::vec3 dronePos(20.0f, OGLobj->getTerreno()->Superficie(20.0f, 20.0f) + 2.0f, 20.0f);
+            glm::vec3 droneScale(2.0f, 2.0f, 2.0f);
+
+            drone->setTranslate(&dronePos);
+            drone->setNextTranslate(&dronePos);
+            drone->setScale(&droneScale);
+            drone->setRotY(180);
+            drone->name = "Drone";
+            drone->buildKDtree();
+
+            // IMPORTANTE: Hacer que el drone NO tenga colisiones con el jugador
+            drone->ignoreAABB = true; // Desactivar colisiones del drone
+
+            // Añadir a la escena
+            scenario->getLoadedModels()->emplace_back(drone);
+            scenario->setDrone(drone);
+
+            INFO("Drone cargado correctamente (sin colisiones).", "DRONE_INIT");
+        }
 
         int running = 1;
         fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
@@ -143,27 +310,82 @@ int startGameEngine(void *ptrMsg){
         // -----------------------------
         glEnable(GL_DEPTH_TEST);
         glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-        gameTime.lastTick = get_nanos() / 1000000.0; // ms
+        gameTime.lastTick = get_nanos() / 1000000.0;
         int totFrames = 0;
         double deltasCount = 0;
-        double jump = 0;
-    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        std::cout << "\n=== CONTROLES ===" << std::endl;
+        std::cout << "JUGADOR (Tercera persona por defecto):" << std::endl;
+        std::cout << "  W/S: Adelante/Atrás" << std::endl;
+        std::cout << "  A/D: Rotar" << std::endl;
+        std::cout << "  Shift: Correr" << std::endl;
+        std::cout << "  P: Cambiar a primera persona" << std::endl;
+        std::cout << "  Mouse: Control de cámara" << std::endl;
+        std::cout << "  E: Entrar al drone (cerca)" << std::endl;
+        std::cout << "\nDRONE (Primera persona obligatoria):" << std::endl;
+        std::cout << "  W/S: Adelante/Atrás" << std::endl;
+        std::cout << "  A/D: Strafe lateral" << std::endl;
+        std::cout << "  V: Subir" << std::endl;
+        std::cout << "  F: Bajar" << std::endl;
+        std::cout << "  Flechas ←/→: Rotar cámara 360°" << std::endl;
+        std::cout << "  Flechas ↑/↓: Pitch de cámara" << std::endl;
+        std::cout << "  E: Salir del drone (solo en el suelo)" << std::endl;
+        std::cout << "==================\n" << std::endl;
+
         while (isProgramRunning(ptrMsg)) {
             deltasCount += gameTime.deltaTime;
             totFrames++;
-            if (deltasCount >= 1000.0f){
+
+            if (musica.necesitaSiguienteCancion()) {
+                musica.siguienteCancion();
+            }
+
+            if (deltasCount >= 1000.0f) {
                 updateFPS(fps, totFrames);
                 deltasCount -= 1000.0f;
                 totFrames = 1;
             }
             updatePosCords(coordenadas);
+
+            // === DETECCIÓN DE PROXIMIDAD AL DRONE ===
+            bool nearDrone = false;
+            Scenario* scenario = dynamic_cast<Scenario*>(OGLobj);
+            if (scenario != nullptr) {
+                Model* drone = scenario->getDrone();
+                if (drone != nullptr && !scenario->getIsDroneActive()) {
+                    glm::vec3 playerPos = *scenario->getMainModel()->getTranslate();
+                    glm::vec3 dronePos = *drone->getTranslate();
+                    float distanceToDrone = glm::distance(playerPos, dronePos);
+
+                    if (distanceToDrone < 5.0f) {
+                        nearDrone = true;
+                    }
+                }
+            }
+
+            // === LÓGICA PARA ENTRAR AL DRONE ===
+            if (nearDrone && KEYS[KEYB_DRONE]) {
+                if (scenario != nullptr && !scenario->getIsDroneActive()) {
+                    scenario->enterDrone(scenario->getMainModel());
+                    std::cout << ">>> ENTRANDO AL DRONE (Primera persona)" << std::endl;
+                }
+                KEYS[KEYB_DRONE] = false;
+            }
+
+            // === LÓGICA PARA SALIR DEL DRONE ===
+            if (scenario != nullptr && scenario->getIsDroneActive() && KEYS[KEYB_DRONE]) {
+                scenario->exitDrone();
+                // El mensaje se muestra dentro de exitDrone()
+                KEYS[KEYB_DRONE] = false;
+            }
+
             GameActions actions;
-            actions.jump = &jump;
+
             // render
-            // ------
             bool checkCollition = checkInput(&actions, OGLobj);
             int cambio = OGLobj->update();
-            Scene *escena = OGLobj->Render();
+            Scene* escena = OGLobj->Render();
+
             if (escena != OGLobj) {
                 delete OGLobj;
                 OGLobj = escena;
@@ -184,67 +406,212 @@ int startGameEngine(void *ptrMsg){
     return finishProgram(ptrMsg);
 }
 
-bool checkInput(GameActions *actions, Scene* scene) {
+bool checkInput(GameActions* actions, Scene* scene) {
     bool changeAnimation = false;
-    if (gamePadEvents(actions)){
-    } else {
+
+    if (gamePadEvents(actions)) {
+    }
+    else {
         mouseActions();
         KeysEvents(actions);
     }
-    Model* OGLobj = scene->getMainModel();
-    if (actions->displayHitboxStats){
+
+    // === SISTEMA DRONE ===
+    Scenario* scenario = dynamic_cast<Scenario*>(scene);
+    Model* currentModel = nullptr;
+    bool isDrone = false;
+
+    if (scenario != nullptr) {
+        currentModel = scenario->getActiveModel();
+        isDrone = scenario->getIsDroneActive();
+    }
+    else {
+        currentModel = scene->getMainModel();
+    }
+
+    // ========================================
+    // === CONTROLES EXCLUSIVOS DEL DRONE ===
+    // ========================================
+    if (isDrone) {
+        // NO HAY ANIMACIONES PARA EL DRONE
+
+        // Velocidad independiente del drone (más rápido que el jugador)
+        float droneSpeed = 0.15f; // Velocidad base del drone
+        float deltaTimeFactor = gameTime.deltaTime / 16.0f;
+
+        glm::vec3 pos = *currentModel->getNextTranslate();
+
+        // === MOVIMIENTO FRONTAL/TRASERO (W/S) ===
+        if (actions->advance != 0) {
+            float moveSpeed = droneSpeed * deltaTimeFactor * actions->advance;
+            pos.x += moveSpeed * glm::sin(glm::radians(currentModel->getRotY()));
+            pos.z += moveSpeed * glm::cos(glm::radians(currentModel->getRotY()));
+        }
+
+        // === MOVIMIENTO LATERAL - STRAFE (A/D) ===
+        if (actions->sideAdvance != 0) {
+            float strafeSpeed = droneSpeed * deltaTimeFactor * actions->sideAdvance;
+            pos.x += strafeSpeed * glm::cos(glm::radians(currentModel->getRotY()));
+            pos.z += strafeSpeed * -glm::sin(glm::radians(currentModel->getRotY()));
+        }
+
+        // === MOVIMIENTO VERTICAL (V subir / F bajar) ===
+        if (KEYS[input.V] || KEYS[input.F]) {
+            float verticalSpeed = droneSpeed * deltaTimeFactor;
+
+            if (KEYS[input.V]) {
+                pos.y += verticalSpeed; // Elevarse
+            }
+            if (KEYS[input.F]) {
+                // Descender controlado
+                float terrainHeight = scenario->getTerreno()->Superficie(pos.x, pos.z);
+                if (pos.y - verticalSpeed > terrainHeight + 1.0f) {
+                    pos.y -= verticalSpeed;
+                }
+                else {
+                    pos.y = terrainHeight + 1.0f; // Altura mínima
+                }
+            }
+        }
+
+        // Asegurar que el drone no se hunda en el terreno
+        float terrainHeight = scenario->getTerreno()->Superficie(pos.x, pos.z);
+        if (pos.y < terrainHeight + 1.0f) {
+            pos.y = terrainHeight + 1.0f;
+        }
+
+        currentModel->setNextTranslate(&pos);
+
+        // === CONTROL DE CÁMARA (Flechas) ===
+        Camera* camera = currentModel->cameraDetails;
+
+        // ROTACIÓN HORIZONTAL 360° (FLECHAS IZQUIERDA/DERECHA)
+        if (KEYS[input.Left]) {
+            float angleIncrement = 2.5f * deltaTimeFactor;
+            camera->calculateAngleAroundPlayer(-angleIncrement);
+        }
+        if (KEYS[input.Right]) {
+            float angleIncrement = 2.5f * deltaTimeFactor;
+            camera->calculateAngleAroundPlayer(angleIncrement);
+        }
+
+        // PITCH DE CÁMARA (FLECHAS ARRIBA/ABAJO)
+        if (KEYS[input.Up]) {
+            float newPitch = camera->getPitch() + (1.5f * deltaTimeFactor);
+            if (newPitch > 89.0f) newPitch = 89.0f;
+            camera->setPitch(newPitch);
+        }
+        if (KEYS[input.Down]) {
+            float newPitch = camera->getPitch() - (1.5f * deltaTimeFactor);
+            if (newPitch < -89.0f) newPitch = -89.0f;
+            camera->setPitch(newPitch);
+        }
+
+        // Confirmar movimiento del drone
+        currentModel->setTranslate(&pos);
+
+        // NO PERMITIR cambio de cámara con P en drone
+        // El drone SIEMPRE está en primera persona
+
+    }
+    // =========================================
+    // === CONTROLES EXCLUSIVOS DEL JUGADOR ===
+    // =========================================
+    else {
+        // === CONTROL DE ANIMACIONES ===
+        isMoving = (actions->advance != 0 || actions->sideAdvance != 0);
+
+        if (isMoving) {
+            lastMoveTime = gameTime.lastTick;
+        }
+
+        bool hasForwardMovement = (actions->advance > 0);
+        bool hasBackwardMovement = (actions->advance < 0);
+
+        if (hasForwardMovement) {
+            if (KEYS[KEYB_SPRINT]) {
+                changeAnimation = setAnimation(currentModel, ANIM_RUN_FRONT);
+            }
+            else {
+                changeAnimation = setAnimation(currentModel, ANIM_WALK_FRONT);
+            }
+        }
+        else if (hasBackwardMovement) {
+            if (KEYS[KEYB_SPRINT]) {
+                changeAnimation = setAnimation(currentModel, ANIM_RUN_BACK);
+            }
+            else {
+                changeAnimation = setAnimation(currentModel, ANIM_WALK_BACK);
+            }
+        }
+        else {
+            if (gameTime.lastTick - lastMoveTime > 30000.0) {
+                changeAnimation = setAnimation(currentModel, ANIM_IDLE_MOVE);
+            }
+            else {
+                changeAnimation = setAnimation(currentModel, ANIM_IDLE_STOP);
+            }
+        }
+
+        // Velocidad independiente del jugador (más lento que el drone)
+        float playerSpeed = 0.30f; // Velocidad base del jugador (más lenta que drone)
+        float deltaTimeFactor = gameTime.deltaTime / 16.0f;
+
+        // === ROTACIÓN DEL JUGADOR (A/D) ===
+        if (actions->sideAdvance != 0) {
+            float rotationSpeed = 2.0f * deltaTimeFactor;
+
+            // Multiplicador de velocidad si está corriendo
+            if (KEYS[KEYB_SPRINT]) {
+                rotationSpeed *= 1.5f;
+            }
+
+            currentModel->setNextRotY(currentModel->getNextRotY() + (rotationSpeed * actions->sideAdvance));
+            currentModel->setRotY(currentModel->getNextRotY());
+        }
+
+        // === MOVIMIENTO FRONTAL/TRASERO (W/S) ===
+        if (actions->advance != 0) {
+            glm::vec3 pos = *currentModel->getNextTranslate();
+            float moveSpeed = playerSpeed * deltaTimeFactor;
+
+            // Multiplicador de velocidad si está corriendo
+            if (KEYS[KEYB_SPRINT]) {
+                moveSpeed *= 2.0f;
+            }
+
+            pos.x += actions->advance * moveSpeed * glm::sin(glm::radians(currentModel->getRotY()));
+            pos.z += actions->advance * moveSpeed * glm::cos(glm::radians(currentModel->getRotY()));
+            currentModel->setNextTranslate(&pos);
+        }
+
+        // === CONTROL DE CÁMARA CON MOUSE (solo jugador) ===
+        // El mouse ya se procesa en mouseActions()
+
+        // PERMITIR cambio entre primera y tercera persona (P)
+        if (actions->firstPerson) {
+            currentModel->cameraDetails->setFirstPerson(!currentModel->cameraDetails->getFirstPerson());
+        }
+    }
+
+    // =======================================
+    // === CONTROLES GENERALES (UI) ===
+    // =======================================
+    if (actions->displayHitboxStats) {
         showHitbox = !showHitbox;
         showStats = !showStats;
     }
-    if (actions->firstPerson) {
-        OGLobj->cameraDetails->setFirstPerson(!OGLobj->cameraDetails->getFirstPerson());
-    }
-    if (actions->sideAdvance != 0) {
-        OGLobj->setNextRotY(OGLobj->getNextRotY() + ((6 * gameTime.deltaTime / 100) * actions->sideAdvance));
-    }
-    if (actions->hAdvance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->hAdvance * (3 * gameTime.deltaTime/100) * glm::cos(glm::radians(OGLobj->getRotY()));
-        pos.z += actions->hAdvance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
 
-        OGLobj->setNextTranslate(&pos);
-    }
-    if (actions->advance != 0) {
-        glm::vec3 pos = *OGLobj->getTranslate();
-        pos.x += actions->advance * (3 * gameTime.deltaTime / 100) * glm::sin(glm::radians(OGLobj->getRotY()));
-        pos.z += actions->advance * (3 * gameTime.deltaTime / 100) * glm::cos(glm::radians(OGLobj->getRotY()));
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-//        pos.y = *actions->jump > 0 ? pos.y : scene->getTerreno()->Superficie(pos.x, pos.z);
-        OGLobj->setNextTranslate(&pos);
-    }
-    if (*actions->jump > 0){
-        glm::vec3 pos = *OGLobj->getNextTranslate();
-        double del = (*actions->jump) * gameTime.deltaTime / 100;
-        pos.y += del;
-        (*actions->jump) -= del;
-        if (*actions->jump < 0.01f)
-            *actions->jump = 0.0f;
-        // Posicionamos la camara/modelo pixeles arriba de su posicion en el terreno
-        OGLobj->setNextTranslate(&pos);
-    }
-    if (actions->getAngle() != NULL) {
-        OGLobj->cameraDetails->calculateAngleAroundPlayer((*actions->getAngle()) * (6 * gameTime.deltaTime / 100));
-    }
-    if (actions->getPitch() != NULL) {
-        OGLobj->cameraDetails->setPitch(OGLobj->cameraDetails->getPitch() + (*actions->getPitch()) * (6 * gameTime.deltaTime / 100));
-    }
+    // === ZOOM (ambos pueden hacer zoom) ===
     if (actions->getZoom() != NULL) {
-        OGLobj->cameraDetails->setZoom(OGLobj->cameraDetails->getZoom() + *actions->getZoom() * (6 * gameTime.deltaTime / 100));
+        currentModel->cameraDetails->setZoom(currentModel->cameraDetails->getZoom() + *actions->getZoom() * 0.1f);
     }
     if (actions->getPlayerZoom() != NULL) {
-        OGLobj->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * (6 * gameTime.deltaTime / 100));
+        currentModel->cameraDetails->calculateZoomPlayer(*actions->getPlayerZoom() * 0.1f);
     }
 
-    return true; // siempre buscar colision
+    return true;
 }
-
 #ifdef _WIN32
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -515,14 +882,34 @@ void mouseActions() {
 #else
     glfwGetCursorPos(window, &x, &y);
 #endif
-    glm::vec2 scale = glm::vec2(x, y) / windowSize;
-    OGLobj->getMainModel()->cameraDetails->setPitch(scale.y * 70.0f - 30.f);
-    scale = cDelta.setPosition(x, y, cDelta.getLbtn() || cDelta.getRbtn());
-/*    scale = cDelta.setPosition(x, y, true);
-    if (scale.x != 0)
-        OGLobj->getMainModel()->cameraDetails->calculateAngleAroundPlayer((scale.x / abs(scale.x)) * -3.0);*/
-}
 
+    Scenario* scenario = dynamic_cast<Scenario*>(OGLobj);
+    bool isDrone = scenario && scenario->getIsDroneActive();
+
+    // === CONTROL DE MOUSE SOLO PARA JUGADOR ===
+    if (!isDrone) {
+        glm::vec2 scale = cDelta.setPosition(x, y, true);
+
+        // Control vertical de cámara (pitch)
+        if (scale.y != 0) {
+            Camera* camera = OGLobj->getMainModel()->cameraDetails;
+            float newPitch = camera->getPitch() + (scale.y * 0.5f);
+            camera->setPitch(newPitch);
+        }
+
+        // Control horizontal de cámara (yaw) - solo con botón izquierdo presionado
+        if (cDelta.getLbtn() && scale.x != 0) {
+            Camera* camera = OGLobj->getMainModel()->cameraDetails;
+            camera->calculateAngleAroundPlayer(scale.x * -0.5f);
+        }
+    }
+    else {
+        // === EN DRONE: EL MOUSE NO HACE NADA ===
+        // Solo las flechas controlan la cámara del drone
+        // Resetear delta para que no se acumule
+        cDelta.setPosition(x, y, false);
+    }
+}
 int isProgramRunning(void *ptr){
     double currentTime = get_nanos() / 1000000.0;
     gameTime.deltaTime =  currentTime - gameTime.lastTick; // ms

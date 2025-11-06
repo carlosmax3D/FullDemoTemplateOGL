@@ -2,6 +2,7 @@
 #ifndef KEYBOARD_INPUT_H
 #define KEYBOARD_INPUT_H
 #define MOUSE_INPUT_H
+#define KEYB_DRONE input.E  // Tecla E para entrar/salir del drone
 #include "../Base/Utilities.h"
 
 	struct Input {

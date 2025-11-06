@@ -40,6 +40,7 @@ private:
     bool cleanTextures = true;
     bool defaultShader = false;
     glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+	bool visible = true; //visibilidad del modelo
 
 public:
     // model data 
@@ -110,6 +111,9 @@ public:
     bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false, int idx = 0);
     static bool colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
 
+	//Para gestionar la visibilidad del modelo
+    void setVisible(bool visible);
+    bool isVisible() const;
     std::unordered_map<string, int>* GetBoneInfoMap();
     std::vector<BoneInfo>* getBonesInfo();
     int& GetBoneCount();

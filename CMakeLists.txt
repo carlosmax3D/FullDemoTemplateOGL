@@ -8,6 +8,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/FreeImage/)
 add_subdirectory(${CMAKE_SOURCE_DIR}/ExternalResources/freetype/)
 
 include_directories(FullDemoTemplateOGL
+    ${CMAKE_SOURCE_DIR}/ExternalResources/bass24/c/
     ${CMAKE_SOURCE_DIR}/ExternalResources/assimp/include/
     ${CMAKE_SOURCE_DIR}/ExternalResources/glfw-3.3.2/include/
     ${CMAKE_SOURCE_DIR}/ExternalResources/glad/include/
@@ -19,6 +20,7 @@ include_directories(FullDemoTemplateOGL
 link_directories(FullDemoTemplateOGL
     ${CMAKE_SOURCE_DIR}/ExternalResources/glfw-3.3.2/build/src/
     ${CMAKE_SOURCE_DIR}/ExternalResources/freetype/
+    ${CMAKE_SOURCE_DIR}/ExternalResources/bass24/libs/x86_64/
     )
 
 add_executable(FullDemoTemplateOGL 
@@ -44,6 +46,7 @@ target_link_libraries(FullDemoTemplateOGL glm)
 target_link_libraries(FullDemoTemplateOGL FreeImage)
 target_link_libraries(FullDemoTemplateOGL freetype)
 target_link_libraries(FullDemoTemplateOGL assimp)
+target_link_libraries(FullDemoTemplateOGL ${CMAKE_SOURCE_DIR}/ExternalResources/bass24/libs/x86_64/libbass.so)
 #find_package(assimp REQUIRED)
 #if (assimp_FOUND)
 #    set(ASSIMP_LIBRARY "assimp")

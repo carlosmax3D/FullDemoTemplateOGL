@@ -5,291 +5,482 @@
 #define wcscat_s(x,y,z) wcscat(x,z)
 #endif
 
-Scenario::Scenario(Camera *cam) {
+Scenario::Scenario(Camera* cam) {
     glm::vec3 translate;
-	glm::vec3 scale;
+    glm::vec3 scale;
     Model* model = new Model("models/Cube/Cube.obj", cam);
-	translate = glm::vec3(0.0f, 0.0f, 3.0f);
-	scale = glm::vec3(0.25f, 0.25f, 0.25f);	// it's a bit too big for our scene, so scale it down
-	model->setScale(&scale);
-	model->setTranslate(&translate);
-	model->setNextTranslate(&translate);
-	InitGraph(model);
+    translate = glm::vec3(0.0f, 0.0f, 3.0f);
+    scale = glm::vec3(0.25f, 0.25f, 0.25f);
+    model->setScale(&scale);
+    model->setTranslate(&translate);
+    model->setNextTranslate(&translate);
+    InitGraph(model);
+
+    // Inicializar variables del drone
+    isDroneActive = false;
+    previousMainModel = nullptr;
+
 }
-Scenario::Scenario(Model *camIni) {
+
+Scenario::Scenario(Model* camIni) {
     InitGraph(camIni);
 }
-void Scenario::InitGraph(Model *main) {
+
+void Scenario::enterDrone(Model* player) {
+    if (isDroneActive || Drone == nullptr) return;
+
+    // Guardar posición EXACTA del jugador
+    previousMainModel = player;
+    glm::vec3 savedPlayerPos = *player->getTranslate();
+
+    // CONGELAR al jugador en su posición actual
+    player->setActive(false);
+    player->setVisible(false);
+
+    // IMPORTANTE: Forzar que el jugador NO se mueva
+    player->setNextTranslate(&savedPlayerPos);
+
+    // El drone se queda donde está (NO lo movemos)
+    // Solo activamos el drone
+    Drone->setActive(true);
+    Drone->setVisible(true);
+
+    // FORZAR cámara en primera persona para el drone
+    Drone->cameraDetails->setFirstPerson(true);
+
+    // Cambiar modelo principal al drone
+    setMainModel(Drone);
+
+    INFO("Entrando al Drone.", "DRONE");
+    isDroneActive = true;
+}
+
+void Scenario::exitDrone() {
+    if (!isDroneActive || previousMainModel == nullptr) return;
+
+    // Verificar altura del drone
+    glm::vec3 dronePos = *Drone->getTranslate();
+    float terrainHeight = getTerreno()->Superficie(dronePos.x, dronePos.z);
+
+    // NO PERMITIR salir si está muy alto (más de 2 unidades sobre el terreno)
+    if (dronePos.y > terrainHeight + 2.0f) {
+        INFO("No puedes salir del drone mientras está en el aire. Desciende primero (Tecla F).", "DRONE");
+        return;
+    }
+
+    // RECUPERAR la posición EXACTA donde el jugador entró al drone
+    // El jugador NO se movió, sigue en la misma posición
+    glm::vec3 playerOriginalPos = *previousMainModel->getTranslate();
+
+    // Reactivar al jugador EN SU POSICIÓN ORIGINAL
+    previousMainModel->setTranslate(&playerOriginalPos);
+    previousMainModel->setNextTranslate(&playerOriginalPos);
+    previousMainModel->setActive(true);
+    previousMainModel->setVisible(true);
+
+    // Restaurar cámara al jugador (en tercera persona)
+    setMainModel(previousMainModel);
+    previousMainModel->cameraDetails->setFirstPerson(false);
+
+    // El drone se queda donde lo dejaste
+    Drone->setActive(true);
+    Drone->setVisible(true);
+
+    INFO("Saliendo del Drone. El jugador regresa a su posición original.", "DRONE");
+    isDroneActive = false;
+    previousMainModel = nullptr;
+}
+
+void Scenario::InitGraph(Model* main) {
     float matAmbient[] = { 1,1,1,1 };
-	float matDiff[] = { 1,1,1,1 };
-	angulo = 0;
-	camara = main;
-	//creamos el objeto skydome
-	sky = new SkyDome(32, 32, 20, (WCHAR*)L"skydome/earth.jpg", main->cameraDetails);
-	//creamos el terreno
-	terreno = new Terreno((WCHAR*)L"skydome/terreno.jpg", (WCHAR*)L"skydome/texterr2.jpg", 400, 400, main->cameraDetails);
-	water = new Water((WCHAR*)L"textures/terreno.bmp", (WCHAR*)L"textures/water.bmp", 20, 20, camara->cameraDetails);
-	glm::vec3 translate;
-	glm::vec3 scale;
-	glm::vec3 rotation;
-	translate = glm::vec3(0.0f, 20.0f, 30.0f);
-	water->setTranslate(&translate);
-	// load models
-	// -----------
-	ourModel.emplace_back(main);
-	Model* model;
-	model = new Model("models/fogata/fogata.obj", main->cameraDetails);
-	translate = glm::vec3(0.0f, 10.0f, 25.0f);
-	model->setTranslate(&translate);
-	model->setNextTranslate(&translate);
-	rotation = glm::vec3(1.0f, 0.0f, 0.0f); //rotation X
-	model->setNextRotX(45); // 45� rotation
-	ourModel.emplace_back(model);
+    float matDiff[] = { 1,1,1,1 };
+    angulo = 0;
+    camara = main;
 
-	ModelAttributes m;
-	Model *pez = new Model("models/pez/pez.obj", main->cameraDetails);
-	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 50.0f), 50.0f);
-	pez->setNextTranslate(&translate);
-	pez->setTranslate(&translate);
-	ourModel.emplace_back(pez);
-	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
-	m.hitbox = model;
-	pez->getModelAttributes()->push_back(m);
-	translate.x = 5;
-	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
-	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
-	model = CollitionBox::GenerateAABB(m.translate, pez->AABBsize, main->cameraDetails);
-	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
-	pez->getModelAttributes()->push_back(m);
-	translate.x = 10;
-	pez->setTranslate(&translate, pez->getModelAttributes()->size()-1);
-	pez->setNextTranslate(&translate, pez->getModelAttributes()->size()-1);
+    // CREAR SKYDOME CON CICLO DÍA/NOCHE COMPLETO
+    sky = new SkyDome(32, 32, 20,
+        (WCHAR*)L"skydome/day_sky.jpg",
+        (WCHAR*)L"skydome/sunset_sky.jpg",
+        (WCHAR*)L"skydome/night_sky.jpg",
+        main->cameraDetails,
+        0.0f);
 
-	model = new Model("models/dancing_vampire/dancing_vampire.dae", main->cameraDetails);
-	translate = glm::vec3(0.0f, terreno->Superficie(0.0f, 60.0f), 60.0f);
-	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
-	model->setTranslate(&translate);
-	model->setNextTranslate(&translate);
-	model->setScale(&scale);
-	model->setNextRotY(90);
-	ourModel.emplace_back(model);
-	try{
-		std::vector<Animation> animations = Animation::loadAllAnimations("models/dancing_vampire/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::vector<Animation> animation = Animation::loadAllAnimations("models/dancing_vampire/dancing_vampire.dae", model->GetBoneInfoMap(), model->getBonesInfo(), model->GetBoneCount());
-		std::move(animation.begin(), animation.end(), std::back_inserter(animations));
-		for (Animation animation : animations)
-			model->setAnimator(Animator(animation));
-		model->setAnimation(1);
-	}catch(...){
-		ERRORL("Could not load animation!", "ANIMACION");
-	}
+    std::cout << "\n=== SISTEMA DIA/NOCHE INICIADO ===" << std::endl;
+    std::cout << "Ciclo completo: 6 minutos (360 segundos)" << std::endl;
+    std::cout << "Cada periodo: 2 minutos (120 segundos)" << std::endl;
+    std::cout << "NOCHE: 0:00-8:00 (0-120s)" << std::endl;
+    std::cout << "DIA: 8:00-16:00 (120-240s)" << std::endl;
+    std::cout << "TARDE: 16:00-24:00 (240-360s)" << std::endl;
+    std::cout << "===================================\n" << std::endl;
 
-	Model* silly = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
-	translate = glm::vec3(10.0f, terreno->Superficie(10.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
-	silly->setTranslate(&translate);
-	silly->setNextTranslate(&translate);
-	silly->setScale(&scale);
-	silly->setNextRotY(180);
-	ourModel.emplace_back(silly);
-	try{
-		std::vector<Animation> animations = Animation::loadAllAnimations("models/Silly_Dancing/Silly_Dancing.fbx", silly->GetBoneInfoMap(), silly->getBonesInfo(), silly->GetBoneCount());
-		for (Animation animation : animations)
-			silly->setAnimator(Animator(animation));
-		silly->setAnimation(0);
-	}catch(...){
-		ERRORL("Could not load animation!", "ANIMACION");
-	}
-	model = CollitionBox::GenerateAABB(translate, silly->AABBsize, main->cameraDetails);
-	m.hitbox = model; // Le decimos al ultimo ModelAttribute que tiene un hitbox asignado
-	silly->getModelAttributes()->push_back(m);
-	translate.x += 10;
-	silly->setTranslate(&translate, silly->getModelAttributes()->size()-1);
-	silly->setNextTranslate(&translate, silly->getModelAttributes()->size()-1);
-	silly->setScale(&scale, silly->getModelAttributes()->size()-1);
-	silly->setNextRotY(180, silly->getModelAttributes()->size()-1);
-	silly->setRotY(180, silly->getModelAttributes()->size()-1);
-	// Import model and clone with bones and animations
-	model = new Model("models/Silly_Dancing/Silly_Dancing.fbx", main->cameraDetails);
-	translate = glm::vec3(30.0f, terreno->Superficie(30.0f, 60.0f) , 60.0f);
-	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
-	model->name = "Silly_Dancing1";
-	model->setTranslate(&translate);
-	model->setNextTranslate(&translate);
-	model->setScale(&scale);
-	model->setNextRotY(180);
-	ourModel.emplace_back(model);
-	// Para clonar la animacion se eliminan los huesos del modelo actual y se copian los modelos y animators
-	model->GetBoneInfoMap()->clear();
-	model->getBonesInfo()->clear();
-	*model->GetBoneInfoMap() = *silly->GetBoneInfoMap();
-	*model->getBonesInfo() = *silly->getBonesInfo();
-	model->setAnimator(silly->getAnimator());
+    // Creamos el terreno
+    terreno = new Terreno(
+        (WCHAR*)L"skydome/terreno.jpg",      // Mapa de alturas
+        (WCHAR*)L"skydome/texterr2.jpg",     // Textura 1 (pasto)
+        (WCHAR*)L"skydome/texterr.jpg",       // Textura 2 (tierra)
+		(WCHAR*)L"skydome/multitextura.jpg", // Splatmap escala de grises
+        400, 400,
+        main->cameraDetails
+    );
 
-	//	model = new Model("models/IronMan.obj", main->cameraDetails);
-//	translate = glm::vec3(0.0f, 20.0f, 30.0f);
-//	scale = glm::vec3(0.025f, 0.025f, 0.025f);	// it's a bit too big for our scene, so scale it down
-//	model->setScale(&scale);
-//	model->setTranslate(&translate);
-//	ourModel.emplace_back(model);
-	model = new Model("models/backpack/backpack.obj", main->cameraDetails, false, false);
-	translate = glm::vec3(20.0f, terreno->Superficie(20.0f, 0.0f) + 2, 0.0f);
-	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
-	model->setTranslate(&translate);
-	model->setNextTranslate(&translate);
-	model->setScale(&scale);
-	ourModel.emplace_back(model);
-	model->lightColor = glm::vec3(10,0,0);
-	model = new CollitionBox(60.0f, 15.0f, 10.0f, 10, 10, 10, main->cameraDetails);
-	scale = glm::vec3(1.0f, 1.0f, 1.0f);	// it's a bit too big for our scene, so scale it down
-	model->setNextTranslate(model->getTranslate());
-	model->setScale(&scale);
-	ourModel.emplace_back(model);
-	
+    // Agua
+    water = new Water((WCHAR*)L"textures/terreno.bmp", (WCHAR*)L"textures/water.bmp", 20, 20, camara->cameraDetails);
+    glm::vec3 translate, scale, rotation;
+    translate = glm::vec3(0.0f, -3000.0f, 30.0f);
+    water->setTranslate(&translate);
 
-	inicializaBillboards();
-	std::wstring prueba(L"Esta es una prueba");
-	ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
-	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
-	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
-	billBoard2D.back()->setScale(&scale);
-	}
+    // El drone se crea en startGameEngine()
+
+    // Load models
+    ourModel.emplace_back(main);
+
+    //CARRITO DE COMIDA
+    Model* model;
+    model = new Model("models/Food cart/FoodCart.obj", main->cameraDetails);
+    translate = glm::vec3(-6.0f, 4.7f, 19.0f);
+    model->setTranslate(&translate);
+    model->setNextTranslate(&translate);
+    model->setNextRotY(45);
+    // Colisión inline - sin declarar variables separadas
+    model->buildCollider(
+		0.1f, 1.0f, -1.6f, //posición relativa al modelo
+		1.0f, 4.0f, 2.3f); // dimensiones de la caja
+    ourModel.emplace_back(model);
+
+    //BARANDALES
+ 
+	//barandal 1
+/*    model = new Model("models/Barandal/Barandal.obj", main->cameraDetails);
+    translate = glm::vec3(4.7f, 4.7f, 9.0f);
+    model->setTranslate(&translate);
+    model->setNextTranslate(&translate);
+    model->setNextRotY(180);
+    // Colisión diferente inline
+    model->buildCollider(
+        0.0f, 2.0f, 0.0f,
+        10.0f, 2.0f, 0.5f);  // Barandal: más ancho y plano
+    ourModel.emplace_back(model);
+
+	//barandal 2
+    model = new Model("models/Barandal/Barandal.obj", main->cameraDetails);
+    translate = glm::vec3(4.7f, 4.7f, -9.0f);
+    model->setTranslate(&translate);
+    model->setNextTranslate(&translate);
+    model->setNextRotY(180);
+    // Colisión diferente inline
+    model->buildCollider(
+        0.0f, 2.0f, 0.0f,
+        10.0f, 2.0f, 0.5f);  // Barandal: más ancho y plano
+    ourModel.emplace_back(model);*/
+
+    
+    //ESTADIO SIN COLISIONES 
+
+    // ============================================================
+  // CREAR PAREDES INVISIBLES 
+  // ============================================================
+    std::vector<CollitionBox*> invisibleWalls;
+
+    // Pared NORTE
+    CollitionBox* northWall = new CollitionBox(
+        0.0f, 5.0f, -36.0f,      // Posición (x, y, z) -36 para igualar con sur
+        25.0f, 5.0f, 0.5f,       // halfWidth, halfHeight, halfDepth
+        main->cameraDetails
+    );
+    northWall->setVisible(false);
+    invisibleWalls.push_back(northWall);
+
+    // Pared SUR
+    CollitionBox* southWall = new CollitionBox(
+        0.0f, 5.0f, 36.0f,
+        25.0f, 5.0f, 0.5f, 
+        main->cameraDetails);
+    southWall->setVisible(false);
+    invisibleWalls.push_back(southWall);
+
+    // Pared ESTE
+    CollitionBox* eastWall = new CollitionBox(
+        23.0f, 5.0f, 0.0f,
+        12.5f, 5.0f, 50.0f, 
+        main->cameraDetails);
+    eastWall->setVisible(false);
+    invisibleWalls.push_back(eastWall);
+
+    //// Pared OESTE
+    //CollitionBox* westWall = new CollitionBox(
+    //    -50.0f, 5.0f, 0.0f,
+    //    0.5f, 5.0f, 50.0f,
+    //    main->cameraDetails);
+    //westWall->setVisible(false);
+    //invisibleWalls.push_back(westWall);
+
+    // Agregarlas al vector de modelos para que se detecten colisiones
+    for (auto wall : invisibleWalls) {
+        ourModel.emplace_back(wall);
+    }
+
+    std::cout << "Paredes invisibles del mapa creadas: " << invisibleWalls.size() << std::endl;
+    // ============================================================
+
+    inicializaBillboards();
+
+    // Texto
+    std::wstring prueba(L"Esta es una prueba");
+    ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
+
+    // Billboard 2D
+    billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
+    scale = glm::vec3(100.0f, 100.0f, 0.0f);
+    billBoard2D.back()->setScale(&scale);
+}
 
 void Scenario::inicializaBillboards() {
-	float ye = terreno->Superficie(0, 0) + 3;
-	Billboard *arbol = new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye, 0, camara->cameraDetails);
-	billBoard.emplace_back(arbol);
-	ModelAttributes mAttr;
-	glm::vec3 pos(5, ye, 0);
-	mAttr.setTranslate(&pos);
-	arbol->getModelAttributes()->push_back(mAttr);
-	pos = glm::vec3(10, ye, 0);
-	mAttr.setTranslate(&pos);
-	arbol->getModelAttributes()->push_back(mAttr);
-	pos = glm::vec3(-10, ye, 0);
-	mAttr.setTranslate(&pos);
-	arbol->getModelAttributes()->push_back(mAttr);
+  /*  float ye = terreno->Superficie(0, 0);
+    billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol.png", 6, 6, 0, ye - 1, 0, camara->cameraDetails));*/
 
-	ye = terreno->Superficie(-9, -15) + 4;
-	billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye, -15, camara->cameraDetails));
+    float ye = terreno->Superficie(2, -12);
+    billBoard.emplace_back(new Billboard((WCHAR*)L"billboards/Arbol3.png", 8, 8, -9, ye - 1, -15, camara->cameraDetails));
 
-	BillboardAnimation *billBoardAnimated = new BillboardAnimation();
-	ye = terreno->Superficie(5, -5) + 3;
-	for (int frameArbol = 1; frameArbol < 4; frameArbol++){
-		wchar_t textura[50] = {L"billboards/Arbol"};
-		if (frameArbol != 1){
-			wchar_t convert[25];
-			swprintf(convert, 25, L"%d", frameArbol);
-			wcscat_s(textura, 50, convert);
-		}
-		wcscat_s(textura, 50, L".png");
-		billBoardAnimated->pushFrame(new Billboard((WCHAR*)textura, 6, 6, 5, ye, -5, camara->cameraDetails));		
-	}
-	billBoardAnim.emplace_back(billBoardAnimated);
+    //BillboardAnimation* billBoardAnimated = new BillboardAnimation();
+    //ye = terreno->Superficie(5, -5);
+    //for (int frameArbol = 1; frameArbol < 4; frameArbol++) {
+    //    wchar_t textura[50] = { L"billboards/Arbol" };
+    //    if (frameArbol != 1) {
+    //        wchar_t convert[25];
+    //        swprintf(convert, 25, L"%d", frameArbol);
+    //        wcscat_s(textura, 50, convert);
+    //    }
+    //    wcscat_s(textura, 50, L".png");
+    //    billBoardAnimated->pushFrame(new Billboard((WCHAR*)textura, 6, 6, 5, ye - 1, -5, camara->cameraDetails));
+    //}
+    //billBoardAnim.emplace_back(billBoardAnimated);
 }
 
-	//el metodo render toma el dispositivo sobre el cual va a dibujar
-	//y hace su tarea ya conocida
 Scene* Scenario::Render() {
-	//borramos el biffer de color y el z para el control de profundidad a la 
-	//hora del render a nivel pixel.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-//	glClearColor(255.0f, 255.0f, 255.0f, 255.0f);
+    // ============================================================
+    // ACTUALIZAR CICLO DÍA/NOCHE
+    // ============================================================
+    sky->update(gameTime.deltaTime / 1000.0f);
 
-	if (this->animacion > 10) { // Timer se ejecuta cada 1000/30 = 33.333 ms
-		for (BillboardAnimation *b : billBoardAnim){
-			b->nextAnimation();
-		}
-		this->animacion = 0;
-	} else {
-		animacion = animacion + (1 * gameTime.deltaTime/100);
-	}
-	// Decimos que dibuje la media esfera
-	sky->Draw();
-	// Ahora el terreno
-	terreno->Draw();
-	water->Draw();
-	// Dibujamos cada billboard que este cargado en el arreglo de billboards.
-	for (int i = 0; i < billBoard.size(); i++)
-		billBoard[i]->Draw();
-	for (int i = 0; i < billBoardAnim.size(); i++)
-		billBoardAnim[i]->Draw();
-	for (int i = 0; i < billBoard2D.size(); i++)
-		billBoard2D[i]->Draw();
-	// Dibujamos cada modelo que este cargado en nuestro arreglo de modelos
-	for (int i = 0; i < ourModel.size(); i++) {
-			ourModel[i]->Draw();
-	}
-	for (int i = 0; i < ourText.size(); i++) {
-		ourText[i]->Draw();
-	}
-		// Le decimos a winapi que haga el update en la ventana
-	return this;
+    // ============================================================
+    // OBTENER INFORMACIÓN DE ILUMINACIÓN DEL SKYDOME
+    // ============================================================
+    glm::vec3 ambient = sky->getAmbientLight();
+    glm::vec3 diffuse = sky->getDiffuseLight();
+    glm::vec3 sunDir = sky->getSunDirection();
+    float currentTime = sky->getTimeOfDay();
+
+    // ============================================================
+    // COLOR DE FONDO DINÁMICO
+    // ============================================================
+    glm::vec3 clearColor = ambient * 1.2f; //contraste
+    glClearColor(clearColor.r, clearColor.g, clearColor.b, 1.0f);
+
+    // ============================================================
+    // LIMPIAR BUFFERS
+    // ============================================================
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // ============================================================
+    // ANIMACIÓN DE BILLBOARDS
+    // ============================================================
+    if (this->animacion > 10) {
+        for (BillboardAnimation* b : billBoardAnim) {
+            b->nextAnimation();
+        }
+        this->animacion = 0;
+    }
+    else {
+        animacion = animacion + (1 * gameTime.deltaTime / 100);
+    }
+
+    // ============================================================
+    // DIBUJAR SKYDOME (FONDO)
+    // ============================================================
+    sky->Draw();
+
+    // ============================================================
+    // DIBUJAR TERRENO CON ILUMINACIÓN DINÁMICA
+    // ============================================================
+    if (terreno != NULL) {
+        // Si el terreno usa shader personalizado
+        if (terreno->gpuDemo != NULL) {
+            terreno->gpuDemo->use();
+
+            // Pasar iluminación dinámica
+            terreno->gpuDemo->setVec3("dirLightAmbient", ambient);
+            terreno->gpuDemo->setVec3("dirLightDiffuse", diffuse);
+            terreno->gpuDemo->setVec3("dirLightSpecular", glm::vec3(1.0f, 1.0f, 1.0f));
+            terreno->gpuDemo->setVec3("dirLightDirection", -sunDir);
+            terreno->gpuDemo->setFloat("timeOfDay", currentTime);
+            terreno->gpuDemo->setVec3("viewPos", terreno->cameraDetails->getPosition());
+
+            terreno->gpuDemo->desuse();
+        }
+        terreno->Draw();
+    }
+
+    // ============================================================
+    // DIBUJAR AGUA (SI EXISTE)
+    // ============================================================
+    if (water != NULL) {
+        water->Draw();
+    }
+
+    // ============================================================
+    // DIBUJAR BILLBOARDS
+    // ============================================================
+    for (int i = 0; i < billBoard.size(); i++)
+        billBoard[i]->Draw();
+
+    for (int i = 0; i < billBoardAnim.size(); i++)
+        billBoardAnim[i]->Draw();
+
+    for (int i = 0; i < billBoard2D.size(); i++)
+        billBoard2D[i]->Draw();
+
+    // ============================================================
+    // DIBUJAR MODELOS CON ILUMINACIÓN DINÁMICA
+    // ============================================================
+    for (int i = 0; i < ourModel.size(); i++) {
+        if (ourModel[i] != NULL) {
+            // Si el modelo tiene shader personalizado
+            if (ourModel[i]->gpuDemo != NULL) {
+                ourModel[i]->gpuDemo->use();
+
+                // PASAR ILUMINACIÓN DINÁMICA - MISMOS VALORES QUE EL TERRENO
+                ourModel[i]->gpuDemo->setVec3("dirLight.ambient", ambient);
+                ourModel[i]->gpuDemo->setVec3("dirLight.diffuse", diffuse);
+                ourModel[i]->gpuDemo->setVec3("dirLight.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+                ourModel[i]->gpuDemo->setVec3("dirLight.direction", -sunDir);
+                ourModel[i]->gpuDemo->setFloat("timeOfDay", currentTime);
+                ourModel[i]->gpuDemo->setVec3("viewPos", ourModel[i]->cameraDetails->getPosition());
+
+                // ELIMINAR: ourModel[i]->gpuDemo->setBool("useDynamicLighting", true);
+
+                ourModel[i]->gpuDemo->desuse();
+            }
+
+            // Dibujar el modelo
+            ourModel[i]->Draw();
+        }
+    }
+
+    // ============================================================
+    // DIBUJAR TEXTO
+    // ============================================================
+    for (int i = 0; i < ourText.size(); i++) {
+        ourText[i]->Draw();
+    }
+
+    return this;
 }
-	
-std::vector<Model*> *Scenario::getLoadedModels() {
-	return &ourModel;
+
+std::vector<Model*>* Scenario::getLoadedModels() {
+    return &ourModel;
 }
-std::vector<Billboard*> *Scenario::getLoadedBillboards() {
-	return &billBoard;
+
+std::vector<Billboard*>* Scenario::getLoadedBillboards() {
+    return &billBoard;
 }
-std::vector<Billboard2D*> *Scenario::getLoadedBillboards2D(){
-	return &billBoard2D;
+
+std::vector<Billboard2D*>* Scenario::getLoadedBillboards2D() {
+    return &billBoard2D;
 }
-std::vector<Texto*> *Scenario::getLoadedText(){
-	return &ourText;
+
+std::vector<Texto*>* Scenario::getLoadedText() {
+    return &ourText;
 }
-std::vector<BillboardAnimation*> *Scenario::getLoadedBillboardsAnimation(){
-	return &billBoardAnim;
+
+std::vector<BillboardAnimation*>* Scenario::getLoadedBillboardsAnimation() {
+    return &billBoardAnim;
 }
 
 Model* Scenario::getMainModel() {
-	return this->camara;
+    return this->camara;
 }
-void Scenario::setMainModel(Model* mainModel){
-	this->camara = mainModel;
+
+void Scenario::setMainModel(Model* mainModel) {
+    this->camara = mainModel;
 }
+
 float Scenario::getAngulo() {
-	return this->angulo;
+    return this->angulo;
 }
+
 void Scenario::setAngulo(float angulo) {
-	this->angulo = angulo;
+    this->angulo = angulo;
 }
+
 SkyDome* Scenario::getSky() {
-	return sky;
+    return sky;
 }
+
 Terreno* Scenario::getTerreno() {
-	return terreno;
+    return terreno;
 }
 
 Scenario::~Scenario() {
-	if (this->sky != NULL) {
-		delete this->sky;
-		this->sky = NULL;
-	}
-	if (this->terreno != NULL) {
-		delete this->terreno;
-		this->terreno = NULL;
-	}
-	if (billBoard.size() > 0)
-		for (int i = 0; i < billBoard.size(); i++)
-			delete billBoard[i];
-	if (billBoardAnim.size() > 0)
-		for (int i = 0; i < billBoardAnim.size(); i++)
-			delete billBoardAnim[i];
-	if (billBoard2D.size() > 0)
-		for (int i = 0; i < billBoard2D.size(); i++)
-			delete billBoard2D[i];
-	this->billBoard.clear();
-	if (ourText.size() > 0)
-		for (int i = 0; i < ourText.size(); i++)
-			if (!(ourText[i]->name.compare("FPSCounter") || ourText[i]->name.compare("Coordenadas")))
-				delete ourText[i];
-	this->ourText.clear();
-	if (ourModel.size() > 0)
-		for (int i = 0; i < ourModel.size(); i++)
-			if (ourModel[i] != camara)
-			delete ourModel[i];
-	this->ourModel.clear();
+    // Limpiar sky
+    if (this->sky != NULL) {
+        delete this->sky;
+        this->sky = NULL;
+    }
+
+    // Limpiar terreno
+    if (this->terreno != NULL) {
+        delete this->terreno;
+        this->terreno = NULL;
+    }
+
+    // Limpiar water si existe
+    if (this->water != NULL) {
+        delete this->water;
+        this->water = NULL;
+    }
+
+    // Limpiar billboards
+    if (billBoard.size() > 0) {
+        for (int i = 0; i < billBoard.size(); i++)
+            delete billBoard[i];
+        billBoard.clear();
+    }
+
+    if (billBoardAnim.size() > 0) {
+        for (int i = 0; i < billBoardAnim.size(); i++)
+            delete billBoardAnim[i];
+        billBoardAnim.clear();
+    }
+
+    if (billBoard2D.size() > 0) {
+        for (int i = 0; i < billBoard2D.size(); i++)
+            delete billBoard2D[i];
+        billBoard2D.clear();
+    }
+
+    // Limpiar texto (excepto FPS y coordenadas que se limpian en otro lugar)
+    if (ourText.size() > 0) {
+        for (int i = 0; i < ourText.size(); i++) {
+            if (ourText[i]->name != "FPSCounter" && ourText[i]->name != "Coordenadas") {
+                delete ourText[i];
+            }
+        }
+        ourText.clear();
+    }
+
+    // Limpiar modelos (excepto la cámara principal)
+    if (ourModel.size() > 0) {
+        for (int i = 0; i < ourModel.size(); i++) {
+            if (ourModel[i] != camara) {
+                delete ourModel[i];
+            }
+        }
+        ourModel.clear();
+    }
 }
+// M�todos para veh�culo
+Model* Scenario::getDrone() { return Drone; }
+void Scenario::setDrone(Model* drone) { Drone = drone; } 
+bool Scenario::getIsDroneActive() { return isDroneActive; }
+float Scenario::getDroneSpeedMultiplier() { return DroneSpeedMultiplier; }
+Model* Scenario::getActiveModel() { return isDroneActive ? Drone : getMainModel(); }

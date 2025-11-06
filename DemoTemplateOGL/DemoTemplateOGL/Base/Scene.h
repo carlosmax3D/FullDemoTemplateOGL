@@ -49,11 +49,6 @@ class Scene {
 						idxCollider = mcollider.attrIdx;
 					}
 					if (collider != NULL && model == camara){
-						if (ejeColision.y == 1){
-							INFO("APLASTADO!!!! " + collider->name, "JUMP HITBOX_"+to_string(idxCollider));
-							if (removeCollideModel(collider, idxCollider))
-								i--;
-						}
 					}
 					if (j < 0) j = 0;
 				}

@@ -67,7 +67,7 @@ public:
 #endif
 		unsigned char* mapaAlturas = loadFile(stext, &mapAlturaX, &mapAlturaY, &mapAlturaComp, 0);
 		//en caso del puntero de la imagen sea nulo se brica esta opcion
-		UTILITIES_OGL::Maya terreno = UTILITIES_OGL::Plano(mapAlturaX, mapAlturaY, ancho, prof, mapaAlturas, mapAlturaComp, 30);
+		UTILITIES_OGL::Maya terreno = UTILITIES_OGL::PlanoTerreno(mapAlturaX, mapAlturaY, ancho, prof, mapaAlturas, mapAlturaComp);
 		UTILITIES_OGL::vectoresEsfera(terreno, vertices, indices, mapAlturaX * mapAlturaY * 3, (mapAlturaX - 1) * (mapAlturaY - 1) * 6);
 		delete[] terreno.maya;
 		delete[] terreno.indices;
@@ -95,6 +95,106 @@ public:
 		meshes.emplace_back(new Mesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
 		setDefaultShader(false);
 		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
+		PrecalcularPlanos();
+	}
+
+	Terreno(WCHAR alturas[], WCHAR textura[], WCHAR textura2[], WCHAR splatmap[],
+		float ancho, float prof, Camera* camera,
+		int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+
+		cameraDetails = camera;
+		vector<unsigned int> indices;
+		vector<Texture> textures;
+		vector<Material> materials;
+		vector<Vertex> vertices;
+		if (this->getModelAttributes()->size() == 0){
+			ModelAttributes attr{0};
+			this->getModelAttributes()->push_back(attr);
+		}
+
+		unsigned int planoTextura, planoTextura2, splatTextura;
+		int mapAlturaComp;
+		anchof = ancho;
+		proff = prof;
+
+		// Cargar mapa de alturas
+		char stext[1024];
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)alturas, 1024);
+#else
+		wcstombs(stext, (wchar_t*)alturas, 1024);
+#endif
+		unsigned char* mapaAlturas = loadFile(stext, &mapAlturaX, &mapAlturaY, &mapAlturaComp, 0);
+
+		// Crear geometr�a del terreno
+		UTILITIES_OGL::Maya terreno = UTILITIES_OGL::Plano(mapAlturaX, mapAlturaY, ancho, prof, mapaAlturas, mapAlturaComp, 30);
+		UTILITIES_OGL::vectoresEsfera(terreno, vertices, indices, mapAlturaX * mapAlturaY * 3, (mapAlturaX - 1) * (mapAlturaY - 1) * 6);
+		delete[] terreno.maya;
+		delete[] terreno.indices;
+		delete[] mapaAlturas;
+
+		verx = mapAlturaX;
+		verz = mapAlturaY;
+		deltax = anchof / verx;
+		deltaz = proff / verz;
+
+		// ============================================================
+		// CARGAR LAS 3 TEXTURAS
+		// ============================================================
+
+		// 1. TEXTURA ORIGINAL (pasto)
+		Texture t1;
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
+		strcpy_s(t1.type, 255, "texture_diffuse");
+		strcpy_s(t1.path, 1024, stext);
+#else
+		wcstombs(stext, (wchar_t*)textura, 1024);
+		strcpy(t1.type, "texture_diffuse");
+		strcpy(t1.path, stext);
+#endif
+		planoTextura = TextureFromFile(stext, this->directory);
+		t1.id = planoTextura;
+		textures.emplace_back(t1);
+
+		// 2. TEXTURA SECUNDARIA (tierra)
+		Texture t2;
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)textura2, 1024);
+		strcpy_s(t2.type, 255, "texture_diffuse2");
+		strcpy_s(t2.path, 1024, stext);
+#else
+		wcstombs(stext, (wchar_t*)textura2, 1024);
+		strcpy(t2.type, "texture_diffuse2");
+		strcpy(t2.path, stext);
+#endif
+		planoTextura2 = TextureFromFile(stext, this->directory);
+		t2.id = planoTextura2;
+		textures.emplace_back(t2);
+
+		// 3. SPLATMAP (multitextura.jpg)
+		Texture t3;
+#ifdef _WIN32
+		wcstombs_s(NULL, stext, 1024, (wchar_t*)splatmap, 1024);
+		strcpy_s(t3.type, 255, "texture_splatmap");
+		strcpy_s(t3.path, 1024, stext);
+#else
+		wcstombs(stext, (wchar_t*)splatmap, 1024);
+		strcpy(t3.type, "texture_splatmap");
+		strcpy(t3.path, stext);
+#endif
+		splatTextura = TextureFromFile(stext, this->directory);
+		t3.id = splatTextura;
+		textures.emplace_back(t3);
+
+		// Crear mesh
+		meshes.emplace_back(new Mesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
+		setDefaultShader(false);
+
+		// Guardar referencias
+		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
+		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[1]);
+		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[2]);
 		PrecalcularPlanos();
 	}
 
@@ -139,17 +239,9 @@ public:
 
 
 	virtual void prepShader(Shader& shader) {
-		glm::vec3 lightColor;
-		lightColor.x = sin(7200 * 2.0f);
-		lightColor.y = sin(7200 * 0.7f);
-		lightColor.z = sin(7200 * 1.3f);
-		glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-		shader.setVec3("light.ambient", ambientColor);
-		shader.setVec3("light.diffuse", diffuseColor);
-		shader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-		shader.setVec3("light.position", lightPos);
+		// Obtener iluminaci�n din�mica del SkyDome
+		// (Esto ya lo est�s pasando desde Scenario::Render())
+
 		shader.setVec3("viewPos", cameraDetails->getPosition());
 
 		// view/projection transformations
@@ -158,18 +250,20 @@ public:
 
 		// render the loaded model
 		glm::mat4 model = glm::mat4(1.0f);
-		// translate it down so it's at the center of the scene
-//		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); 
-		model = glm::translate(model, *getTranslate()); // translate it down so it's at the center of the scene
-//			model = glm::translate(model, glm::vec3(cameraDetails.Position->x, cameraDetails.Position->y - 5, cameraDetails.Position->z)); // translate it down so it's at the center of the scene
-//			model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
+		model = glm::translate(model, *getTranslate());
+
 		if (this->getRotX() != 0)
 			model = glm::rotate(model, glm::radians(this->getRotX()), glm::vec3(1, 0, 0));
 		if (this->getRotY() != 0)
 			model = glm::rotate(model, glm::radians(this->getRotY()), glm::vec3(0, 1, 0));
 		if (this->getRotZ() != 0)
 			model = glm::rotate(model, glm::radians(this->getRotZ()), glm::vec3(0, 0, 1));
+
 		shader.setMat4("model", model);
+
+		// Calcular matriz normal para iluminaci�n correcta
+		glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(model)));
+		shader.setMat3("normalMatrix", normalMatrix);
 	}
 
 	float getAncho() { return anchof; }

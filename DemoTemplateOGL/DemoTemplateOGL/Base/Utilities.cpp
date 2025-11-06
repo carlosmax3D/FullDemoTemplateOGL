@@ -337,25 +337,33 @@ void UTILITIES_OGL::normaliza(float* v1) {
 }
 
 void UTILITIES_OGL::vectoresEsfera(Maya esfera, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices, unsigned int iv, unsigned int ii) {
-	for (unsigned int i = 0; i < iv || i < ii; i++) {
-		if (i < iv) {
-			Vertex v;
-			v.Position.x = esfera.maya[i].Posx;
-			v.Position.y = esfera.maya[i].Posy;
-			v.Position.z = esfera.maya[i].Posz;
-			v.Normal.x = esfera.maya[i].Normx;
-			v.Normal.y = esfera.maya[i].Normy;
-			v.Normal.z = esfera.maya[i].Normz;
-			v.TexCoords.x = esfera.maya[i].u;
-			v.TexCoords.y = esfera.maya[i].v;
-			vertices.emplace_back(v);
-		}
-		if (i < ii)
-			indices.emplace_back(esfera.indices[i]);
+	// Limpiar los vectores primero
+	vertices.clear();
+	indices.clear();
 
+	// Reservar espacio para optimizar
+	vertices.reserve(iv);
+	indices.reserve(ii);
+
+	// Cargar v�rtices (solo hasta iv)
+	for (unsigned int i = 0; i < iv; i++) {
+		Vertex v;
+		v.Position.x = esfera.maya[i].Posx;
+		v.Position.y = esfera.maya[i].Posy;
+		v.Position.z = esfera.maya[i].Posz;
+		v.Normal.x = esfera.maya[i].Normx;
+		v.Normal.y = esfera.maya[i].Normy;
+		v.Normal.z = esfera.maya[i].Normz;
+		v.TexCoords.x = esfera.maya[i].u;  // CORRECCI�N: TexCoords no ToxCoords
+		v.TexCoords.y = esfera.maya[i].v;
+		vertices.emplace_back(v);
+	}
+
+	// Cargar �ndices (solo hasta ii)
+	for (unsigned int i = 0; i < ii; i++) {
+		indices.emplace_back(esfera.indices[i]);
 	}
 }
-
 //generamos los vertices a traves de coordenadas esfericas
 //conocimiento adquirido en la materia de Fund de las Graficas Computacionales
 UTILITIES_OGL::Maya UTILITIES_OGL::Esfera(int stacks, int slices, float radio, float inicio, float final) {
@@ -525,7 +533,7 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 		for (unsigned int x = 0; x < vertx; x++)
 		{
 			verticesxyzSD[z * vertx + x].Posx = (float)x * deltax - anchof / 2.0;
-			verticesxyzSD[z * vertx + x].Posy = (float)altura[(z * vertx + x) * nrComponents] / 10.0; // nrComponents -> 4
+			verticesxyzSD[z * vertx + x].Posy = (float)altura[z * vertx * nrComponents + x * nrComponents] / 10.0; // nrComponents -> 4
 			verticesxyzSD[z * vertx + x].Posz = (float)z * deltaz - profz / 2.0;
 
 			//carga las normales con cero
@@ -535,13 +543,13 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 		}
 	}
 
-	//calcula los uv's
+	//calcula los uv's - MODIFICADO: SIN TILE, SOLO 0.0 A 1.0
 	for (unsigned int z = 0; z < vertz; z++)
 	{
 		for (unsigned int x = 0; x < vertx; x++)
 		{
-			verticesxyzSD[z * vertx + x].u = (float)(x * tile) / (vertx - 1);
-			verticesxyzSD[z * vertx + x].v = (float)(z * tile) / (vertz - 1);
+			verticesxyzSD[z * vertx + x].u = (float)x / (vertx - 1);
+			verticesxyzSD[z * vertx + x].v = (float)z / (vertz - 1);
 		}
 	}
 
@@ -599,6 +607,92 @@ UTILITIES_OGL::Maya UTILITIES_OGL::Plano(int vertx, int vertz, float anchof, flo
 
 	Maya salida;
 
+	salida.maya = verticesxyzSD;
+	salida.indices = indices;
+
+	return salida;
+}
+
+// NUEVA FUNCI�N ESPEC�FICA PARA TERRENO SIN TILING
+UTILITIES_OGL::Maya UTILITIES_OGL::PlanoTerreno(int vertx, int vertz, float anchof, float profz, unsigned char* altura, int nrComponents) {
+	// Cargamos la estructura con los espacios de memoria necesarios
+	Vertices* verticesxyzSD = new Vertices[vertx * vertz];
+	unsigned int* indices = new unsigned int[(vertx - 1) * (vertz - 1) * 6];
+
+	float deltax = anchof / (vertx - 1);
+	float deltaz = profz / (vertz - 1);
+
+	// Crea los v�rtices
+	for (unsigned int z = 0; z < vertz; z++) {
+		for (unsigned int x = 0; x < vertx; x++) {
+			unsigned int index = z * vertx + x;
+			verticesxyzSD[index].Posx = (float)x * deltax - anchof / 2.0f;
+			verticesxyzSD[index].Posy = (float)altura[z * vertx * nrComponents + x * nrComponents] / 10.0f;
+			verticesxyzSD[index].Posz = (float)z * deltaz - profz / 2.0f;
+
+			// Inicializa las normales
+			verticesxyzSD[index].Normx = 0.0f;
+			verticesxyzSD[index].Normy = 1.0f;
+			verticesxyzSD[index].Normz = 0.0f;
+		}
+	}
+
+	// Calcula los UV's - SOLO 0.0 A 1.0 PARA TODO EL TERRENO
+	for (unsigned int z = 0; z < vertz; z++) {
+		for (unsigned int x = 0; x < vertx; x++) {
+			unsigned int index = z * vertx + x;
+			verticesxyzSD[index].u = (float)x / (vertx - 1);
+			verticesxyzSD[index].v = (float)z / (vertz - 1);
+		}
+	}
+
+	glm::vec3 aux;
+	// Crea las normales
+	for (unsigned int z = 0; z < (vertz - 1); z++) {
+		for (unsigned int x = 0; x < (vertx - 1); x++) {
+			// Primer tri�ngulo
+			aux = genNormal(&verticesxyzSD[z * vertx + x].Posx,
+				&verticesxyzSD[z * vertx + (x + 1)].Posx,
+				&verticesxyzSD[(z + 1) * vertx + (x + 1)].Posx);
+
+			sumaNormal(&verticesxyzSD[z * vertx + x].Normx, &aux.x);
+			sumaNormal(&verticesxyzSD[(z + 1) * vertx + (x + 1)].Normx, &aux.x);
+			sumaNormal(&verticesxyzSD[z * vertx + (x + 1)].Normx, &aux.x);
+
+			// Segundo tri�ngulo
+			aux = genNormal(&verticesxyzSD[z * vertx + x].Posx,
+				&verticesxyzSD[(z + 1) * vertx + (x + 1)].Posx,
+				&verticesxyzSD[(z + 1) * vertx + x].Posx);
+
+			sumaNormal(&verticesxyzSD[z * vertx + x].Normx, &aux.x);
+			sumaNormal(&verticesxyzSD[(z + 1) * vertx + x].Normx, &aux.x);
+			sumaNormal(&verticesxyzSD[(z + 1) * vertx + (x + 1)].Normx, &aux.x);
+		}
+	}
+
+	// Normaliza las normales
+	for (unsigned int z = 0; z < vertz; z++) {
+		for (unsigned int x = 0; x < vertx; x++) {
+			normaliza(&verticesxyzSD[z * vertx + x].Normx);
+		}
+	}
+
+	// Crea los �ndices
+	unsigned int indice = 0;
+	for (unsigned int i = 0; i < vertz - 1; i++) {
+		for (unsigned int j = 0; j < vertx - 1; j++) {
+			indices[indice++] = i * vertx + j;
+			indices[indice++] = (i + 1) * vertx + j + 1;
+			indices[indice++] = i * vertx + j + 1;
+
+			indices[indice++] = (i + 1) * vertx + j;
+			indices[indice++] = (i + 1) * vertx + j + 1;
+			indices[indice++] = i * vertx + j;
+		}
+	}
+
+	// Genera el objeto de retorno
+	Maya salida;
 	salida.maya = verticesxyzSD;
 	salida.indices = indices;
 
@@ -733,6 +827,8 @@ unsigned int TextureFromMemory(const aiTexture* texture, bool rotateX, bool rota
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		//        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);   //Requires GL 1.4. Removed from GL 3.1 and above.
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -790,6 +886,8 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		//        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);   //Requires GL 1.4. Removed from GL 3.1 and above.
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

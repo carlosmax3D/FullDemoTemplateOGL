@@ -96,19 +96,9 @@ void Model::SetVertexBoneDataToDefault(Vertex& vertex){
 
 // draws the model, and thus all its meshes
 void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
-//    lightColor.x = 3;//sin(7200 * 2.0f);
-//    lightColor.y = 3;//sin(7200 * 0.7f);
-//    lightColor.z = 3;//sin(7200 * 1.3f);
-    glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
-    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-    gpuDemo.setVec3("light.ambient", ambientColor);
-    gpuDemo.setVec3("light.diffuse", diffuseColor);
-    gpuDemo.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-    //        glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-    gpuDemo.setVec3("light.position", lightPos);
-    gpuDemo.setVec3("viewPos", cameraDetails->getPosition());
-
-    // view/projection transformations
+    // ============================================================
+    // MATRICES DE TRANSFORMACIÓN
+    // ============================================================
     gpuDemo.setMat4("projection", cameraDetails->getProjection());
     gpuDemo.setMat4("view", cameraDetails->getView());
 
@@ -129,6 +119,27 @@ void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
             model = glm::scale(model, attributes.scale);	// it's a bit too big for our scene, so scale it down
         gpuDemo.setMat4("model", model);
     }
+
+    // ============================================================
+    // POSICIÓN DE LA CÁMARA (para cálculos de iluminación)
+    // ============================================================
+    gpuDemo.setVec3("viewPos", cameraDetails->getPosition());
+
+    // ============================================================
+    // MATERIAL DEL MODELO
+    // ============================================================
+    // Valores por defecto si no hay material cargado
+    gpuDemo.setVec3("material.ambient", glm::vec3(1.0f, 1.0f, 1.0f));
+    gpuDemo.setVec3("material.diffuse", glm::vec3(1.0f, 1.0f, 1.0f));
+    gpuDemo.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+    gpuDemo.setFloat("material.shininess", 32.0f);
+
+    // Si el modelo tiene textura, indicarlo
+    gpuDemo.setInt("textureSample", 1);
+    gpuDemo.setVec4("color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+    // NOTA: La iluminación dinámica (dirLight, timeOfDay, etc.)
+    // se configura en Scenario::Render() para mantener consistencia
 }
 void Model::Draw() {
     if (gpuDemo == NULL) {
@@ -835,4 +846,12 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
 
 void Model::setCleanTextures(bool flag){
     cleanTextures = flag;
+}
+
+//Para gestionar la visibilidad del modelo
+void Model::setVisible(bool visible) {
+    this->visible = visible;
+}
+bool Model::isVisible() const {
+    return visible;
 }

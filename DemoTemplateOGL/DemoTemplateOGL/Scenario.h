@@ -26,12 +26,26 @@ private:
 	std::vector<BillboardAnimation*> billBoardAnim;
 	std::vector<Billboard2D*> billBoard2D;
 	std::vector<Model*> ourModel;
+	Model* Drone = nullptr;          // Modelo del Drone cargado inicializado en nullptr     
+	bool isDroneActive = false;
+	Model* previousMainModel;
+	float DroneSpeedMultiplier = 2.0f;
 	Model* camara;
 	Water* water;
 	float angulo;
 	float animacion = 0;
 	std::vector<Texto*> ourText;
 public:
+
+	// M�todos para veh�culo
+	Model* getDrone();
+	void setDrone(Model* drone);
+	bool getIsDroneActive();
+	float getDroneSpeedMultiplier();
+	void enterDrone(Model* player);
+	void exitDrone();
+	Model* getActiveModel();
+
 	Scenario(Camera *cam);
 	Scenario(Model *camIni);
 	void InitGraph(Model *main);
