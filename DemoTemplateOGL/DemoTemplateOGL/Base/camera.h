@@ -1,4 +1,4 @@
-#ifndef CAMERA_H
+﻿#ifndef CAMERA_H
 #define CAMERA_H
 
 #include "Utilities.h"
@@ -19,7 +19,9 @@ enum Camera_Movement {
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
 const float SPEED = 2.5f;
+
 const float SENSITIVITY = 0.1f;
+
 const float ZOOM = 45.0f;
 
 
@@ -45,7 +47,7 @@ private:
     glm::mat4 projection;
     // Obtenemos la vista
     glm::mat4 view;
-    float characterHeight = 0;
+    float characterHeight = 0.0;//ALTURA DE LA CAMARA RESPECTO AL SUELO
     bool firstPerson = false;
 
     // calculates the front vector from the Camera's (updated) Euler Angles
@@ -95,6 +97,9 @@ public:
         //glm::lookAt(Position, Position + Front, Up);
     }
 
+    
+    //ZITOS
+    //POSICION DE LA CAMARA
     void calculateCameraPosition(float pRotY, glm::vec3 *pTrans, float dHorizontal, float dVertical) {
         if (firstPerson) {
             float theta = pRotY + Camera::angleAroundPlayer; //Model::getRotationAngle() +
@@ -102,13 +107,18 @@ public:
             float offsetZ = dHorizontal * glm::cos(glm::radians(theta));
             getPosition().x = pTrans->x - offsetX;
             getPosition().z = pTrans->z - offsetZ;
-            getPosition().y = pTrans->y + dVertical;
+            getPosition().y = pTrans->y + dVertical + characterHeight;
         } else {
             setPosition(*pTrans);
+            //getPosition().y += 1.8f;
             getPosition().y += characterHeight;
         }
     }
+    //ZITOS
 
+
+
+    ////POR AQUI VA LA CAMARA
     glm::mat4 CamaraUpdate(float pRotY, glm::vec3 *pTrans) {
         calculateCameraPosition(pRotY, pTrans, calculateHorizontalDistance(), calculateVerticalDistance());
         setYaw(180 - pRotY - angleAroundPlayer);
@@ -121,6 +131,8 @@ public:
             Position + Front,
             glm::vec3(0, 1, 0));
     }
+
+
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, float deltaTime)
@@ -135,6 +147,8 @@ public:
         if (direction == RIGHT)
             Position += Right * velocity;
     }
+
+
 
     void movePosition(glm::vec3& avance, float vel) {
         avance.x = Position.x + Front.x * vel;
@@ -233,6 +247,8 @@ public:
         return firstPerson;
     }
     float getAngleAroundPlayer() { return angleAroundPlayer; }
+
+
     void calculateAngleAroundPlayer(double val) {
         angleAroundPlayer -= val * 0.5;
         if ((!firstPerson) && angleAroundPlayer > 90)
@@ -240,6 +256,9 @@ public:
         if ((!firstPerson) && angleAroundPlayer < -90)
             angleAroundPlayer = -90;
     }
+
+
+
     void calculateZoomPlayer(float val) {
         DistanceFromPlayer -= val * 0.5f;
     }
@@ -303,6 +322,7 @@ public:
             Zoom = 1.0f;
         else if (Zoom > 45.0f)
             Zoom = 45.0f;
+            
         else this->Zoom = Zoom; //cameraDetails.Zoom = &this->Zoom; 
     }
     glm::mat4 getProjection() {

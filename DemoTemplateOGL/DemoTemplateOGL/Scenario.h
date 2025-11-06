@@ -16,14 +16,20 @@
 #include "Base/Scene.h"
 #include "Texto.h"
 #include "Billboard2D.h"
+//ZITOS 
+//#include "SpriteSec.h"
+//ZITOS
 #include "CollitionBox.h"
 
 class Scenario : public Scene {
 private:
 	SkyDome* sky;
+	SkyDome* sky_2;
 	Terreno* terreno;
 	std::vector<Billboard*> billBoard;
 	std::vector<BillboardAnimation*> billBoardAnim;
+
+ 
 	std::vector<Billboard2D*> billBoard2D;
 	std::vector<Model*> ourModel;
 	Model* camara;

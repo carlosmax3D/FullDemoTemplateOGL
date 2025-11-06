@@ -93,12 +93,11 @@ void Model::SetVertexBoneDataToDefault(Vertex& vertex){
         vertex.m_Weights[i] = 0.0f;
     }
 }
-
 // draws the model, and thus all its meshes
 void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
-//    lightColor.x = 3;//sin(7200 * 2.0f);
-//    lightColor.y = 3;//sin(7200 * 0.7f);
-//    lightColor.z = 3;//sin(7200 * 1.3f);
+    //    lightColor.x = 3;//sin(7200 * 2.0f);
+    //    lightColor.y = 3;//sin(7200 * 0.7f);
+    //    lightColor.z = 3;//sin(7200 * 1.3f);
     glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
     glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
     gpuDemo.setVec3("light.ambient", ambientColor);
@@ -167,11 +166,11 @@ glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) c
     glm::mat4 model = makeTrans(idx) * prevTransformations;
     if (this->attributes[idx].rotation.x != 0 || this->attributes[idx].rotation.y != 0 || this->attributes[idx].rotation.z != 0) {
         if (this->attributes[idx].rotation.x != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[idx].rotX), glm::vec3(1,0,0));
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotX), glm::vec3(1, 0, 0));
         if (this->attributes[idx].rotation.y != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[idx].rotY), glm::vec3(0,1,0));
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotY), glm::vec3(0, 1, 0));
         if (this->attributes[idx].rotation.z != 0)
-            model = glm::rotate(model, glm::radians(this->attributes[idx].rotZ), glm::vec3(0,0,1));
+            model = glm::rotate(model, glm::radians(this->attributes[idx].rotZ), glm::vec3(0, 0, 1));
     }
     if (attributes[idx].hasScale)
         model = glm::scale(model, attributes[idx].scale);
@@ -216,7 +215,8 @@ void Model::setTranslate(glm::vec3* translate, int idx) {
 void Model::setNextTranslate(glm::vec3* translate, int idx) {
     if (translate == NULL) {
         this->attributes[idx].nextTranslate = glm::vec3(0);
-    } else {
+    }
+    else {
         this->attributes[idx].nextTranslate = *translate;
     }
     Model* AABB = (Model*)this->getModelAttributes()->at(idx).hitbox;
@@ -314,7 +314,7 @@ bool Model::getActive(int idx){
     return attributes[idx].active;
 }
 
-void Model::setActive(bool active, int idx){
+void Model::setActive(bool active,int idx){
     this->attributes[idx].active = active;
 }
 
@@ -368,14 +368,16 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
         prevGPosition += this->velocity;
     }
 
-    bool thisInMovement = true;//(*getNextTranslate()) != (*getTranslate());
+    bool thisInMovement = true;//(*getNextTranslate(idx)) != (*getTranslate(idx));
     // Check terrain collision
     if (gravityEnable && prevGPosition.y < terrainY) {
         prevGPosition.y = terrainY;
+        collide.hitGround = true;
     }
     if (gravityEnable && nextGPosition.y < terrainY) {
         nextGPosition.y = terrainY;
         this->velocity.y = 0.0f;
+        collide.hitGround = true;
     }
     setNextTranslate(&nextGPosition, idx);
 
@@ -384,25 +386,26 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
     yPos = glm::vec3(0);
     for (int i = 0; i < models.size(); i++) {
         Model *other = models[i];
+        //break;
         for (int j = 0; j < other->getModelAttributes()->size(); j++) {
             if (this != other && this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)) {
-    //            bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
+                //bool objInMovement = (*other->getNextTranslate()) != (*other->getTranslate());
                 // If colliding, place object on top of the other object
-    //            glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
-    //            nextPosition.y = otherPos.y + other->AABBsize.m_halfHeight + this->AABBsize.m_halfHeight / 2;
+                //glm::vec3 &otherPos = objInMovement ? *other->getNextTranslate() : *other->getTranslate();
+                //nextPosition.y = otherPos.y + other->AABBsize.m_halfHeight + this->AABBsize.m_halfHeight / 2;
                 this->velocity.y = 0.0f;  // Stop downward movement
                 ejeColision.x = 1;
                 ejeColision.z = 1;
                 collide.model = other;
                 collide.attrIdx = j;
-                if (!other->walkeable){
+                if (!other->walkeable) {
                     setNextTranslate(getTranslate(idx), idx);
                     setNextRotX(getRotX(idx), idx);
                     setNextRotY(getRotY(idx), idx);
                     setNextRotZ(getRotZ(idx), idx);
                     break;
                 }
-                if (nextGPosition.y > (yPos.y * 0.90)){
+                if (nextGPosition.y > (yPos.y * 0.90)) {
                     nextGPosition.y = yPos.y;
                     setNextTranslate(&nextGPosition, idx);
                     ejeColision.y = 1;
@@ -429,7 +432,7 @@ ModelCollider Model::update(float terrainY, std::vector<Model*>& models, glm::ve
                     break;
                 }
                 setNextTranslate(&prevPosition, idx);
-                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)){
+                if (!this->colisionaCon(other->getModelAttributes()->at(j), yPos, thisInMovement, idx)) {
                     break;
                 }
                 setNextTranslate(getTranslate(idx), idx);
@@ -836,3 +839,66 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
 void Model::setCleanTextures(bool flag){
     cleanTextures = flag;
 }
+
+
+bool Model::intersectaRayo(glm::vec3 origen, glm::vec3 direccion, bool collitionMove, float& outT, int idx) {
+    ModelAttributes& mAttr = this->getModelAttributes()->at(idx);
+    if (mAttr.hitbox == NULL)
+        return false;
+
+    Model* AABB = (Model*)mAttr.hitbox;
+    glm::mat4 transform = collitionMove
+        ? AABB->makeTransScaleNextPosition(glm::mat4(1))
+        : AABB->makeTransScale(glm::mat4(1));
+
+    const auto& vertices = AABB->meshes[0]->vertices;
+    if (vertices.empty()) return false;
+
+    glm::vec3 min = glm::vec3(transform * glm::vec4(vertices[0].Position, 1.0f));
+    glm::vec3 max = min;
+
+    for (size_t i = 1; i < vertices.size(); ++i) {
+        glm::vec3 p = glm::vec3(transform * glm::vec4(vertices[i].Position, 1.0f));
+        min = glm::min(min, p);
+        max = glm::max(max, p);
+    }
+
+    float tmin = -FLT_MAX;
+    float tmax = FLT_MAX;
+
+    for (int i = 0; i < 3; ++i) {
+        float origin = origen[i];
+        float dir = direccion[i];
+        float minB = min[i];
+        float maxB = max[i];
+
+        if (std::abs(dir) < 1e-6f) {
+            if (origin < minB || origin > maxB)
+                return false;
+        }
+        else {
+            float ood = 1.0f / dir;
+            float t1 = (minB - origin) * ood;
+            float t2 = (maxB - origin) * ood;
+
+            if (t1 > t2) std::swap(t1, t2);
+            tmin = std::max(tmin, t1);
+            tmax = std::min(tmax, t2);
+
+            if (tmin > tmax)
+                return false;
+        }
+    }
+
+    if (tmax < 0.0f)
+        return false;
+
+    outT = tmin > 0.0f ? tmin : tmax;  // Usar el t válido más cercano
+    return true;
+}
+//ZITOS
+//void Model::setPlayerZoom(float value) {
+//    if (playerZoom == NULL) playerZoom = new float;
+//    *playerZoom = value;
+//}
+//ZITOS

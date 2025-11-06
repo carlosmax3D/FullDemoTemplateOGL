@@ -58,6 +58,8 @@ public:
     glm::vec3 lightColor = glm::vec3(3.0f,3.0f,3.0f);
     glm::vec3 lightPos = glm::vec3(100.2f, 100.0f, 100.0f);
 
+
+
     // constructor, expects a filepath to a 3D model.
     Model();
     Model(string const& path, Camera* camera, bool rotationX = false, bool rotationY = true, bool gamma = false);
@@ -69,7 +71,7 @@ public:
     const std::string& getModelType() const { return modelType; }
 
     // draws the model, and thus all its meshes
-    virtual void prepShader(Shader& gpuDemo, ModelAttributes &attributes);
+    virtual void prepShader(Shader& gpuDemo, ModelAttributes& attributes);
     virtual void Draw();
     virtual void Draw(Shader& shader, int attribute);
     glm::mat4 makeTransScale(const glm::mat4& prevTransformations, int idx = 0) const;
@@ -78,6 +80,13 @@ public:
     glm::mat4 makeTransScaleNextPosition(const glm::mat4& prevTransformations, int idx = 0);
     bool getDefaultShader();
     void setDefaultShader(bool defaultShader);
+
+    //ZITOS
+    
+    //float* playerZoom = NULL;
+    //void setPlayerZoom(float value);
+
+    //ZITOS
 
     void setVelocity(glm::vec3* velocity);
     glm::vec3* getVelocity();
@@ -109,6 +118,7 @@ public:
     bool colisionaCon(ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false, int idx = 0);
     bool nodoColisionCon(Model& objeto, std::pair<Node*, Node*>& nodeCollitions, bool collitionMove = false, int idx = 0);
     static bool colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm::vec3 &yPos, bool collitionMove = false);
+    bool intersectaRayo(glm::vec3 origen, glm::vec3 direccion, bool collitionMove, float& outT, int idx = 0);
 
     std::unordered_map<string, int>* GetBoneInfoMap();
     std::vector<BoneInfo>* getBonesInfo();

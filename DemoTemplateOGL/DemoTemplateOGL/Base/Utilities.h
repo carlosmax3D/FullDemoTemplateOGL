@@ -45,9 +45,19 @@ extern unsigned int SCR_HEIGHT;
 extern glm::vec2 windowSize;
 extern bool showHitbox;
 extern bool showStats;
-const float GRAVITY = -9.81f; // Gravity acceleration (m/s²)
+//const float GRAVITY = -9.81f; // Gravity acceleration (m/s²)     ZITOS
+const float GRAVITY = -6.81f; // Gravity acceleration (m/s²)
 const float TERMINAL_VELOCITY = -50.0f; // Optional: Prevents infinite acceleration
 extern bool KEYS[256];
+
+
+//ZITOS
+
+//ZITOS
+
+extern bool mouseEnabled;
+extern bool freeMouseCamera;
+
 
 struct GameTime {
 	double lastTick = 0;
@@ -65,6 +75,8 @@ struct GameActions {
 	double *jump = NULL;
 	bool action = false;
 	bool displayHitboxStats = false;
+    bool fired = false;
+    bool lockMouse = false;
 	void setZoom(float value);
 	float* getZoom();
 	void setPlayerZoom(float value);
@@ -117,7 +129,12 @@ struct ModelAttributes{
 	float nextRotZ = 0;
 	glm::vec3 nextRotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	float active = true; // GPU Friendly
-	void *hitbox = NULL; // possible link to hitbox
+	
+    void* hitbox = NULL; // possible link to 
+    void* owner = NULL;
+    int life = 0;
+    glm::vec3 forward = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 origin = glm::vec3(0.0f, 0.0f, 0.0f);
 	void setNextTranslate(glm::vec3* translate);
 	void setTranslate(glm::vec3* translate);
 	void setScale(glm::vec3* scale);
@@ -131,6 +148,7 @@ struct ModelAttributes{
 struct ModelCollider{
 	void *model = NULL;
 	int attrIdx = -1;
+    bool hitGround = false;
 };
 
 struct BoneInfo {

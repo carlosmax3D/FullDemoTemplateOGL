@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Ammo.h" />
     <ClInclude Include="Base\Animation.h" />
     <ClInclude Include="Base\Animator.h" />
     <ClInclude Include="Base\Billboard.h" />
@@ -161,10 +162,10 @@
     <ClInclude Include="Billboard2DAnimation.h" />
     <ClInclude Include="CollitionBox.h" />
     <ClInclude Include="KDTree\CollitionDetection.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="SpriteSec.h" />
     <ClInclude Include="Texto.h" />
     <ClInclude Include="Water.h" />
-    <ClInclude Include="WinAPIHeaders\DemoTemplateOGL.h" />
-    <ClInclude Include="WinAPIHeaders\framework.h" />
     <ClInclude Include="InputDevices\GamePadRR.h" />
     <ClInclude Include="Base\glext.h" />
     <ClInclude Include="Scenario.h" />
@@ -173,11 +174,9 @@
     <ClInclude Include="Base\material.h" />
     <ClInclude Include="Base\mesh.h" />
     <ClInclude Include="Base\Model.h" />
-    <ClInclude Include="WinAPIHeaders\Resource.h" />
     <ClInclude Include="Base\Scene.h" />
     <ClInclude Include="Base\shader.h" />
     <ClInclude Include="SkyDome.h" />
-    <ClInclude Include="WinAPIHeaders\targetver.h" />
     <ClInclude Include="Terreno.h" />
     <ClInclude Include="Base\Utilities.h" />
     <ClInclude Include="Base\wglext.h" />
@@ -196,7 +195,9 @@
     <ClCompile Include="InputDevices\KeyboardInput.cpp" />
     <ClCompile Include="Base\Model.cpp" />
     <ClCompile Include="Base\Utilities.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Scenario.cpp" />
+    <ClCompile Include="SpriteSec.cpp" />
     <ClCompile Include="Texto.cpp" />
   </ItemGroup>
   <ItemGroup>

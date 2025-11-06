@@ -1,4 +1,4 @@
-#ifndef _Sky
+﻿#ifndef _Sky
 #define _Sky
 #include "Base/Utilities.h"
 #include "Base/model.h"
@@ -11,9 +11,15 @@
 #include <vector>
 
 class SkyDome : public Model {
-	//El constructor llama al metodo Esfera de la clase geometrias que generara los vertices
-	//normales y uvs de la misma, nos regresa la estructura Maya.
+    //El constructor llama al metodo Esfera de la clase geometrias que generara los vertices
+    //normales y uvs de la misma, nos regresa la estructura Maya.
 public:
+    Camera* cameraDetails = NULL;
+
+    glm::vec3 position; //  POSICIÓN
+    glm::vec3 scale;    // escala del skydome
+
+    bool bandera;
 	SkyDome(int stacks, int slices, float radio, WCHAR *nombre, Camera* camera) {
 		cameraDetails = camera;
 		vector<unsigned int> indices;
@@ -94,17 +100,42 @@ public:
 
 		// render the loaded model
 		glm::mat4 model = glm::mat4(1.0f);
-		//		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
-		model = glm::translate(model, glm::vec3(cameraDetails->getPosition().x, cameraDetails->getPosition().y - 5, cameraDetails->getPosition().z)); // translate it down so it's at the center of the scene
-		if (getRotationVector()->x != 0)
+		//model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+
+
+        if (bandera == true) {
+            model = glm::translate(model, glm::vec3(cameraDetails->getPosition().x, cameraDetails->getPosition().y - 5, cameraDetails->getPosition().z));
+        }
+        else {
+            model = glm::translate(model, *getTranslate());
+        }
+		//model = glm::translate(model,*getTranslate()); // translate it down so it's at the center of the scene
+		//model = glm::translate(model, glm::vec3(cameraDetails->getPosition().x, cameraDetails->getPosition().y - 5, cameraDetails->getPosition().z)); // translate it down so it's at the center of the scene
+		
+        
+        if (getRotationVector()->x != 0)
 			model = glm::rotate(model, glm::radians(getRotX()), glm::vec3(1, 0, 0));
 		if (getRotationVector()->y != 0)
 			model = glm::rotate(model, glm::radians(getRotY()), glm::vec3(0, 1, 0));
 		if (getRotationVector()->z != 0)
 			model = glm::rotate(model, glm::radians(getRotZ()), glm::vec3(0, 0, 1));
+        ModelAttributes attributes = this->getModelAttributes()->at(0);
+        if (attributes.hasScale)
+            model = glm::scale(model,attributes.scale);	// it's a bit too big for our scene, so scale it down
 		//model = glm::scale(model, glm::vec3(0.0025f, 0.0025f, 0.0025f));	// it's a bit too big for our scene, so scale it down
-//			model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+			//model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		shader.setMat4("model", model);
 	}
+    void poner_bandera(const bool nueva_bandera) { bandera = nueva_bandera; }
+
+    //void setPosition(const glm::vec3& newPos) { position = newPos; }
+    //void setPosition(float x, float y, float z) { position = glm::vec3(x, y, z); }
+    //glm::vec3 getPosition() const { return position; }
+
+
+    //void setScale(const glm::vec3& newScale) { scale = newScale; }
+    //void setScale(float uniformScale) { scale = glm::vec3(uniformScale); }
+    //void setScale(float x, float y, float z) { scale = glm::vec3(x, y, z); }
+    //glm::vec3 getScale() const { return scale; }
 };
 #endif
