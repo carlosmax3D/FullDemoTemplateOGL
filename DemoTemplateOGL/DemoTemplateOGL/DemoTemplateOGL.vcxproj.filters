@@ -129,6 +129,9 @@
     <ClInclude Include="Billboard2DAnimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Pincipal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DemoTemplateOGL.cpp">
@@ -175,6 +178,9 @@
     </ClCompile>
     <ClCompile Include="CollitionBox.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePadRR.cpp">
+      <Filter>Source Files\InputDevices</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
