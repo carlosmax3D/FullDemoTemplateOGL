@@ -167,3 +167,16 @@ void Billboard::setTextureCoords(float *tCoords){
 		vertices.at(i/2).TexCoords.y = tCoords[i+1];
 	}
 }
+
+void Billboard::setAlto(float alto) {
+	this->alto = alto;
+}
+float Billboard::getAlto() {
+	return alto;
+}
+void Billboard::setAncho(float ancho) {
+	this->ancho = ancho;
+}
+float Billboard::getAncho() {
+	return ancho;
+}

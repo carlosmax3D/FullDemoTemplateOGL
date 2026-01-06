@@ -47,8 +47,8 @@ void reloadData(vector<Vertex>& vertices) {
 //    buildKDtree();
 }
 public:
-	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera)
-		: Terreno(alturas, textura, ancho, prof, camera, GL_DYNAMIC_DRAW) {
+	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera, WCHAR texNormal[] = NULL)
+		: Terreno(alturas, textura, ancho, prof, camera, texNormal, GL_DYNAMIC_DRAW) {
 		name = "Agua";
 		gpuDemo = NULL;
 //		buildKDtree();

@@ -6,5 +6,32 @@ in vec2 TexCoords;
 uniform sampler2D texture_diffuse1;
 
 void main(){
-    FragColor = texture(texture_diffuse1, TexCoords);
+    // Normalizar las normales interpoladas
+//    float3 normal = normalize(input.normal);
+
+    // Agregar un poco de transparencia y reflexi n para el efecto de agua
+    vec4 diffuseColor = texture(texture_diffuse1, TexCoords);
+    // Muestrear el normal map y convertir de [0,1] a [-1,1]
+//    vec3 normalMap = texture(normalTexture, TexCoords * 2.0f).rgb;
+//    normalMap = normalize(normalMap * 2.0f - 1.0f);
+    
+    // Crear matriz TBN (Tangent, Binormal, Normal)
+//    vec3 tangent = normalize(input.tangent);
+//    vec4 binormal = normalize(input.binormal);
+//    mat3 TBN = mat4(tangent, binormal, normal);
+    
+    // Transformar la normal del mapa de normales al espacio mundial
+//    vec3 bumpNormal = normalize(TBN * normalMap);
+    
+    // Calcular iluminaci n difusa
+//    vec3 lightDirection = normalize(-lightDir);
+//    float diffuseFactor = max(dot(bumpNormal, lightDirection), 0.1f);
+    
+    // Aplicar color de luz
+//    vec3 finalColor = diffuseColor.rgb * lightColor * diffuseFactor;
+    vec3 finalColor = diffuseColor.rgb;
+    float alpha = diffuseColor.a * 0.8f;
+    // Agregar un tinte azulado para agua
+    finalColor = mix(finalColor, finalColor * vec3(0.7f, 0.9f, 1.2f), 0.3f);
+    FragColor = vec4(finalColor, alpha);
 }

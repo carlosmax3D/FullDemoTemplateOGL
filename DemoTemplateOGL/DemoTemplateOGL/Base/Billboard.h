@@ -35,6 +35,11 @@ public:
 	virtual void prepShader(Shader& shader, int idx = 0);
 
 	void setTextureCoords(float *tCoords);
+
+	void setAlto(float alto);
+	float getAlto();
+	void setAncho(float ancho);
+	float getAncho();
 };
 
 #endif 

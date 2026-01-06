@@ -16,15 +16,16 @@ cbuffer CBPerObject : register(b0)
     // ===== LIGHT =====
     float3 lightPosition; float width;
     float3 lightAmbient;  float height;
-    float3 lightDiffuse;  float pad4;
-    float3 lightSpecular; float pad5;
+    float3 lightDiffuse;  float blendFactor;
+    float3 lightSpecular; float pad1;
+    float3 lightDirection; float pad2;
 
     // ===== CAMERA / FLAGS =====
     float3 cameraPos;         int textureSample;
     float3 viewPos;           int multipleInstances;
     float3 billboardPos;      int texture_diffuse;
-    float3 camRight;          int pad7;
-    float3 color;             int pad8;
+    float3 camRight;          int useBlending;
+    float3 color;             int useDynamicLighting;
 };
 
 // ================================
@@ -145,7 +146,12 @@ VS_OUTPUT main(VS_INPUT input)
 
     float4x4 instMat = createInstanceMatrix(input);
 
-    float4 worldPos = mul(float4(input.Position, 1.0f), instMat);
+    float3 scaledPos = input.Position;
+    if (width != 0.0f && height != 0.0f){
+        scaledPos.x *= width;
+        scaledPos.y *= height;
+    }
+    float4 worldPos = mul(float4(scaledPos, 1.0f), instMat);
     output.Position = mul(worldPos, projection);
 
     output.TexCoord = input.TexCoord;

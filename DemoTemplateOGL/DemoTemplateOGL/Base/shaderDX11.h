@@ -25,15 +25,16 @@ struct CB_PerObject {
     // ===== LIGHT (PS) =====
     DirectX::XMFLOAT3 lightPos;      float width;
     DirectX::XMFLOAT3 lightAmbient;  float height;
-    DirectX::XMFLOAT3 lightDiffuse;  float pad4;
-    DirectX::XMFLOAT3 lightSpecular; float pad5;
+    DirectX::XMFLOAT3 lightDiffuse;  float blendFactor;
+    DirectX::XMFLOAT3 lightSpecular; float pad1;
+    DirectX::XMFLOAT3 lightDirection; float pad2;
 
     // ===== CAMERA / FLAGS (VS + PS) =====
     DirectX::XMFLOAT3 cameraPos;  int textureSample;
     DirectX::XMFLOAT3 viewPos;    int multipleInstances;
     DirectX::XMFLOAT3 billboardPos; int texture_diffuse1;
-    DirectX::XMFLOAT3 camRight;    int pad7;
-    DirectX::XMFLOAT3 color;       int pad8;
+    DirectX::XMFLOAT3 camRight;    int useBlending;
+    DirectX::XMFLOAT3 color;       int useDynamicLighting;
 };
 
 struct CB_Bones {

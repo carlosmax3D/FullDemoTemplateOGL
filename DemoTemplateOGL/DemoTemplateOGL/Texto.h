@@ -8,7 +8,7 @@ class Texto {
 
 private:
     std::vector<Billboard2D*> textBillboard;
-	Model* cameraDetails = NULL;
+	Camera* cameraDetails = NULL;
     Shader* gpuDemo = NULL;
 	bool defaultShader = false;
 	float scale = 0;
@@ -19,9 +19,9 @@ private:
 	float z;
 public:
 	std::string name = "";
-	Texto(std::wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera);
+	Texto(std::wstring &texto, float escala, float rotacion, float x, float y, float z, Camera* camera);
 
-	Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Model* camera);
+	Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Camera* camera);
 
 	~Texto();
 

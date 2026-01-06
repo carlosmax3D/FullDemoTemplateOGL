@@ -27,7 +27,8 @@ void main() {
 
     // Output to fragment shader
     FragPos = modifiedPos;
-    TexCoords = aTexCoords;
+    TexCoords = aTexCoords + vec2(sin(time + modifiedPos.x) * 0.02,
+        cos(time + modifiedPos.y) * 0.02);
     Normal = aNormal;
 
     gl_Position = projection * view * model * vec4(modifiedPos, 1.0);

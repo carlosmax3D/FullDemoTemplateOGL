@@ -149,7 +149,7 @@ void Scenario::InitGraph(Model *main) {
 
 	inicializaBillboards();
 	std::wstring prueba(L"Esta es una prueba");
-	ourText.emplace_back(new Texto(prueba, 20, 0, 0, SCR_HEIGHT, 0, camara));
+	ourText.emplace_back(new Texto(prueba, 0.30, 0, 0, SCR_HEIGHT, 0, model->cameraDetails));
 	billBoard2D.emplace_back(new Billboard2D((WCHAR*)L"billboards/awesomeface.png", 6, 6, 100, 200, 0, camara->cameraDetails));
 	scale = glm::vec3(100.0f, 100.0f, 0.0f);	// it's a bit too big for our scene, so scale it down
 	billBoard2D.back()->setScale(&scale);

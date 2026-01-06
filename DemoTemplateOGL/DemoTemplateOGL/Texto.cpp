@@ -8,7 +8,7 @@
 #define wcstombs_s(x, y, z, w, r) wcstombs(y,w,r)
 #endif
 
-Texto::Texto(wstring &texto, float escala, float rotacion, float x, float y, float z, Model* camera){
+Texto::Texto(wstring &texto, float escala, float rotacion, float x, float y, float z, Camera* camera){
 	this->scale = escala;
 	this->rotacion = rotacion;
 	this->x = x;
@@ -19,7 +19,7 @@ Texto::Texto(wstring &texto, float escala, float rotacion, float x, float y, flo
     initTexto();
 }
 
-Texto::Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Model* camera){
+Texto::Texto(WCHAR *texto, float escala, float rotacion, float x, float y, float z, Camera* camera){
 	this->scale = escala;
 	this->rotacion = rotacion;
 	this->x = x;
@@ -45,6 +45,7 @@ void Texto::initTexto(){
 	if (this->textBillboard.capacity() < tLength)
 	    this->textBillboard.reserve(tLength);
 	font_atlas &fontTexture = font_atlas::getInstance();
+	float textHeiScale = fontTexture.TextureHeight * scale, hTextHeiScale = fontTexture.TextureHeight / 2 * scale;
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)texto, 512);
@@ -55,7 +56,7 @@ void Texto::initTexto(){
 	float xpos = x;
 	float ypos = y;
 	for (int i = this->textBillboard.size(); i < tLength; i++){
-        textBillboard.emplace_back(new Billboard2D(0, (WCHAR*)L"TEXTO", 0, 0, 0, cameraDetails->cameraDetails, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW));
+        textBillboard.emplace_back(new Billboard2D(0, (WCHAR*)L"TEXTO", 0, 0, 0, cameraDetails, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW));
 		textBillboard.back()->setCleanTextures(false);
 	}
 	for (int i = 0; i < textBillboard.size(); i++) {
@@ -72,11 +73,14 @@ void Texto::initTexto(){
 //		float xpos = x + (ch_data.Bearing.x * scale);
 //		float ypos = y - (ch_data.Size.y - ch_data.Bearing.y) * scale;
 
-		float w = ch_data.Size.x * scale;
-		float h = ch_data.Size.y * scale;
-		glm::vec3 scaleV(w, h, 1);
+		float w = ch_data.Size.x;
+		float h = ch_data.Size.y;
+		float texHeight = (ch == 43 || ch == 45) ? hTextHeiScale : textHeiScale;
+		glm::vec3 scaleV(scale, scale, 0);
 //		rotated_pt = rotate_pt(loc, glm::vec2(xpos, ypos + h), rotacion);
-		glm::vec3 pos = glm::vec3(xpos, ypos, 0);
+		glm::vec3 pos = glm::vec3(xpos, ypos + (texHeight - h * scale), 0);
+		letra.setAncho(w);
+		letra.setAlto(h);
 		letra.setTranslate(&pos);
 		letra.setScale(&scaleV);
 		letra.setActive(true);
@@ -95,7 +99,7 @@ void Texto::initTexto(){
 							  ch_data.top_left.x + margin, ch_data.top_left.y,
 							  ch_data.bot_right.x - margin, ch_data.top_left.y };
 		letra.setTextureCoords(texCoords);
-		xpos += scale;
+		xpos += (w == 0 ? fontTexture.medWidth : w) * scale + 1;
 	}
 }
 
@@ -135,13 +139,15 @@ void Texto::prepShader(Shader& shader, Billboard2D &bill){
 	glm::vec3& pos = *bill.getTranslate();
 //	glm::mat4 projection = cameraDetails->cameraDetails->getProjection();
     glm::mat4 projection = glm::ortho(0.0f, (SCR_WIDTH+0.0f), (SCR_HEIGHT+0.0f), 0.0f, -1.0f, 1.0f);
-	glm::mat4 view = cameraDetails->cameraDetails->getView();
+	glm::mat4 view = cameraDetails->getView();
 
 	glm::mat4 model = glm::mat4(1.0f);
 //	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 	model = glm::translate(model, pos); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(scale, scale, 0.0f));
+	model = glm::scale(model, *bill.getScale());
 
+	shader.setFloat("width", bill.getAncho());
+	shader.setFloat("height", bill.getAlto());
 	shader.setVec3("color", glm::vec3(128,128,128));
 	shader.setMat4("projection", projection);
 	shader.setMat4("view", view);

@@ -133,10 +133,10 @@ int startGameEngine(void *ptrMsg){
         renderiza = false;
 
         int running = 1;
-        fps = new Texto((WCHAR*)L"0 fps", 20, 0, 0, 22, 0, model);
+        fps = new Texto((WCHAR*)L"0 fps", 0.30, 0, 0, 40, 0, model->cameraDetails);
         fps->name = "FPSCounter";
         OGLobj->getLoadedText()->emplace_back(fps);
-        coordenadas = new Texto((WCHAR*)L"0", 20, 0, 0, 0, 0, model);;
+        coordenadas = new Texto((WCHAR*)L"0", 0.30, 0, 0, 0, 0, model->cameraDetails);
         coordenadas->name = "Coordenadas";
         OGLobj->getLoadedText()->emplace_back(coordenadas);
         updatePosCords(coordenadas);
@@ -361,6 +361,8 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.lpszClassName = szWindowClass;
+    wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DEMOTEMPLATEOGL));
+    wc.hIconSm = LoadIcon(NULL, MAKEINTRESOURCE(IDI_SMALL));
     RegisterClassEx(&wc);
     hInst = hInstance;
 #ifdef ENGINE_DIRECTX

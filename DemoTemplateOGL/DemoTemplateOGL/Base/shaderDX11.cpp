@@ -136,7 +136,11 @@ void ShaderDX11::apply() {
 
 void ShaderDX11::setBool(const char* name, bool value) {
     if (strcmp(name, "textureSample") == 0)
-        cpuData.textureSample = value ? 1 : 0;
+        cpuData.textureSample = value ? 1 : 0; 
+    else if (strcmp(name, "useBlending") == 0)
+        cpuData.useBlending = value ? 1 : 0;
+    else if (strcmp(name, "useDynamicLighting") == 0)
+        cpuData.useDynamicLighting = value ? 1 : 0;
     else
         ERRORL("Missing Bool param name", name);
 }
@@ -147,7 +151,11 @@ void ShaderDX11::setInt(const char* name, int value) {
     else if (strcmp(name, "multipleInstances") == 0)
         cpuData.multipleInstances = value;
     else if (strcmp(name, "texture_diffuse1") == 0)
-        cpuData.texture_diffuse1 = value;
+        cpuData.texture_diffuse1 = value; 
+    else if (strcmp(name, "useBlending") == 0)
+        cpuData.useBlending = value;
+    else if (strcmp(name, "useDynamicLighting") == 0)
+        cpuData.useDynamicLighting = value;
     else
         ERRORL("Missing Int param name", name);
 }
@@ -161,6 +169,8 @@ void ShaderDX11::setFloat(const char* name, float value) {
         cpuData.width = value;
     else if (strcmp(name, "height") == 0)
         cpuData.height = value;
+    else if (strcmp(name, "blendFactor") == 0)
+        cpuData.blendFactor = value;
     else
         ERRORL("Missing Float param name", name);
 }
@@ -194,6 +204,8 @@ void ShaderDX11::setVec3(const char* name, float x, float y, float z) {
         cpuData.lightSpecular = v;
     else if (strcmp(name, "light.position") == 0)
         cpuData.lightPos = v;
+    else if (strcmp(name, "light.direction") == 0)
+        cpuData.lightDirection = v;
     else if (strcmp(name, "viewPos") == 0)
         cpuData.viewPos = v;
     else if (strcmp(name, "billboardPos") == 0)

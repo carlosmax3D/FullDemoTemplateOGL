@@ -19,14 +19,16 @@ cbuffer CBPerObject : register(b0)
     // ===== LIGHT =====
     float3 lightPosition; float width;
     float3 lightAmbient;  float height;
-    float3 lightDiffuse;  float pad4;
-    float3 lightSpecular; float pad5;
+    float3 lightDiffuse;  float blendFactor;
+    float3 lightSpecular; float pad1;
+    float3 lightDirection; float pad2;
 
     // ===== CAMERA / FLAGS =====
     float3 cameraPos;         int textureSample;
     float3 viewPos;           int multipleInstances;
     float3 billboardPos;      int texture_diffuse;
-    float3 camRight;          int pad7;
+    float3 camRight;          int useBlending;
+    float3 color;             int useDynamicLighting;
 };
 
 // ================================

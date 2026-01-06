@@ -44,7 +44,7 @@ public:
 	int verx, verz;
 	//el nombre numerico de la textura en cuestion, por lo pronto una
 
-	Terreno(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+	Terreno(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera, WCHAR texNorm[] = NULL, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
 		name = "Terreno";
 		cameraDetails = camera;
 		vector<unsigned int> indices;
@@ -83,15 +83,28 @@ public:
 		Texture t;
 #ifdef _WIN32
 		wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
-		strcpy_s(t.type, 255, "texture_height");
+		strcpy_s(t.type, 255, "texture_diffuse");
 		strcpy_s(t.path, 1024, stext);
 #else
 		wcstombs(stext, (wchar_t*)textura, 1024);
-		strcpy(t.type, "texture_height");
+		strcpy(t.type, "texture_diffuse");
 		strcpy(t.path, stext);
 #endif
 		planoTextura = TextureFromFile(t, stext, this->directory);
 		textures.emplace_back(t);
+		if (texNorm != NULL) {
+#ifdef _WIN32
+			wcstombs_s(NULL, stext, 1024, (wchar_t*)texNorm, 1024);
+			strcpy_s(t.type, 255, "texture_normal");
+			strcpy_s(t.path, 1024, stext);
+#else
+			wcstombs(stext, (wchar_t*)texNorm, 1024);
+			strcpy(t.type, "texture_normal");
+			strcpy(t.path, stext);
+#endif
+			planoTextura = TextureFromFile(t, stext, this->directory);
+			textures.emplace_back(t);
+		}
 		meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
 		setDefaultShader(false);
 		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);

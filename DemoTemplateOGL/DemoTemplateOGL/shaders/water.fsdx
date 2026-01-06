@@ -19,14 +19,16 @@ cbuffer CBPerObject : register(b0)
     // ===== LIGHT =====
     float3 lightPosition; float width;
     float3 lightAmbient;  float height;
-    float3 lightDiffuse;  float pad4;
-    float3 lightSpecular; float pad5;
+    float3 lightDiffuse;  float blendFactor;
+    float3 lightSpecular; float pad1;
+    float3 lightDirection; float pad2;
 
     // ===== CAMERA / FLAGS =====
     float3 cameraPos;         int textureSample;
     float3 viewPos;           int multipleInstances;
     float3 billboardPos;      int texture_diffuse;
-    float3 camRight;          int pad7;
+    float3 camRight;          int useBlending;
+    float3 color;             int useDynamicLighting;
 };
 
 // ================================
@@ -45,5 +47,37 @@ struct PS_INPUT
 // ================================
 float4 main(PS_INPUT input) : SV_TARGET
 {
-    return texture_diffuse1.Sample(samplerLinear, input.TexCoords);
+    // Normalizar las normales interpoladas
+//    float3 normal = normalize(input.normal);
+    
+    // Muestrear la textura de agua
+    float4 diffuseColor = texture_diffuse1.Sample(samplerLinear, input.TexCoords);
+    
+    // Muestrear el normal map y convertir de [0,1] a [-1,1]
+//    float3 normalMap = normalTexture.Sample(samplerLinear, input.TexCoords * 2.0f).rgb;
+//    normalMap = normalize(normalMap * 2.0f - 1.0f);
+    
+    // Crear matriz TBN (Tangent, Binormal, Normal)
+//    float3 tangent = normalize(input.tangent);
+//    float3 binormal = normalize(input.binormal);
+//    float3x3 TBN = float3x3(tangent, binormal, normal);
+    
+    // Transformar la normal del mapa de normales al espacio mundial
+//    float3 bumpNormal = normalize(mul(normalMap, TBN));
+    
+    // Calcular iluminaci n difusa
+//    float3 lightDirection = normalize(-lightDir);
+//    float diffuseFactor = max(dot(bumpNormal, lightDirection), 0.1f);
+    
+    // Aplicar color de luz
+//    float3 finalColor = diffuseColor.rgb * lightColor * diffuseFactor;
+    float3 finalColor = diffuseColor.rgb;
+    
+    // Agregar un poco de transparencia y reflexi n para el efecto de agua
+    float alpha = diffuseColor.a * 0.8f;
+    
+    // Agregar un tinte azulado para agua
+    finalColor = lerp(finalColor, finalColor * float3(0.7f, 0.9f, 1.2f), 0.3f);
+    
+    return float4(finalColor, alpha);
 }

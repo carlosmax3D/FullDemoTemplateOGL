@@ -43,9 +43,12 @@ MeshDX11::MeshDX11(vector<Vertex>& vertices, vector<unsigned int>& indices, vect
 }
 
 MeshDX11::~MeshDX11() {
-    vertexBuffer->Release(); // vertex buffer
-    indexBuffer->Release();       // index buffer
-    instanceBuffer->Release(); // instance buffer
+    if (vertexBuffer != NULL) vertexBuffer->Release();      // vertex buffer
+    if (indexBuffer != NULL) indexBuffer->Release();        // index buffer
+    if (instanceBuffer != NULL) instanceBuffer->Release();  // instance buffer
+    vertexBuffer = NULL;
+    indexBuffer = NULL;
+    instanceBuffer = NULL;
 }
 
 void MeshDX11::setupMesh() {
@@ -123,10 +126,11 @@ void MeshDX11::updateInstanceBuffer() {
         ctx->Unmap(instanceBuffer, 0);
     }
 }
+#define MAX_SRV_TEXTURES 12
 void MeshDX11::Draw(Shader &sh) {
     float blendFactor[4] = { 0,0,0,0 };
     ShaderDX11& shader = (ShaderDX11&)sh;
-    ID3D11ShaderResourceView* srvTextures[5] = { 0 };
+    ID3D11ShaderResourceView* srvTextures[MAX_SRV_TEXTURES] = { 0 };
     ID3D11SamplerState* samplers[2] = { this->fontType ? createFontSampler() : createDefaultSampler(), createDefaultAlphaSampler() };
     if (this->VBOGLDrawType == GL_STATIC_DRAW && this->TYPEGLDrawType == GL_POINTS)
         TYPEGLDrawType = GL_POINTS;
@@ -138,21 +142,28 @@ void MeshDX11::Draw(Shader &sh) {
             ctx->RSSetState(createCullRasterizer(false));
     }
     int textureSample = 0;
+    int texture_diffuse = 0;
+    int texture_specular = 1;
+    int texture_normal = 2;
+    int texture_height = 3;
     for (unsigned int i = 0; i < textures.size() || i < materials.size(); i++) {
         if (i < textures.size()) {
             char textShader[255] = { 0 };
             // retrieve texture number (the N in diffuse_textureN)
             string number;
             if (strcmp(textures[i].type, "texture_diffuse") == 0) {
-                if (srvTextures[0] != NULL) srvTextures[4] = textures[i].idDX11;
-                else srvTextures[0] = textures[i].idDX11;
-            } else if (strcmp(textures[i].type, "texture_specular") == 0)
-                srvTextures[1] = textures[i].idDX11; // transfer unsigned int to stream
-            else if (strcmp(textures[i].type, "texture_normal") == 0)
-                srvTextures[2] = textures[i].idDX11; // transfer unsigned int to stream
-            else if (strcmp(textures[i].type, "texture_height") == 0) {
-                srvTextures[3] = textures[i].idDX11; // transfer unsigned int to stream
+                srvTextures[texture_diffuse] = textures[i].idDX11;
+                texture_diffuse += 4;
+            } else if (strcmp(textures[i].type, "texture_specular") == 0) {
+                srvTextures[texture_specular] = textures[i].idDX11; // transfer unsigned int to stream
+                texture_specular += 4;
+            } else if (strcmp(textures[i].type, "texture_normal") == 0) {
+                srvTextures[texture_normal] = textures[i].idDX11; // transfer unsigned int to stream
+                texture_normal += 4;
+            } else if (strcmp(textures[i].type, "texture_height") == 0) {
+                srvTextures[texture_height] = textures[i].idDX11; // transfer unsigned int to stream
                 if (srvTextures[0] == NULL) srvTextures[0] = textures[i].idDX11;
+                texture_height += 4;
             }
             textureSample = 1;
             // now set the sampler to the correct texture unit
@@ -181,8 +192,8 @@ void MeshDX11::Draw(Shader &sh) {
     ctx->PSSetShader(ps, nullptr, 0);
     ctx->GSSetShader(gs, nullptr, 0);
 
-    ctx->PSSetShaderResources(0, this->fontType ? 1 : 5, srvTextures);
-    ctx->PSSetSamplers(0, this->fontType ? 1 : 2, samplers);
+    ctx->PSSetShaderResources(0, this->fontType ? 1 : MAX_SRV_TEXTURES, srvTextures);
+    ctx->PSSetSamplers(0, 2, samplers);
     shader.setInt("textureSample", textureSample);
     int multipleInstances = this->modelAttributes != NULL && this->modelAttributes->size() > 1;
     shader.setInt("multipleInstances", multipleInstances);

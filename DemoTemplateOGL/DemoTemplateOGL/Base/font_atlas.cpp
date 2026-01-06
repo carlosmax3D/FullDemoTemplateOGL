@@ -113,6 +113,7 @@ void font_atlas::create_atlas(const char *fontName) {
 			}
 			// update atlas size variables
 			atlas_width += static_cast<int>(face->glyph->bitmap.width);
+			if (face->glyph->bitmap.width != 0) this->validChars++;
 			atlas_height = std::max(atlas_height, static_cast<int>(face->glyph->bitmap.rows));
 		}
 		TextureWidth = atlas_width;
@@ -198,6 +199,7 @@ void font_atlas::create_atlas(const char *fontName) {
 		texture->Release();
 #endif
 	}
+	this->medWidth = this->TextureWidth / this->validChars;
 	// destroy FreeType once we're finished
 	FT_Done_Face(face);
 	FT_Done_FreeType(ft);

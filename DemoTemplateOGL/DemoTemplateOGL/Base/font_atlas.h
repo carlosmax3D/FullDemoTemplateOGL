@@ -38,6 +38,8 @@ public:
 	Texture texture;
 	unsigned int TextureWidth; // Total width of the atlas
 	unsigned int TextureHeight; // Total height of the atlas
+	unsigned int validChars = 0;
+	float medWidth = 0;
 	std::map<char, Character> ch_atlas;
 	char name[100] = { 0 };
 
