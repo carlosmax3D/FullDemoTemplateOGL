@@ -23,6 +23,12 @@ link_directories(FullDemoTemplateOGL
 
 add_executable(FullDemoTemplateOGL 
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/glad.c
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/mesh.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/MeshDX11.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/MeshGL33.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/shader.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/shaderDX11.cpp
+    ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/shaderGL33.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/model.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/Utilities.cpp
     ${CMAKE_SOURCE_DIR}/DemoTemplateOGL/DemoTemplateOGL/Base/Animation.cpp

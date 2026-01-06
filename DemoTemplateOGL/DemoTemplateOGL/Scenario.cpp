@@ -191,11 +191,7 @@ void Scenario::inicializaBillboards() {
 	//el metodo render toma el dispositivo sobre el cual va a dibujar
 	//y hace su tarea ya conocida
 Scene* Scenario::Render() {
-	//borramos el biffer de color y el z para el control de profundidad a la 
-	//hora del render a nivel pixel.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
-//	glClearColor(255.0f, 255.0f, 255.0f, 255.0f);
+	clearScreen();
 
 	if (this->animacion > 10) { // Timer se ejecuta cada 1000/30 = 33.333 ms
 		for (BillboardAnimation *b : billBoardAnim){
@@ -219,7 +215,7 @@ Scene* Scenario::Render() {
 		billBoard2D[i]->Draw();
 	// Dibujamos cada modelo que este cargado en nuestro arreglo de modelos
 	for (int i = 0; i < ourModel.size(); i++) {
-			ourModel[i]->Draw();
+		ourModel[i]->Draw();
 	}
 	for (int i = 0; i < ourText.size(); i++) {
 		ourText[i]->Draw();
@@ -275,16 +271,18 @@ Scenario::~Scenario() {
 	if (billBoard.size() > 0)
 		for (int i = 0; i < billBoard.size(); i++)
 			delete billBoard[i];
+	this->billBoard.clear();
 	if (billBoardAnim.size() > 0)
 		for (int i = 0; i < billBoardAnim.size(); i++)
 			delete billBoardAnim[i];
+	this->billBoardAnim.clear();
 	if (billBoard2D.size() > 0)
 		for (int i = 0; i < billBoard2D.size(); i++)
 			delete billBoard2D[i];
-	this->billBoard.clear();
+	this->billBoard2D.clear();
 	if (ourText.size() > 0)
 		for (int i = 0; i < ourText.size(); i++)
-			if (!(ourText[i]->name.compare("FPSCounter") || ourText[i]->name.compare("Coordenadas")))
+			if (!(ourText[i]->name.compare("FPSCounter") == 0 || ourText[i]->name.compare("Coordenadas") == 0))
 				delete ourText[i];
 	this->ourText.clear();
 	if (ourModel.size() > 0)

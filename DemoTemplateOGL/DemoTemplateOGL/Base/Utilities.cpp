@@ -29,6 +29,20 @@
 #define MB_ICONSTOP                 MB_ICONHAND
 #define sprintf_s(a,b,c,d,e,f,g,h,i) sprintf(a,c,d,e,f,g,h,i)
 #endif
+#if defined(_WIN32) && defined(ENGINE_DIRECTX)
+ID3D11Device* device = NULL;
+ID3D11DeviceContext* ctx = NULL;
+IDXGISwapChain* swapChain = NULL;
+ID3D11RenderTargetView* backBufferRTV = NULL;
+ID3D11BlendState* blendState = NULL;
+ID3D11SamplerState* samplerState = NULL;
+ID3D11SamplerState* samplerAlpha = NULL;
+ID3D11SamplerState* samplerFont = NULL;
+ID3D11DepthStencilView* depthView = NULL;
+ID3D11DepthStencilState* depthState = NULL;
+ID3D11RasterizerState* rsBackState = NULL;
+ID3D11RasterizerState* rsFrontState = NULL;
+#endif
 
 std::wstring s2ws(const std::string& s) {
 #ifdef __linux__
@@ -706,66 +720,259 @@ unsigned char* loadMemory(const aiTexture* tex, int* x, int* y, int* comp, int r
 	return tmp;
 }
 
-unsigned int TextureFromMemory(const aiTexture* texture, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
+bool TextureFromMemory(Texture& text, const aiTexture* texture, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
+	bool textureID = false;
 
 	int width, height, nrComponents;
 	unsigned char* data = loadMemory(texture, &width, &height, &nrComponents, 0, rotateX, rotateY);
-	GLenum format = GL_RGBA;
 	if (data) {
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3) {
-			format = GL_RGB;
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		}
-		else if (nrComponents == 4) {
-			format = GL_RGBA;
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		}
-		if (alpha != NULL && *alpha) {
-			format = GL_RGBA;
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		}
-		if (format == GL_RGBA && alpha != NULL)
-			*alpha = true;
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		//        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);   //Requires GL 1.4. Removed from GL 3.1 and above.
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#ifdef ENGINE_DIRECTX
+		textureID = DXLoadTexture(text, data, width, height, nrComponents, alpha, img);
+#else
+		textureID = GLLoadTexture(text, data, width, height, nrComponents, alpha, img);
+#endif
 		delete[] data;
-	}
-	else {
+		if (!textureID) {
+			std::string name = texture->mFilename.C_Str();
+			INFO("Texture failed to load at path: " + name, "ERROR LOAD OBJ");
+		}
+	} else {
 		std::string name = texture->mFilename.C_Str();
 		INFO("Texture failed to load texture : " + name, "ERROR LOAD OBJ");
-	}
-	if (img != NULL) {
-		img->format = format;
-		img->height = height;
-		img->nrComponents = nrComponents;
-		img->width = width;
 	}
 	return textureID;
 }
 
-unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
+bool TextureFromFile(Texture& text, const char* path, const std::string& directory, bool rotateX, bool rotateY, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
 	std::string filename = std::string(path);
 	if (!directory.empty())
 		filename = directory + '/' + filename;
 
-	unsigned int textureID;
-	glGenTextures(1, &textureID);
+	bool textureID = false;
 
 	int width, height, nrComponents;
 	unsigned char* data = loadFile(filename.c_str(), &width, &height, &nrComponents, 0, rotateX, rotateY);
+	if (data) {
+#ifdef ENGINE_DIRECTX
+		textureID = DXLoadTexture(text, data, width, height, nrComponents, alpha, img);
+#else
+		textureID = GLLoadTexture(text, data, width, height, nrComponents, alpha, img);
+#endif
+		delete[] data;
+		if (!textureID) INFO("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
+	}else
+		INFO("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
+	return textureID;
+}
+
+#ifdef ENGINE_DIRECTX
+ID3D11RasterizerState* createCullRasterizer(bool front) {
+	if (front && rsFrontState != NULL) return rsFrontState;
+	if (!front && rsBackState != NULL) return rsBackState;
+
+	D3D11_RASTERIZER_DESC rs = {};
+	rs.FillMode = D3D11_FILL_SOLID;
+	rs.DepthClipEnable = TRUE;
+	rs.CullMode = front ? D3D11_CULL_FRONT : D3D11_CULL_BACK;
+	rs.FrontCounterClockwise = TRUE;
+	device->CreateRasterizerState(&rs, front ? &rsFrontState : &rsBackState);
+	return front ? rsFrontState : rsBackState;
+}
+
+ID3D11DepthStencilState* createDefaultDepthState() {
+	if (depthState != NULL) return depthState;
+	D3D11_DEPTH_STENCIL_DESC dsDesc = {};
+	dsDesc.DepthEnable = TRUE;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	device->CreateDepthStencilState(&dsDesc, &depthState);
+	return depthState;
+}
+ID3D11BlendState* createAlphaBlend() {
+	if (blendState != NULL) return blendState;
+	D3D11_BLEND_DESC bd = {};
+	bd.RenderTarget[0].BlendEnable = TRUE;
+	bd.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	bd.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	bd.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	bd.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	bd.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	bd.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	bd.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	device->CreateBlendState(&bd, &blendState);
+	return blendState;
+}
+ID3D11SamplerState* createFontSampler() {
+	if (samplerFont) return samplerFont;
+	D3D11_SAMPLER_DESC samp = {};
+	samp.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT; // NO mipmap
+//	samp.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	samp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samp.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samp.MinLOD = 0;
+	samp.MaxLOD = 0;
+
+	device->CreateSamplerState(&samp, &samplerFont);
+	return samplerFont;
+}
+ID3D11SamplerState* createDefaultAlphaSampler() {
+	if (samplerAlpha != NULL) return samplerAlpha;
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// MUY IMPORTANTE PARA ALPHA
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+
+	device->CreateSamplerState(&sampDesc, &samplerAlpha);
+	return samplerAlpha;
+}
+ID3D11SamplerState* createDefaultSampler() {
+	if (samplerState != NULL) return samplerState;
+	D3D11_SAMPLER_DESC samp = {};
+	samp.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samp.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samp.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samp.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samp.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samp.MinLOD = 0;
+	samp.MaxLOD = D3D11_FLOAT32_MAX;
+
+	device->CreateSamplerState(&samp, &samplerState);
+	return samplerState;
+}
+bool DXLoadTexture(Texture& text, unsigned char* data, int width, int height, int nrComponents, bool* alpha, struct UTILITIES_OGL::ImageDetails* img) {
+	if (!data) return 0;
+	DXGI_FORMAT format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	unsigned char* fData = NULL;
+	switch (nrComponents) {
+		case 1: format = DXGI_FORMAT_R8_UNORM;
+			break;
+		case 3:	format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				fData = expandToRGBA(data, width, height, nrComponents);
+			break;
+		case 4: format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		default:format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				fData = expandToRGBA(data, width, height, nrComponents);
+	}
+	if (fData != NULL) data = fData;
+	if (alpha && *alpha)
+		format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	if (alpha && (nrComponents == 4))
+		*alpha = true;
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Width = width;
+	texDesc.Height = height;
+	texDesc.MipLevels = 0;
+	texDesc.ArraySize = 1;
+	texDesc.Format = format;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	texDesc.CPUAccessFlags = 0;
+	texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+	ID3D11Texture2D* tex = nullptr;
+	HRESULT hr = device->CreateTexture2D(&texDesc, nullptr, &tex);
+	if (FAILED(hr)) {
+		if (fData != NULL) delete[] fData;
+		return false;
+	}
+	ctx->UpdateSubresource(tex, 0, nullptr, data, width * (nrComponents == 1 ? 1 : 4), 0);
+	ID3D11ShaderResourceView* srv = NULL;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = format;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MipLevels = UINT(-1);
+	hr = device->CreateShaderResourceView(tex, &srvDesc, &srv);
+	tex->Release();
+	if (FAILED(hr)) {
+		ERRORL(std::to_string(hr), "ERROR");
+		if (fData != NULL) delete[] fData;
+		return false;
+	}
+	if (srv == NULL) return false;
+	ctx->GenerateMips(srv);
+	// ---------------------------------------
+	//  Info de salida (igual que OpenGL)
+	// ---------------------------------------
+	if (img) {
+		img->width = width;
+		img->height = height;
+		img->nrComponents = nrComponents;
+		img->format = format; // ahora DXGI_FORMAT
+	}
+	text.id = 0;
+	text.idDX11 = srv;
+	if (fData != NULL) delete[] fData;
+	return true;
+}
+void cleanDXPipeline() {
+	// Input Assembler
+	ID3D11Buffer* nullVB[8] = {};
+	UINT strides[8] = {};
+	UINT offsets[8] = {};
+	ctx->IASetVertexBuffers(0, 8, nullVB, strides, offsets);
+	ctx->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
+	ctx->IASetInputLayout(nullptr);
+	// Shaders
+	ctx->VSSetShader(nullptr, nullptr, 0);
+	ctx->PSSetShader(nullptr, nullptr, 0);
+	ctx->GSSetShader(nullptr, nullptr, 0);
+	ctx->HSSetShader(nullptr, nullptr, 0);
+	ctx->DSSetShader(nullptr, nullptr, 0);
+	ctx->CSSetShader(nullptr, nullptr, 0);
+	// Shader resources
+	ID3D11ShaderResourceView* nullSRV[16] = {};
+	ctx->VSSetShaderResources(0, 16, nullSRV);
+	ctx->PSSetShaderResources(0, 16, nullSRV);
+	ctx->CSSetShaderResources(0, 16, nullSRV);
+	// Samplers
+	ID3D11SamplerState* nullSamplers[16] = {};
+	ctx->VSSetSamplers(0, 16, nullSamplers);
+	ctx->PSSetSamplers(0, 16, nullSamplers);
+	ctx->CSSetSamplers(0, 16, nullSamplers);
+	// States
+	ctx->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+	ctx->OMSetDepthStencilState(nullptr, 0);
+	ctx->RSSetState(nullptr);
+	// Render targets
+	ctx->OMSetRenderTargets(0, nullptr, nullptr);
+	ctx->PSSetShaderResources(0, 16, nullSRV);
+	ctx->ClearState();
+	ctx->Flush();
+	if (blendState != NULL) blendState->Release();
+	if (rsBackState != NULL) rsBackState->Release();
+	if (rsFrontState != NULL) rsFrontState->Release();
+	if (samplerAlpha != NULL) samplerAlpha->Release();
+	if (samplerState != NULL) samplerState->Release();
+	if (samplerFont != NULL) samplerFont->Release();
+	if (depthState != NULL) depthState->Release();
+	if (depthView != NULL) depthView->Release();
+	if (backBufferRTV != NULL) backBufferRTV->Release();
+	if (swapChain != NULL) swapChain->Release();
+	if (ctx != NULL) ctx->Release();
+#if defined(ENGINE_DEBUG)
+	ID3D11Debug* d3dDebug;
+	if (SUCCEEDED(device->QueryInterface(IID_PPV_ARGS(&d3dDebug)))) {
+		// 2. Call ReportLiveDeviceObjects
+		d3dDebug->ReportLiveDeviceObjects(D3D11_RLDO_IGNORE_INTERNAL);
+		d3dDebug->Release();
+	}
+#endif
+	if (device != NULL) device->Release();
+}
+#else
+bool GLLoadTexture(Texture& text, unsigned char* data, int width, int height, int nrComponents, bool *alpha, struct UTILITIES_OGL::ImageDetails* img) {
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
 	GLenum format = GL_RGBA;
 	if (data) {
 		if (nrComponents == 1 || nrComponents == 2) {
@@ -798,10 +1005,6 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		delete[] data;
-	}
-	else {
-		INFO("Texture failed to load at path: " + filename, "ERROR LOAD OBJ");
 	}
 	if (img != NULL) {
 		img->format = format;
@@ -809,12 +1012,14 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
 		img->nrComponents = nrComponents;
 		img->width = width;
 	}
-	return textureID;
+	text.id = textureID;
+	return true;
 }
+#endif
 
 double get_nanos() {
 	struct timespec ts;
-	timespec_get(&ts, TIME_UTC);
+	int r = timespec_get(&ts, TIME_UTC);
 	return ts.tv_sec * 1000000000L + ts.tv_nsec;
 }
 
@@ -966,6 +1171,79 @@ std::vector<unsigned int> getCubeIndex() {
 	for (unsigned int i = 0; i < cubeIndexSize; i++)
 		indices.emplace_back(cubeIndex[i]);
 	return indices;
+}
+
+void clearScreen() {
+	//borramos el biffer de color y el z para el control de profundidad a la 
+	//hora del render a nivel pixel.
+	const float clearColor[4] = { 0.05f, 0.05f, 0.05f, 1.0f };
+#ifdef ENGINE_DIRECTX
+	if (depthView != NULL)ctx->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	ctx->ClearRenderTargetView(backBufferRTV, clearColor);
+#else
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+	//	glClearColor(255.0f, 255.0f, 255.0f, 255.0f);
+#endif
+}
+
+void freeTexture(Texture& texture) {
+#ifdef ENGINE_DIRECTX
+	if (texture.idDX11 != NULL) {
+		texture.idDX11->Release();
+		texture.idDX11 = NULL;
+	}
+#else
+	glDeleteTextures(1, &(texture.id));
+#endif
+}
+
+void setDepthTest(bool enable) {
+#ifdef ENGINE_DIRECTX
+	ctx->OMSetDepthStencilState(enable ? createDefaultDepthState() : NULL, 0);
+	if (enable && depthView != NULL) ctx->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+#else
+	if (enable) glEnable(GL_DEPTH_TEST);
+	else glDisable(GL_DEPTH_TEST);
+#endif
+}
+
+unsigned char* expandToRGBA(unsigned char* data, int width, int height, int nrComponents) {
+	long size = width * height * nrComponents, iEx = 0;
+	unsigned char* expanded = new unsigned char[width * height * 4];
+	for (long i = 0; i < size; i += nrComponents) {
+		int j = 0;
+		for (j = 0; j < 4 && j < nrComponents; j++)
+			expanded[iEx + j] = data[i + j];
+		unsigned char v = nrComponents % 4 == 0 ? 255 : (nrComponents < 3 ? data[i] : 255);
+		while (j < 3){
+			expanded[iEx + j] = v;
+			j++;
+		}
+		if (nrComponents % 4 != 0 || nrComponents < 4)
+			expanded[iEx + 3] = (unsigned char)255;
+		iEx += 4;
+	}
+	return expanded;
+}
+
+unsigned char* expandGlyphToRGBA(const unsigned char* src, int w, int h, int pitch){
+	unsigned char* dst = new unsigned char[w * h * 4];
+
+	for (int y = 0; y < h; ++y)
+	{
+		for (int x = 0; x < w; ++x)
+		{
+			unsigned char a = src[y * pitch + x];
+			int i = (y * w + x) * 4;
+
+			dst[i + 0] = 255; // R
+			dst[i + 1] = 255; // G
+			dst[i + 2] = 255; // B
+			dst[i + 3] = a;   // A
+		}
+	}
+	return dst;
 }
 
 //void * operator new(size_t size){

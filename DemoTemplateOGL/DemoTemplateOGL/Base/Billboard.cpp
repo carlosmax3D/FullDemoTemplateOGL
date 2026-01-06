@@ -60,6 +60,7 @@ void Billboard::reloadData(vector<Vertex> *vertices, glm::vec3 origin){
 
 Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera) {
 //    std::string stext(texto.begin(), texto.end());
+	name = "Texto";
 	if (this->getModelAttributes()->size() == 0){
 		ModelAttributes attr{0};
 		this->getModelAttributes()->push_back(attr);
@@ -69,7 +70,7 @@ Billboard::Billboard(int glTextura, WCHAR textura[], float x, float y, float z, 
 }
 
 Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y, float z, Camera* camera) {
-	unsigned int texturaB;
+	bool texturaB = false;
 	bool alpha = true;
 	char stext[1024];
 //    std::string stext(texto.begin(), texto.end());
@@ -78,11 +79,11 @@ Billboard::Billboard(WCHAR textura[], float ancho, float alto, float x, float y,
 		this->getModelAttributes()->push_back(attr);
 	}
 	wcstombs_s(NULL, stext, 1024, (wchar_t*)textura, 1024);
-	texturaB = TextureFromFile(stext, this->directory, false, true, &alpha);
 	Texture t;
-	t.id = texturaB;
+	texturaB = TextureFromFile(t, stext, this->directory, false, true, &alpha);
 	strcpy_s(t.type, 255, "texture_diffuse");
-	strcpy_s(t.type, 1024, stext);
+	strcpy_s(t.path, 1024, stext);
+	name = stext;
 	initBillboard(t, ancho, alto, x, y, z, camera, GL_DYNAMIC_DRAW);
 }
 
@@ -107,7 +108,7 @@ void Billboard::initBillboard(Texture &texture, float ancho, float alto, float x
 	vertices[3].TexCoords = glm::vec2(0.0f, 1.0f);
 	textures.emplace_back(texture);
 	gpuDemo = NULL;
-    meshes.emplace_back(new Mesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
+    meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
 	textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 	for (Mesh *m : meshes)
 		m->modelAttributes = getModelAttributes();
@@ -122,8 +123,8 @@ void Billboard::Draw() {
 	if (gpuDemo == NULL) {
 		// build and compile our shader zprogram
 		// ------------------------------------
-		gpuDemo = new Shader("shaders/billboard.vs", "shaders/billboard.fs");
-//		gpuDemo = new Shader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
+		gpuDemo = Shader::createShader("shaders/billboard.vs", "shaders/billboard.fs");
+//		gpuDemo = Shader::createShader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
 		setDefaultShader(true);
 	}
 	if (getDefaultShader()) {

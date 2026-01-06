@@ -1,0 +1,188 @@
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+};
+
+static const int MAX_BONES = 200;
+static const int MAX_BONES_INFLUENCE = 4;
+
+cbuffer CBBones : register(b1)
+{
+    float4x4 finalBonesMatrices[MAX_BONES];
+};
+
+// ================================
+// INPUT STRUCT
+// ================================
+struct VS_INPUT
+{
+    float3 aPos       : POSITION;
+    float2 aTexCoords : TEXCOORD0;
+    float3 aNormal    : NORMAL;
+    float3 tangent    : TANGENT;
+    float3 bitangent  : BINORMAL;
+
+    uint4 boneIds     : BLENDINDICES;
+    float4 weights    : BLENDWEIGHT;
+
+    // --- Instancing (slot 1) ---
+    float3 trans      : TEXCOORD1;
+    float3 scale      : TEXCOORD2;
+    float  rotX       : TEXCOORD3;
+    float  rotY       : TEXCOORD4;
+    float  rotZ       : TEXCOORD5;
+    float  enabled    : TEXCOORD6;
+};
+
+// ================================
+// OUTPUT STRUCT
+// ================================
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float3 FragPos  : TEXCOORD0;
+    float2 TexCoord : TEXCOORD1;
+    float3 Normal   : TEXCOORD2;
+};
+
+// ================================
+// UTILS
+// ================================
+bool isZeroVec3(float3 v)
+{
+    return all(abs(v) < 0.0001);
+}
+
+bool isZeroVec4(float4 v)
+{
+    return all(abs(v) < 0.0001);
+}
+
+float4x4 translateMat(float4x4 m, float3 v)
+{
+    float4x4 r = m;
+    r[3] = m[0] * v.x + m[1] * v.y + m[2] * v.z + m[3];
+    return r;
+}
+
+float4x4 scaleMat(float4x4 m, float3 v)
+{
+    float4x4 r = m;
+    r[0] *= v.x;
+    r[1] *= v.y;
+    r[2] *= v.z;
+    return r;
+}
+
+float4x4 rotateMat(float4x4 m, float angle, float3 axis)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+    axis = normalize(axis);
+    float3 t = (1.0 - c) * axis;
+
+    float3x3 R =
+    {
+        c + t.x * axis.x,     t.x * axis.y + s * axis.z, t.x * axis.z - s * axis.y,
+        t.y * axis.x - s * axis.z, c + t.y * axis.y,     t.y * axis.z + s * axis.x,
+        t.z * axis.x + s * axis.y, t.z * axis.y - s * axis.x, c + t.z * axis.z
+    };
+
+    float4x4 result = m;
+    result[0] = m[0] * R[0][0] + m[1] * R[0][1] + m[2] * R[0][2];
+    result[1] = m[0] * R[1][0] + m[1] * R[1][1] + m[2] * R[1][2];
+    result[2] = m[0] * R[2][0] + m[1] * R[2][1] + m[2] * R[2][2];
+    return result;
+}
+
+float4x4 createInstanceMatrix(VS_INPUT input)
+{
+    if (multipleInstances == 0)
+        return model;
+
+    float4x4 T = float4x4(1,0,0,0,
+                          0,1,0,0,
+                          0,0,1,0,
+                          0,0,0,1);
+
+    T = translateMat(T, input.trans);
+
+    if (input.rotX != 0)
+        T = rotateMat(T, radians(input.rotX), float3(1,0,0));
+    if (input.rotY != 0)
+        T = rotateMat(T, radians(input.rotY), float3(0,1,0));
+    if (input.rotZ != 0)
+        T = rotateMat(T, radians(input.rotZ), float3(0,0,1));
+
+    if (!isZeroVec3(input.scale))
+        T = scaleMat(T, input.scale);
+
+    return T;
+}
+
+// ================================
+// MAIN
+// ================================
+VS_OUTPUT main(VS_INPUT input)
+{
+    VS_OUTPUT output;
+
+    if (multipleInstances == 1 && input.enabled == 0.0f)
+    {
+        output.Position = float4(0,0,0,0);
+        return output;
+    }
+
+    float4 totalPos = float4(0,0,0,0);
+    float3 totalNormal = float3(0,0,0);
+
+    [unroll]
+    for (int i = 0; i < MAX_BONES_INFLUENCE; i++)
+    {
+        if (input.boneIds[i] < MAX_BONES && input.weights[i] > 0.0f)
+        {
+            float4x4 bone = finalBonesMatrices[input.boneIds[i]];
+            totalPos += mul(float4(input.aPos,1), bone) * input.weights[i];
+            totalNormal += mul((float3x3)bone, input.aNormal) * input.weights[i];
+        }
+    }
+
+    if (isZeroVec4(totalPos))
+        totalPos = float4(input.aPos,1);
+
+    if (isZeroVec3(totalNormal))
+        totalNormal = input.aNormal;
+
+    float4x4 model1 = createInstanceMatrix(input);
+    float4 worldPos = mul(totalPos, model1);
+
+    output.FragPos = worldPos.xyz;
+    output.Normal  = normalize(mul((float3x3)model1, totalNormal));
+    output.TexCoord = input.aTexCoords;
+    output.Position = mul(worldPos, mul(view, projection));
+
+    return output;
+}

@@ -45,6 +45,7 @@ public:
 	//el nombre numerico de la textura en cuestion, por lo pronto una
 
 	Terreno(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW) {
+		name = "Terreno";
 		cameraDetails = camera;
 		vector<unsigned int> indices;
 		vector<Texture>      textures;
@@ -54,7 +55,7 @@ public:
 			ModelAttributes attr{0};
 			this->getModelAttributes()->push_back(attr);
 		}
-		unsigned int planoTextura;
+		bool planoTextura;
 		int mapAlturaComp;
 		anchof = ancho;
 		proff = prof;
@@ -89,10 +90,9 @@ public:
 		strcpy(t.type, "texture_height");
 		strcpy(t.path, stext);
 #endif
-		planoTextura = TextureFromFile(stext, this->directory);
-		t.id = planoTextura;
+		planoTextura = TextureFromFile(t, stext, this->directory);
 		textures.emplace_back(t);
-		meshes.emplace_back(new Mesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
+		meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials, VBOGLDrawType, EBOGLDrawType));
 		setDefaultShader(false);
 		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 		PrecalcularPlanos();
@@ -104,7 +104,7 @@ public:
 
 	virtual void Draw() {
 		if (gpuDemo == NULL) {
-			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
+			gpuDemo = Shader::createShader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
 			setDefaultShader(true);
 		}
 		if (getDefaultShader()) {

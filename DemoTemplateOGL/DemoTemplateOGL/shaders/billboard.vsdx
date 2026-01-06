@@ -1,0 +1,104 @@
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+};
+
+// ================================
+// INPUT LAYOUT
+// ================================
+struct VS_INPUT
+{
+    float3 Position   : POSITION;     // aPos (quad local)
+    float2 TexCoord   : TEXCOORD0;     // aTexCoord
+    float3 aNormal    : NORMAL;
+    float3 tangent    : TANGENT;
+    float3 bitangent  : BINORMAL;
+
+    uint4 boneIds     : BLENDINDICES;
+    float4 weights    : BLENDWEIGHT;
+
+    // --- Instancing (slot 1) ---
+    float3 InstancePos: TEXCOORD1;     // mPos (location = 7)
+    float3 scale      : TEXCOORD2;
+    float  rotX       : TEXCOORD3;
+    float  rotY       : TEXCOORD4;
+    float  rotZ       : TEXCOORD5;
+    float  enabled    : TEXCOORD6;
+};
+
+// ================================
+// OUTPUT
+// ================================
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD0;
+};
+
+// ================================
+// MAIN
+// ================================
+VS_OUTPUT main(VS_INPUT input)
+{
+    VS_OUTPUT output;
+
+    // Desactivar instancia
+    if (multipleInstances == 1 && input.enabled == 0.0f)
+    {
+        output.Position = float4(0, 0, 0, 0);
+        output.TexCoord = input.TexCoord;
+        return output;
+    }
+
+    // Centro del quad
+    float2 centeredPos = input.Position.xy;
+
+    // Posición base
+    float3 trans = (multipleInstances == 1) ? input.InstancePos : billboardPos;
+
+    // Cámara → billboard
+    float3 forward = normalize(cameraPos - trans);
+    forward.y = 0.0f;
+    forward = normalize(forward);
+
+    float3 upVec = float3(0.0f, 1.0f, 0.0f);
+
+    // Importante: igual que tu GLSL
+    float3 right = normalize(cross(upVec, camRight));
+    upVec = normalize(cross(right, forward));
+
+    // Posición final en mundo
+    float3 worldPos =
+        trans +
+        centeredPos.x * width  * right +
+        centeredPos.y * height * upVec;
+
+    float4 viewPos = mul(float4(worldPos, 1.0f), view);
+    output.Position = mul(viewPos, projection);
+    output.TexCoord = input.TexCoord;
+
+    return output;
+}

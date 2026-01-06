@@ -49,6 +49,7 @@ void reloadData(vector<Vertex>& vertices) {
 public:
 	Water(WCHAR alturas[], WCHAR textura[], float ancho, float prof, Camera* camera)
 		: Terreno(alturas, textura, ancho, prof, camera, GL_DYNAMIC_DRAW) {
+		name = "Agua";
 		gpuDemo = NULL;
 //		buildKDtree();
 		mapSizeX = getMapAlturaX() * 3;
@@ -63,7 +64,7 @@ public:
 
 	virtual void Draw() {
 		if (gpuDemo == NULL) {
-			gpuDemo = new Shader("shaders/water.vs", "shaders/water.fs");
+			gpuDemo = Shader::createShader("shaders/water.vs", "shaders/water.fs");
 			setDefaultShader(true);
 		}
 		if (getDefaultShader()) {

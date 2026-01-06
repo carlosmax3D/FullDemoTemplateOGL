@@ -1,0 +1,153 @@
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+    float3 color;             int pad8;
+};
+
+// ================================
+// INPUT LAYOUT
+// ================================
+struct VS_INPUT
+{
+    float3 Position   : POSITION;     // aPos (quad local)
+    float2 TexCoord   : TEXCOORD0;     // aTexCoord
+    float3 aNormal    : NORMAL;
+    float3 tangent    : TANGENT;
+    float3 bitangent  : BINORMAL;
+
+    uint4 boneIds     : BLENDINDICES;
+    float4 weights    : BLENDWEIGHT;
+
+    // --- Instancing (slot 1) ---
+    float3 InstancePos: TEXCOORD1;     // mPos (location = 7)
+    float3 scale      : TEXCOORD2;
+    float  rotX       : TEXCOORD3;
+    float  rotY       : TEXCOORD4;
+    float  rotZ       : TEXCOORD5;
+    float  enabled    : TEXCOORD6;
+};
+
+// ================================
+// OUTPUT
+// ================================
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoord : TEXCOORD0;
+};
+
+// ================================
+// HELPERS (GLSL → HLSL)
+// ================================
+bool isZeroVec3(float3 v)
+{
+    return v.x == 0 && v.y == 0 && v.z == 0;
+}
+
+float4x4 translateMat(float4x4 m, float3 v)
+{
+    float4x4 r = m;
+    r[3] = m[0] * v.x + m[1] * v.y + m[2] * v.z + m[3];
+    return r;
+}
+
+float4x4 scaleMat(float4x4 m, float3 v)
+{
+    float4x4 r = m;
+    r[0] *= v.x;
+    r[1] *= v.y;
+    r[2] *= v.z;
+    return r;
+}
+
+float4x4 rotateMat(float4x4 m, float angle, float3 axis)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+    axis = normalize(axis);
+    float3 t = (1.0f - c) * axis;
+
+    float3x3 R;
+    R[0] = float3(c + t.x * axis.x, t.x * axis.y + s * axis.z, t.x * axis.z - s * axis.y);
+    R[1] = float3(t.y * axis.x - s * axis.z, c + t.y * axis.y, t.y * axis.z + s * axis.x);
+    R[2] = float3(t.z * axis.x + s * axis.y, t.z * axis.y - s * axis.x, c + t.z * axis.z);
+
+    float4x4 r;
+    r[0] = m[0] * R[0][0] + m[1] * R[0][1] + m[2] * R[0][2];
+    r[1] = m[0] * R[1][0] + m[1] * R[1][1] + m[2] * R[1][2];
+    r[2] = m[0] * R[2][0] + m[1] * R[2][1] + m[2] * R[2][2];
+    r[3] = m[3];
+    return r;
+}
+
+float4x4 createInstanceMatrix(VS_INPUT input)
+{
+    if (multipleInstances == 0)
+        return model;
+
+    float4x4 T = float4x4(1,0,0,0,
+                          0,1,0,0,
+                          0,0,1,0,
+                          0,0,0,1);
+
+    T = translateMat(T, input.InstancePos);
+
+    if (input.rotX != 0)
+        T = rotateMat(T, radians(input.rotX), float3(1,0,0));
+    if (input.rotY != 0)
+        T = rotateMat(T, radians(input.rotY), float3(0,1,0));
+    if (input.rotZ != 0)
+        T = rotateMat(T, radians(input.rotZ), float3(0,0,1));
+
+    if (!isZeroVec3(input.scale))
+        T = scaleMat(T, input.scale);
+
+    return T;
+}
+
+// ================================
+// MAIN
+// ================================
+VS_OUTPUT main(VS_INPUT input)
+{
+    VS_OUTPUT output;
+
+    // Desactivar instancia
+    if (multipleInstances == 1 && input.enabled == 0.0f)
+    {
+        output.Position = float4(0, 0, 0, 0);
+        output.TexCoord = input.TexCoord;
+        return output;
+    }
+
+    float4x4 instMat = createInstanceMatrix(input);
+
+    float4 worldPos = mul(float4(input.Position, 1.0f), instMat);
+    output.Position = mul(worldPos, projection);
+
+    output.TexCoord = input.TexCoord;
+    return output;
+}

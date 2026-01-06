@@ -1,0 +1,91 @@
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CBPerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+};
+
+// ================================
+// INPUT LAYOUT
+// ================================
+struct VS_INPUT
+{
+    float3 Position : POSITION;    // aPos
+    float2 TexCoords : TEXCOORD0;  // aTexCoords
+    float3 Normal : NORMAL;        // aNormal
+    float3 tangent    : TANGENT;
+    float3 bitangent  : BINORMAL;
+
+    uint4 boneIds     : BLENDINDICES;
+    float4 weights    : BLENDWEIGHT;
+
+    // --- Instancing (slot 1) ---
+    float3 trans      : TEXCOORD1;
+    float3 scale      : TEXCOORD2;
+    float  rotX       : TEXCOORD3;
+    float  rotY       : TEXCOORD4;
+    float  rotZ       : TEXCOORD5;
+    float  enabled    : TEXCOORD6;
+};
+
+// ================================
+// OUTPUT TO PIXEL SHADER
+// ================================
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float2 TexCoords : TEXCOORD0;
+    float3 Normal : NORMAL;
+    float3 FragPos : TEXCOORD1;
+};
+
+// ================================
+// MAIN
+// ================================
+VS_OUTPUT main(VS_INPUT input)
+{
+    VS_OUTPUT output;
+
+    float3 modifiedPos = input.Position;
+
+    // Wave parameters (hardcoded como en GLSL)
+    float waveFactorX = sin(0.5f * modifiedPos.x + 0.1f * time);
+    float waveFactorZ = sin(0.5f * modifiedPos.z + 0.1f * time);
+
+    modifiedPos.y += 0.5f * (waveFactorX + waveFactorZ);
+
+    // World position
+    float4 worldPos = mul(float4(modifiedPos, 1.0f), model);
+
+    // Outputs
+    output.FragPos = worldPos.xyz;
+    output.TexCoords = input.TexCoords;
+    output.Normal = input.Normal;
+
+    // Final clip space
+    float4 viewPos = mul(worldPos, view);
+    output.Position = mul(viewPos, projection);
+
+    return output;
+}

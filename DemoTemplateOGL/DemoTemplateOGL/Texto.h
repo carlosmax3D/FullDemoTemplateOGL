@@ -34,7 +34,7 @@ public:
 
 	void Draw(Shader &shader);
 
-	void prepShader(Shader& shader, glm::vec3 &pos);
+	void prepShader(Shader& shader, Billboard2D &pos);
 
     glm::vec2 rotate_pt(glm::vec2& rotate_about, glm::vec2 pt, float& rotation_angle);
 	void setDefaultShader(bool defaultShader);

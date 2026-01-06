@@ -21,7 +21,7 @@ public:
 	CollitionBox(glm::vec3 &position, glm::vec3& halfWHD, Camera* camera);
 	void initCollitionBox(float x, float y, float z, float centerx, float centery, float centerz, float halfWidth, float halfHeight, float halfDepth, Camera* camera);
 
-	~CollitionBox();
+	virtual ~CollitionBox();
 
 };
 

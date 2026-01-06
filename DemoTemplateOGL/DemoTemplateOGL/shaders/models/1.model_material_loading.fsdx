@@ -1,0 +1,88 @@
+// ================================
+// TEXTURE & SAMPLER
+// ================================
+Texture2D texture_diffuse1  : register(t0);
+Texture2D texture_specular1 : register(t1);
+Texture2D texture_normal1   : register(t2);
+Texture2D texture_height1   : register(t3);
+SamplerState samplerLinear  : register(s0);
+SamplerState samplerAlpha   : register(s1);
+
+// ================================
+// CONSTANT BUFFERS
+// ================================
+cbuffer CB_PerObject : register(b0)
+{
+    // ===== MATRICES =====
+    float4x4 model;
+    float4x4 view;
+    float4x4 projection;
+
+    // ===== MATERIAL =====
+    float3 materialAmbient;   float pad0;
+    float3 materialDiffuse;   float time;
+    float3 materialSpecular;  float shininess;
+
+    // ===== LIGHT =====
+    float3 lightPosition; float width;
+    float3 lightAmbient;  float height;
+    float3 lightDiffuse;  float pad4;
+    float3 lightSpecular; float pad5;
+
+    // ===== CAMERA / FLAGS =====
+    float3 cameraPos;         int textureSample;
+    float3 viewPos;           int multipleInstances;
+    float3 billboardPos;      int texture_diffuse;
+    float3 camRight;          int pad7;
+};
+
+// ================================
+// INPUT
+// ================================
+struct PS_INPUT
+{
+    float4 Position : SV_POSITION;
+    float3 FragPos  : TEXCOORD0;
+    float2 TexCoords: TEXCOORD1;
+    float3 Normal   : TEXCOORD2;
+};
+
+// ================================
+// MAIN
+// ================================
+float4 main(PS_INPUT input) : SV_TARGET
+{
+    // Ambient
+    float3 ambient = lightAmbient * materialAmbient;
+
+    // Diffuse
+    float3 norm = normalize(input.Normal);
+    float3 lightDir = normalize(lightPosition - input.FragPos);
+    float diff = max(dot(norm, lightDir), 0.0f);
+    float3 diffuse = lightDiffuse * diff * materialDiffuse;
+
+    // Specular
+    float3 viewDir = normalize(viewPos - input.FragPos);
+    float3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), shininess);
+    float3 specular = lightSpecular * spec * materialSpecular;
+
+    float3 result = ambient + diffuse + specular;
+
+    // ================================
+    // Texture sampling (igual que GLSL)
+    // ================================
+    if (textureSample == 1)
+    {
+        float4 texColor = texture_diffuse1.Sample(samplerLinear, input.TexCoords);
+
+        // discard
+        clip(texColor.a - 0.1f);
+
+        return float4(result, 1.0f) * texColor;
+    }
+    else
+    {
+        return float4(result, 1.0f);
+    }
+}

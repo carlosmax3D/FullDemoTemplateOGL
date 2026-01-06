@@ -5,8 +5,9 @@
 
 class Billboard2D : public Billboard {
 public:
-	Billboard2D(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera):
+	Billboard2D(int glTextura, WCHAR textura[], float x, float y, float z, Camera* camera, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW):
         Billboard(glTextura, textura, x, y, z, camera){
+            name = "Letra";
             long tLength = wcslen((const wchar_t*)textura);
             char stext[1024];
             Texture t;
@@ -20,7 +21,7 @@ public:
             strcpy_s(t.type, 255, "texture_diffuse");
             strcpy_s(t.path, 1024, stext);
 #endif
-            initBillboard(t, 0, 0, x, y, z, camera, GL_DYNAMIC_DRAW);
+            initBillboard(t, 0, 0, x, y, z, camera, GL_DYNAMIC_DRAW, EBOGLDrawType);
             glm::vec3 pos(x,y,0);
             this->setTranslate(&pos);
             ModelAttributes &attr = this->getModelAttributes()->at(0);
@@ -39,7 +40,7 @@ public:
             attr.hitbox = NULL;
     }
 
-    ~Billboard2D(){
+    virtual ~Billboard2D(){
     }
 
     // Usa el shader default para poder imprimir el billboard
@@ -47,8 +48,8 @@ public:
         if (gpuDemo == NULL) {
             // build and compile our shader zprogram
             // ------------------------------------
-            gpuDemo = new Shader("shaders/text_shader.vs", "shaders/billboard.fs");
-    //		gpuDemo = new Shader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
+            gpuDemo = Shader::createShader("shaders/text_shader.vs", "shaders/billboard.fs");
+    //		gpuDemo = Shader::createShader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
             setDefaultShader(true);
         }
         if (getDefaultShader()) {
@@ -126,7 +127,7 @@ public:
             1, 2, 3  // second triangle
         };
         gpuDemo = NULL;
-        meshes.emplace_back(new Mesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
+        meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
         textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
     }
 };

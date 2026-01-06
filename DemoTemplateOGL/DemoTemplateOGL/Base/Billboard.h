@@ -21,7 +21,7 @@ public:
 
 	Billboard(WCHAR textura[], float ancho, float alto, float x, float y, float z, Camera* camera);
 
-	~Billboard();
+	virtual ~Billboard();
 
 	virtual void reloadData();
 	void reloadData(vector<Vertex> *vertices);

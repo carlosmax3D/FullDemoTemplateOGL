@@ -1,12 +1,14 @@
 # FullDemoTemplateOGL
 
-Este demo contiene lo necesario para hacer una aplicacion usando OpenGL, contiene librerias para el uso de las extensiones de GL, librerias para soporte de
-imagenes y una implementacion primitiva para deteccion de colisiones. Este proyecto intenta implementar los conceptos de POO para facilitar el uso de OpenGL.
+Este demo contiene lo necesario para hacer una aplicacion usando OpenGL/DirectX, contiene librerias para el uso de las extensiones de GL y DX11, librerias para soporte de
+imagenes y una implementacion primitiva para deteccion de colisiones. Este proyecto intenta implementar los conceptos de POO para facilitar el uso de OpenGL/DirectX.
 
 Para descargar la plantilla con todo y dependencias usar el comando git
 git clone --recurse-submodules https://github.com/carlosmax3D/FullDemoTemplateOGL.git
 
 En caso de descargar solo el .zip, debera descargar la dependencia glm de https://github.com/g-truc/glm/tree/2d4c4b4dd31fde06cfffad7915c2b3006402322f y descomprimir el zip en ExternalResources/glm
+
+Para activar DirectX modificar archivo Utilities.h la directiva ENGINE_OPENGL por ENGINE_DIRECTX y compilar el proyecto, sera necesaria la instalacion del DirectXSDK
 
 Entre los archivos mas destacados se tienen:
 

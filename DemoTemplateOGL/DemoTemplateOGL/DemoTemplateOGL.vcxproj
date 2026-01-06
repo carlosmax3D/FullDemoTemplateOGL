@@ -157,6 +157,10 @@
     <ClInclude Include="Base\Bone.h" />
     <ClInclude Include="Base\camera.h" />
     <ClInclude Include="Base\font_atlas.h" />
+    <ClInclude Include="Base\MeshDX11.h" />
+    <ClInclude Include="Base\MeshGL33.h" />
+    <ClInclude Include="Base\shaderDX11.h" />
+    <ClInclude Include="Base\shaderGL33.h" />
     <ClInclude Include="Billboard2D.h" />
     <ClInclude Include="Billboard2DAnimation.h" />
     <ClInclude Include="CollitionBox.h" />
@@ -188,6 +192,12 @@
     <ClCompile Include="Base\Billboard.cpp" />
     <ClCompile Include="Base\Bone.cpp" />
     <ClCompile Include="Base\font_atlas.cpp" />
+    <ClCompile Include="Base\mesh.cpp" />
+    <ClCompile Include="Base\MeshDX11.cpp" />
+    <ClCompile Include="Base\MeshGL33.cpp" />
+    <ClCompile Include="Base\shader.cpp" />
+    <ClCompile Include="Base\shaderDX11.cpp" />
+    <ClCompile Include="Base\shaderGL33.cpp" />
     <ClCompile Include="CollitionBox.cpp" />
     <ClCompile Include="KDTree\CollitionDetection.cpp" />
     <ClCompile Include="DemoTemplateOGL.cpp" />

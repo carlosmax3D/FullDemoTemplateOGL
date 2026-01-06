@@ -48,12 +48,13 @@ bool renderiza;                     // Variable para controlar el render
 bool checkInput(GameActions* actions, Scene* scene);
 void mouseActions();
 int isProgramRunning(void *ptr);
-void swapGLBuffers();
+void swapBuffers();
 int finishProgram(void *ptr);
 int gamePadEvents(GameActions *actions);
 void updatePosCords(Texto* coordenadas);
 void updateFPS(Texto *fps, int totFrames);
 int startGameEngine(void* ptrMsg);
+void adaptViewPort();
 
 // Propiedades de la ventana
 unsigned int SCR_WIDTH = 800;
@@ -95,7 +96,7 @@ int main(int argc, char** argv){
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    window = glfwCreateWindow(SCR_WIDTH,SCR_HEIGHT, "DemoTemplateOGL", NULL, NULL);
+    window = glfwCreateWindow(SCR_WIDTH,SCR_HEIGHT, "DemoTemplateOGL - Engine GL33", NULL, NULL);
     windowSize = glm::vec2(SCR_WIDTH, SCR_HEIGHT);
     glfwMakeContextCurrent(window);
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)){
@@ -139,15 +140,10 @@ int startGameEngine(void *ptrMsg){
         coordenadas->name = "Coordenadas";
         OGLobj->getLoadedText()->emplace_back(coordenadas);
         updatePosCords(coordenadas);
-        // configure global opengl state
-        // -----------------------------
-        glEnable(GL_DEPTH_TEST);
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
         gameTime.lastTick = get_nanos() / 1000000.0; // ms
         int totFrames = 0;
         double deltasCount = 0;
         double jump = 0;
-    //    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         while (isProgramRunning(ptrMsg)) {
             deltasCount += gameTime.deltaTime;
             totFrames++;
@@ -170,7 +166,7 @@ int startGameEngine(void *ptrMsg){
                 OGLobj->getLoadedText()->emplace_back(fps);
                 OGLobj->getLoadedText()->emplace_back(coordenadas);
             }
-            swapGLBuffers();
+            swapBuffers();
         }
     }catch(...){
     }
@@ -294,7 +290,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     width = 1;
                 SCR_HEIGHT = height;
                 SCR_WIDTH = width;
-                glViewport(0, 0, width, height);
+                adaptViewPort();
                 RECT rect;
                 if (GetClientRect(hWnd, &rect)) 
                     windowSize = glm::vec2(rect.right - rect.left, rect.bottom - rect.top);
@@ -356,8 +352,6 @@ bool SetUpPixelFormat(HDC hDC, PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelForm
 
 // Funciones de inicializacion para ventana compatible con OpenGL
 int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
-    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
     WNDCLASSEX wc;
     ZeroMemory(&wc, sizeof(WNDCLASSEX));
     wc.cbSize = sizeof(WNDCLASSEX);
@@ -369,6 +363,76 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
     wc.lpszClassName = szWindowClass;
     RegisterClassEx(&wc);
     hInst = hInstance;
+#ifdef ENGINE_DIRECTX
+    RECT wr = { 0, 0, SCR_WIDTH, SCR_HEIGHT };
+    AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
+
+    wcscat_s(szTitle, MAX_LOADSTRING, L" - Engine DX11");
+    hWnd = CreateWindow(szWindowClass, szTitle,
+        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+        100, 100,
+        wr.right - wr.left, //SCR_WIDTH, 
+        wr.bottom - wr.top, //SCR_HEIGHT,
+        NULL, NULL, hInstance, NULL);
+    if (hWnd == NULL) {
+        return 1;
+    }
+    DXGI_SWAP_CHAIN_DESC scd = {};
+    scd.BufferCount = 1;
+    scd.BufferDesc.Width = SCR_WIDTH;
+    scd.BufferDesc.Height = SCR_HEIGHT;
+    scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    scd.OutputWindow = hWnd;
+    scd.SampleDesc.Count = 1;
+    scd.Windowed = TRUE;
+
+    UINT createFlags = 0;
+#if defined(ENGINE_DEBUG)
+    createFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+    D3D_FEATURE_LEVEL featureLevel;
+    D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
+
+    HRESULT hr = D3D11CreateDeviceAndSwapChain(
+        nullptr,                    // adapter
+        D3D_DRIVER_TYPE_HARDWARE,   // GPU real
+        nullptr,
+        createFlags,
+        featureLevels,
+        1,
+        D3D11_SDK_VERSION,
+        &scd,
+        &swapChain,
+        &device,
+        &featureLevel,
+        &ctx
+    );
+    D3D11_TEXTURE2D_DESC depthDesc = {};
+    depthDesc.Width = SCR_WIDTH;
+    depthDesc.Height = SCR_HEIGHT;
+    depthDesc.MipLevels = 1;
+    depthDesc.ArraySize = 1;
+    depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depthDesc.SampleDesc.Count = 1;
+    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+    ID3D11Texture2D* depthTex = nullptr;
+    device->CreateTexture2D(&depthDesc, nullptr, &depthTex);
+    device->CreateDepthStencilView(depthTex, nullptr, &depthView);
+    // Obtener el render target del back buffer
+    ID3D11Texture2D* backBuffer = nullptr;
+    swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&backBuffer);
+    device->CreateRenderTargetView(backBuffer, nullptr, &backBufferRTV);
+    depthTex->Release();
+    backBuffer->Release();
+
+    ctx->OMSetRenderTargets(1, &backBufferRTV, depthView);
+#else
+    wcscat_s(szTitle, MAX_LOADSTRING, L" - Engine GL33");
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = nullptr;
+    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB = nullptr;
     HWND fakeWND = CreateWindow(
         szWindowClass, L"Fake Window",      // window class, title
         WS_CLIPSIBLINGS | WS_CLIPCHILDREN, // style
@@ -457,6 +521,7 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
         return 1;
     }
     gladLoadGL();
+#endif
     newContext = true;
     return 0;
 }
@@ -530,6 +595,8 @@ int isProgramRunning(void *ptr){
     int flag = 1;
 #ifndef _WIN32
     if (!renderiza){
+        adaptViewPort();
+        setDepthTest(true);
         glfwSetKeyCallback(window, key_callback);
         glfwSetScrollCallback(window, scroll_callback);
         glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
@@ -541,11 +608,15 @@ int isProgramRunning(void *ptr){
     if (flag)
         glfwPollEvents();
 #else
-    if (!renderiza)
+    if (!renderiza) {
+        adaptViewPort();
+        setDepthTest(true);
         renderiza = true;
+    }
     MSG &msg = *(MSG*)ptr;
     if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
         flag = msg.message == WM_QUIT? 0 : 1;
+        if (flag == 0) hWnd = NULL;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -553,9 +624,63 @@ int isProgramRunning(void *ptr){
     return flag;
 }
 
-void swapGLBuffers(){
+void adaptViewPort() {
+#ifdef ENGINE_DIRECTX
+    ctx->OMSetRenderTargets(0, nullptr, nullptr);
+    ctx->ClearState();
+    ctx->Flush();
+    // Release all outstanding references to the swap chain's buffers.
+    if (backBufferRTV != NULL) backBufferRTV->Release();
+    if (depthView != NULL) depthView->Release();
+    backBufferRTV = NULL;
+    depthView = NULL;
+    HRESULT hr;
+    // Preserve the existing buffer count and format.
+    // Automatically choose the width and height to match the client rect for HWNDs.
+    hr = swapChain->ResizeBuffers(0, SCR_WIDTH, SCR_HEIGHT, DXGI_FORMAT_UNKNOWN, 0);
+    // Perform error handling here!
+    // Get buffer and create a render-target-view.
+    ID3D11Texture2D* pBuffer;
+    hr = swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&pBuffer);
+    // Perform error handling here!
+    hr = device->CreateRenderTargetView(pBuffer, NULL, &backBufferRTV);
+    pBuffer->Release();
+    // Perform error handling here!
+    D3D11_TEXTURE2D_DESC depthDesc = {};
+    depthDesc.Width = SCR_WIDTH;
+    depthDesc.Height = SCR_HEIGHT;
+    depthDesc.MipLevels = 1;
+    depthDesc.ArraySize = 1;
+    depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    depthDesc.SampleDesc.Count = 1;
+    depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    ID3D11Texture2D* depthTex = nullptr;
+    device->CreateTexture2D(&depthDesc, nullptr, &depthTex);
+    if (depthTex != NULL) {
+        device->CreateDepthStencilView(depthTex, nullptr, &depthView);
+        depthTex->Release();
+    }
+    ctx->OMSetRenderTargets(1, &backBufferRTV, depthView);
+    D3D11_VIEWPORT vp = {};
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = (FLOAT)SCR_WIDTH;
+    vp.Height = (FLOAT)SCR_HEIGHT;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ctx->RSSetViewports(1, &vp);
+#else
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+#endif
+}
+
+void swapBuffers(){
 #ifdef _WIN32
+#ifdef ENGINE_DIRECTX
+    swapChain->Present(1, 0);
+#else
     SwapBuffers(dc);
+#endif
 #else
     glfwSwapBuffers(window);
 #endif
@@ -564,6 +689,9 @@ void swapGLBuffers(){
 
 int finishProgram(void *ptr){
 #ifdef _WIN32
+#ifdef ENGINE_DIRECTX
+    cleanDXPipeline();
+#endif
     MSG &msg = *(MSG*)ptr;
     return (int)msg.wParam;
 #else

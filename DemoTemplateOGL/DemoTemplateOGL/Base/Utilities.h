@@ -20,6 +20,16 @@
 #include <assimp/matrix4x4.h>
 #include <assimp/texture.h>
 
+/*
+-------------------------------------------------------------
+------------BANDERA PARA ACTIVAR OPENGL O DIRECTX------------
+-------------------------------------------------------------
+*/
+#define ENGINE_OPENGL // ENGINE_OPENGL / ENGINE_DIRECTX
+/*
+-------------------------------------------------------------
+-------------------------------------------------------------
+*/
 #ifndef UTILITIES_OGL_H
 #define INFO(x,y) LOGGER::LOGS::getLOGGER().info(x, y);
 #define ERRORL(x,y) LOGGER::LOGS::getLOGGER().error(x, y);
@@ -29,6 +39,7 @@
 // FLAG TO DISPLAY ERRORS ON MessageBox
 #define SHOWLOGGERMB
 #define DEBUGFILE
+#define NOENGINE_DEBUG
 #define MAX_BONE_INFLUENCE 4
 #define MAX_MODEL_BONES 200
 #define LUT_SIZE 1024  // Lookup Table (LUT) resolution
@@ -80,6 +91,36 @@ struct GameActions {
 		float* angle = NULL;
 		float* pitch = NULL;
 };
+
+#if defined(_WIN32) && defined(ENGINE_DIRECTX)
+#define ENGINE_DIRECTX
+#else
+#undef ENGINE_DIRECTX 
+#undef ENGINE_OPENGL 
+#define ENGINE_OPENGL 
+#endif
+
+#if defined(_WIN32) && defined(ENGINE_DIRECTX)
+#include <d3d11.h>
+#include <dxgi.h>
+#include <d3dcompiler.h>
+#include <DirectXMath.h>
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+extern ID3D11Device* device;
+extern ID3D11DeviceContext* ctx;
+extern IDXGISwapChain* swapChain;
+extern ID3D11RenderTargetView* backBufferRTV;
+extern ID3D11BlendState* blendState;
+extern ID3D11SamplerState* samplerState;
+extern ID3D11SamplerState* samplerAlpha;
+extern ID3D11SamplerState* samplerFont;
+extern ID3D11DepthStencilView* depthView;
+extern ID3D11DepthStencilState* depthState;
+extern ID3D11RasterizerState* rsBackState;
+extern ID3D11RasterizerState* rsFrontState;
+#endif
 
 // Estructura Vertice que contiene las propiedades del mesh
 struct Vertex {
@@ -146,6 +187,9 @@ struct Texture {
 	unsigned int id;
 	char type[255];
 	char path[1024];
+#ifdef ENGINE_DIRECTX
+	ID3D11ShaderResourceView* idDX11 = NULL;
+#endif
 };
 
 extern std::wstring s2ws(const std::string& s);
@@ -207,9 +251,20 @@ struct KeyFrame {
 	extern float sinLUT[LUT_SIZE];  // Sine Lookup Table
 }
 extern unsigned char* loadFile(char const* filename, int* x, int* y, int* comp, int req_comp, bool rotateX = false, bool rotateY = true);
-extern unsigned int TextureFromMemory(const aiTexture *texture, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
-extern unsigned int TextureFromFile(const char* path, const std::string& directory, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
-
+extern bool TextureFromMemory(Texture& text, const aiTexture *texture, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
+extern bool TextureFromFile(Texture& text, const char* path, const std::string& directory, bool rotateX = false, bool rotateY = true, bool *alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
+#ifdef ENGINE_DIRECTX
+extern ID3D11RasterizerState* createCullRasterizer(bool front = false);
+extern ID3D11DepthStencilState* createDefaultDepthState();
+extern ID3D11SamplerState* createDefaultSampler();
+extern ID3D11BlendState* createAlphaBlend();
+extern ID3D11SamplerState* createDefaultAlphaSampler();
+extern ID3D11SamplerState* createFontSampler();
+extern void cleanDXPipeline();
+extern bool DXLoadTexture(Texture& text, unsigned char* data, int width, int height, int nrComponents, bool* alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
+#else
+extern bool GLLoadTexture(Texture& text, unsigned char* data, int width, int height, int nrComponents, bool* alpha = NULL, struct UTILITIES_OGL::ImageDetails* img = NULL);
+#endif
 #pragma once
 #ifndef LOGGER_H
 #define LOGGER_H
@@ -259,6 +314,11 @@ bool compareKeyframes(UTILITIES_OGL::KeyFrame& A, UTILITIES_OGL::KeyFrame& b);
 glm::vec3 lerpVec3(const glm::vec3& a, const glm::vec3& b, float t);
 std::vector<unsigned int> getCubeIndex();
 std::vector<Vertex> init_cube(float x, float y, float z, float width, float height, float depth);
+void clearScreen();
+void freeTexture(Texture& texture);
+unsigned char* expandToRGBA(unsigned char* data, int width, int height, int nrComponents);
+unsigned char* expandGlyphToRGBA(const unsigned char* src, int w, int h, int pitch);
+void setDepthTest(bool enable = true);
 
 //void * operator new(size_t size);
 

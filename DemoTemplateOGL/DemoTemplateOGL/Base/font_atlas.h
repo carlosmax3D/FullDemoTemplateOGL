@@ -1,4 +1,5 @@
 #pragma once
+#include "Utilities.h"
 #include <iostream>
 #include <map>
 #include <string>
@@ -34,11 +35,11 @@ private:
 	static float oglVersion;
 	static font_atlas *find(const char* fontName);
 public:
-	unsigned int textureID;
+	Texture texture;
 	unsigned int TextureWidth; // Total width of the atlas
 	unsigned int TextureHeight; // Total height of the atlas
 	std::map<char, Character> ch_atlas;
-	char name[100];
+	char name[100] = { 0 };
 
 	static font_atlas &getInstance();
 	static font_atlas &getInstance(const char* fontName);

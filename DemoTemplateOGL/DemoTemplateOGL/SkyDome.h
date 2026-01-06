@@ -15,12 +15,13 @@ class SkyDome : public Model {
 	//normales y uvs de la misma, nos regresa la estructura Maya.
 public:
 	SkyDome(int stacks, int slices, float radio, WCHAR *nombre, Camera* camera) {
+		name = "Skydome";
 		cameraDetails = camera;
 		vector<unsigned int> indices;
 		vector<Texture> textures;
 		vector<Vertex>	vertices;
 		vector<Material> materials;
-		unsigned int esferaTextura;
+		bool esferaTextura;
 		if (this->getModelAttributes()->size() == 0){
 			ModelAttributes attr{0};
 			this->getModelAttributes()->push_back(attr);
@@ -41,11 +42,10 @@ public:
 		strcpy(t.type, "texture_diffuse");
 		strcpy(t.path, stext);
 #endif
-		esferaTextura = TextureFromFile(stext, this->directory);
-		t.id = esferaTextura;
+		esferaTextura = TextureFromFile(t, stext, this->directory);
 		textures.emplace_back(t);
 		gpuDemo = NULL;
-		meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
+		meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials));
 		textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
 		setDefaultShader(false);
 	}
@@ -57,7 +57,7 @@ public:
 	// Usa el shader default para poder imprimir el skydome
 	void Draw() {
 		if (gpuDemo == NULL) {
-			gpuDemo = new Shader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
+			gpuDemo = Shader::createShader("shaders/models/1.model_loading.vs", "shaders/models/1.model_loading.fs");
 			setDefaultShader(true);
 		}
 		if (getDefaultShader()) {
@@ -69,9 +69,9 @@ public:
 	}
 
 	void Draw(Shader& shader) {
-		glDisable(GL_DEPTH_TEST);
+		setDepthTest(false);
 		Model::Draw(shader,0);
-		glEnable(GL_DEPTH_TEST);
+		setDepthTest(true);
 	}
 
 	void prepShader(Shader& shader) {

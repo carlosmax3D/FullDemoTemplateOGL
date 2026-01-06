@@ -37,7 +37,7 @@ Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY,
 Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera) {
     vector<Texture> textures;
     vector<Material> materials;
-    meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
+    meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials));
     this->defaultShader = false;
     gpuDemo = NULL;
     this->cameraDetails = camera;
@@ -75,7 +75,7 @@ Model::~Model() {
         gpuDemo = NULL;
     }
     for (int i = 0; cleanTextures && i < textures_loaded.size(); i++) {
-        glDeleteTextures(1, &(textures_loaded[i]->id));
+        freeTexture(textures_loaded[i][0]);
     }
     for (int i = 0; i < meshes.size(); i++) {
         delete meshes[i];
@@ -132,7 +132,7 @@ void Model::prepShader(Shader& gpuDemo, ModelAttributes& attributes) {
 }
 void Model::Draw() {
     if (gpuDemo == NULL) {
-        gpuDemo = new Shader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
+        gpuDemo = Shader::createShader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
         defaultShader = true;
     }
     if (defaultShader) {
@@ -655,7 +655,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene, bool rotationX, bool
 
     ExtractBoneWeightForVertices(vertices,mesh,scene);
     // return a mesh object created from the extracted mesh data
-    meshes.emplace_back(new Mesh(vertices, indices, textures, materials));
+    meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials));
     if (textures_loaded.capacity() < textures.size())
         textures_loaded.reserve(textures_loaded.capacity() + textures.size());
     for (int i = 0; i < textures.size(); i++)
@@ -684,20 +684,26 @@ void Model::loadMaterialTextures(vector<Texture> &textures, aiMaterial* mat, aiT
         for (unsigned int j = 0; j < textures_loaded.size(); j++)
             if (std::strcmp(textures_loaded[j]->path, str.C_Str()) == 0) {
                 textures.emplace_back(*(textures_loaded[j]));
+#ifdef ENGINE_DIRECTX
+                textures_loaded[j]->idDX11->AddRef(); // Agrega referencia que textura se usara de nuevo
+#endif
                 skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
                 break;
             }
-        for (unsigned int j = 0; j < textures.size(); j++)
+        for (unsigned int j = 0; !skip && j < textures.size(); j++)
             if (std::strcmp(textures[j].path, str.C_Str()) == 0) {
                 textures.emplace_back(textures[j]);
+#ifdef ENGINE_DIRECTX
+                textures[j].idDX11->AddRef(); // Agrega referencia que textura se usara de nuevo
+#endif
                 skip = true; // a texture with the same filepath has already been loaded, continue to next one. (optimization)
                 break;
             }
         if (!skip) {   // if texture hasn't been loaded already, load it
             Texture texture;
             const aiTexture *paiTexture = scene->GetEmbeddedTexture(str.C_Str());
-            texture.id = paiTexture != NULL ? TextureFromMemory(paiTexture, rotationX, rotationY) :
-                                TextureFromFile(str.C_Str(), this->directory, rotationX, rotationY);
+            bool texFlag = paiTexture != NULL ? TextureFromMemory(texture, paiTexture, rotationX, rotationY) :
+                                TextureFromFile(texture, str.C_Str(), this->directory, rotationX, rotationY);
             strcpy_s(texture.type, 255, typeName.c_str());
             strcpy_s(texture.path, 1024, str.C_Str());
             textures.emplace_back(texture);

@@ -25,6 +25,7 @@ void CollitionBox::initCollitionBox(float x, float y, float z, float centerx, fl
     m.Specular  = glm::vec3(0.0f);              // no specular at all
     m.Shininess = 32.0f;                        // any value, has no effect
     Model* AABB = (Model*)this->getModelAttributes()->at(0).hitbox;
+    AABB->name = name;
     for (Mesh *mesh : AABB->meshes)
         mesh->materials.push_back(m);
 }
@@ -42,8 +43,10 @@ Model* CollitionBox::GenerateAABB(glm::vec3 &position, Node& node, Camera* camer
     m.Diffuse   = glm::vec3(1.0f, 0.0f, 0.0f);  // pure red for example
     m.Specular  = glm::vec3(0.0f);              // no specular at all
     m.Shininess = 32.0f;                        // any value, has no effect
+    idCollition++;
     AABB->setTranslate(&position);
     AABB->setNextTranslate(&position);
+    AABB->name = "CollitionBox" + std::to_string(idCollition);
     for (Mesh *mesh : AABB->meshes){
         mesh->VBOGLDrawType = GL_LINE_LOOP;
         mesh->materials.push_back(m);

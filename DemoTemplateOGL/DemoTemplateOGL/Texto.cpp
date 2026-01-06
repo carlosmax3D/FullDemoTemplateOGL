@@ -1,4 +1,7 @@
 #include "Texto.h"
+#ifdef ENGINE_DIRECTX
+#include "Base/MeshDX11.h"
+#endif
 #ifdef __linux__ 
 #define ZeroMemory(x,y) memset(x,0,y)
 #define wcscpy_s(x,y,z) wcscpy(x,z)
@@ -52,7 +55,7 @@ void Texto::initTexto(){
 	float xpos = x;
 	float ypos = y;
 	for (int i = this->textBillboard.size(); i < tLength; i++){
-        textBillboard.emplace_back(new Billboard2D(0, (WCHAR*)L"TEXTO", 0, 0, 0, cameraDetails->cameraDetails));
+        textBillboard.emplace_back(new Billboard2D(0, (WCHAR*)L"TEXTO", 0, 0, 0, cameraDetails->cameraDetails, GL_DYNAMIC_DRAW, GL_DYNAMIC_DRAW));
 		textBillboard.back()->setCleanTextures(false);
 	}
 	for (int i = 0; i < textBillboard.size(); i++) {
@@ -71,18 +74,27 @@ void Texto::initTexto(){
 
 		float w = ch_data.Size.x * scale;
 		float h = ch_data.Size.y * scale;
-
-		float margin = 0.00002; // This value prevents the minor overlap with the next char when rendering
+		glm::vec3 scaleV(w, h, 1);
 //		rotated_pt = rotate_pt(loc, glm::vec2(xpos, ypos + h), rotacion);
 		glm::vec3 pos = glm::vec3(xpos, ypos, 0);
-		letra.textures_loaded[0]->id = fontTexture.textureID;
 		letra.setTranslate(&pos);
+		letra.setScale(&scaleV);
 		letra.setActive(true);
-        float texCoords[] = { ch_data.bot_right.x - margin, ch_data.bot_right.y,
-		                      ch_data.top_left.x+ margin,  ch_data.bot_right.y,
-		                      ch_data.top_left.x + margin, ch_data.top_left.y,
-		                      ch_data.bot_right.x - margin, ch_data.top_left.y };
-        letra.setTextureCoords(texCoords);
+#ifdef ENGINE_DIRECTX
+		letra.textures_loaded[0]->idDX11 = fontTexture.texture.idDX11;
+		letra.meshes[0]->textures[0].idDX11 = fontTexture.texture.idDX11;
+		MeshDX11* m = (MeshDX11*)letra.meshes[0];
+		m->fontType = true;
+#else
+		letra.textures_loaded[0]->id = fontTexture.texture.id;
+		letra.meshes[0]->textures[0].id = fontTexture.texture.id;
+#endif
+		float margin = 0.00002; // This value prevents the minor overlap with the next char when rendering
+		float texCoords[] = { ch_data.bot_right.x - margin, ch_data.bot_right.y,
+							  ch_data.top_left.x + margin,  ch_data.bot_right.y,
+							  ch_data.top_left.x + margin, ch_data.top_left.y,
+							  ch_data.bot_right.x - margin, ch_data.top_left.y };
+		letra.setTextureCoords(texCoords);
 		xpos += scale;
 	}
 }
@@ -100,8 +112,8 @@ void Texto::Draw(){
 	if (gpuDemo == NULL) {
 		// build and compile our shader zprogram
 		// ------------------------------------
-		gpuDemo = new Shader("shaders/text_shader.vs", "shaders/text_shader.fs");
-//		gpuDemo = new Shader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
+		gpuDemo = Shader::createShader("shaders/text_shader.vs", "shaders/text_shader.fs");
+//		gpuDemo = Shader::createShader("shaders/models/1.model_material_loading.vs", "shaders/models/1.model_material_loading.fs");
 		setDefaultShader(true);
 	}
 	if (defaultShader) {
@@ -114,12 +126,13 @@ void Texto::Draw(){
 
 void Texto::Draw(Shader &shader){
     for (int i = 0; showStats && i < textBillboard.size(); i ++){
-		prepShader(shader,*textBillboard[i]->getTranslate());
+		prepShader(shader, *textBillboard[i]);
 	    textBillboard[i]->Draw(shader);
     }
 }
 
-void Texto::prepShader(Shader& shader, glm::vec3 &pos){
+void Texto::prepShader(Shader& shader, Billboard2D &bill){
+	glm::vec3& pos = *bill.getTranslate();
 //	glm::mat4 projection = cameraDetails->cameraDetails->getProjection();
     glm::mat4 projection = glm::ortho(0.0f, (SCR_WIDTH+0.0f), (SCR_HEIGHT+0.0f), 0.0f, -1.0f, 1.0f);
 	glm::mat4 view = cameraDetails->cameraDetails->getView();
@@ -127,9 +140,9 @@ void Texto::prepShader(Shader& shader, glm::vec3 &pos){
 	glm::mat4 model = glm::mat4(1.0f);
 //	model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 	model = glm::translate(model, pos); // translate it down so it's at the center of the scene
-	model = glm::scale(model, glm::vec3(scale,scale,0.0f));
+	model = glm::scale(model, glm::vec3(scale, scale, 0.0f));
 
-	shader.setVec3("color", glm::vec3(100,100,100));
+	shader.setVec3("color", glm::vec3(128,128,128));
 	shader.setMat4("projection", projection);
 	shader.setMat4("view", view);
 	shader.setMat4("model", model);
