@@ -37,7 +37,7 @@ public:
     MeshDX11(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW, int TYPEGLDrawType = GL_TRIANGLES);
 
     // render the mesh
-    void Draw(Shader& sh);
+    void Draw(Shader& sh, vector<ModelAttributes>* modelAttributes = NULL);
 
 private:
     // render data 
@@ -45,8 +45,8 @@ private:
 
     // initializes all the buffer objects/arrays
     void setupMesh();
-    void drawMultipleInstances(int multipleInstances);
-    void updateInstanceBuffer();
+    void drawMultipleInstances(int multipleInstances, vector<ModelAttributes>* modelAttributes = NULL);
+    void updateInstanceBuffer(vector<ModelAttributes>* modelAttributes = NULL);
     void updateDynamicVertexBuffer();
 
 };

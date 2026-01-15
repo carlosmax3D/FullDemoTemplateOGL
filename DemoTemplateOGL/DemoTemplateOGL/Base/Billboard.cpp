@@ -110,8 +110,6 @@ void Billboard::initBillboard(Texture &texture, float ancho, float alto, float x
 	gpuDemo = NULL;
     meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, VBOGLDrawType, EBOGLDrawType));
 	textures_loaded.emplace_back(&this->meshes[0]->textures.data()[0]);
-	for (Mesh *m : meshes)
-		m->modelAttributes = getModelAttributes();
 }
 
 Billboard::~Billboard(){

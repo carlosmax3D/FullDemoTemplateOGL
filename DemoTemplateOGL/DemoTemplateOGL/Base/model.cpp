@@ -18,25 +18,30 @@ Model::Model() {
     defaultShader = false;
     ModelAttributes m{0};
     this->attributes.push_back(m);
-    for (Mesh *m : meshes){
-        m->modelAttributes = &this->attributes;
-    }
+    if (entities == NULL) entities = new int(1);
+}
+Model::Model(int *entities) {
+    this->cameraDetails = NULL;
+    this->gammaCorrection = false;
+    defaultShader = false;
+    ModelAttributes m{0};
+    this->attributes.push_back(m);
+    this->entities = entities;
 }
 Model::Model(string const& path, Camera* camera, bool rotationX, bool rotationY, bool gamma){
     this->cameraDetails = camera;
     gammaCorrection = gamma;
     loadModel(path, rotationX, rotationY);
+    if (entities == NULL) entities = new int(1);
     defaultShader = false;
     ModelAttributes m{0};
     this->attributes.push_back(m);
     buildKDtree();
-    for (Mesh *m : meshes){
-        m->modelAttributes = &this->attributes;
-    }
 }
 Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera) {
     vector<Texture> textures;
     vector<Material> materials;
+    if (entities == NULL) entities = new int(1);
     meshes.emplace_back(Mesh::createMesh(vertices, indices, textures, materials));
     this->defaultShader = false;
     gpuDemo = NULL;
@@ -44,9 +49,6 @@ Model::Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned
     ModelAttributes m{0};
     this->attributes.push_back(m);
 //    buildKDtree();
-    for (Mesh *m : meshes){
-        m->modelAttributes = &this->attributes;
-    }
 }
 Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool rotationX, bool rotationY, bool gamma) {
     cameraDetails = cam;
@@ -54,12 +56,10 @@ Model::Model(string const& path, glm::vec3& actualPosition, Camera *cam, bool ro
     this->attributes.push_back(m);
     this->setTranslate(&actualPosition);
     this->gammaCorrection = gamma;
+    if (entities == NULL) entities = new int(1);
     Model::loadModel(path, rotationX, rotationY);
     this->defaultShader = false;
     buildKDtree();
-    for (Mesh *m : meshes){
-        m->modelAttributes = &this->attributes;
-    }
 }
 
 Model::~Model() {
@@ -74,6 +74,11 @@ Model::~Model() {
         delete gpuDemo;
         gpuDemo = NULL;
     }
+    if (this->entities != NULL && *this->entities > 1){
+        *this->entities = *this->entities - 1;
+        return;
+    }
+    if (this->entities != NULL) delete this->entities;
     for (int i = 0; cleanTextures && i < textures_loaded.size(); i++) {
         freeTexture(textures_loaded[i][0]);
     }
@@ -161,7 +166,7 @@ void Model::Draw(Shader& shader, int idxAttribute) {
     }
     if ((attributes.size() == 1 && attribute.active) || attributes.size() > 1)
         for (unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i]->Draw(shader);
+            meshes[i]->Draw(shader, &this->attributes);
 }
 glm::mat4 Model::makeTransScale(const glm::mat4& prevTransformations, int idx) const {
     glm::mat4 model = makeTrans(idx) * prevTransformations;
@@ -841,4 +846,48 @@ bool Model::colisionaCon(ModelAttributes& objeto0, ModelAttributes& objeto, glm:
 
 void Model::setCleanTextures(bool flag){
     cleanTextures = flag;
+}
+
+Model* Model::clone(int attr){
+    if (attr < 0 || attr >= getModelAttributes()->size())
+        return NULL;
+    Model *clone = new Model(this->entities);
+    *this->entities = *this->entities + 1;
+    clone->modelType = this->modelType;
+    clone->animatorIdx = this->animatorIdx;
+    clone->cleanTextures = this->cleanTextures;
+    clone->defaultShader = false;
+    clone->velocity = this->velocity;
+    clone->cameraDetails = this->cameraDetails;
+    clone->AABBsize = this->AABBsize;
+    clone->ignoreAABB = this->ignoreAABB;
+    clone->walkeable = this->walkeable;
+    clone->textures_loaded = this->textures_loaded;
+    clone->material_loaded = this->material_loaded;
+    clone->meshes = this->meshes;
+    clone->directory = this->directory;
+    clone->gammaCorrection = this->gammaCorrection;
+    clone->name = this->name;
+    clone->lightColor = this->lightColor;
+    clone->lightPos = this->lightPos;
+    clone->gpuDemo = NULL;
+    
+    *clone->GetBoneInfoMap() = this->m_BoneInfoMap;
+    *clone->getBonesInfo() = this->bonesInfo;
+    clone->m_BoneCounter = this->m_BoneCounter;
+    clone->setAnimator(this->animators);
+    ModelAttributes &att = clone->getModelAttributes()->at(attr);
+    Node &head = AABBsize;
+    clone->buildCollider(head.m_center.x, head.m_center.y, head.m_center.z, head.m_halfWidth, head.m_halfHeight, head.m_halfDepth);
+	clone->setNextTranslate(&att.nextTranslate);
+	clone->setTranslate(&att.translate);
+	clone->setScale(&att.scale);
+	clone->setRotX(att.rotX);
+	clone->setRotY(att.rotY);
+	clone->setRotZ(att.rotZ);
+	clone->setNextRotX(att.nextRotX);
+	clone->setNextRotY(att.nextRotY);
+	clone->setNextRotZ(att.nextRotZ);
+
+    return clone;
 }

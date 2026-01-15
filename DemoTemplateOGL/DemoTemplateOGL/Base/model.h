@@ -40,6 +40,7 @@ private:
     bool cleanTextures = true;
     bool defaultShader = false;
     glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+    int *entities = NULL; // Counter for instances of this object
 
 public:
     // model data 
@@ -60,6 +61,7 @@ public:
 
     // constructor, expects a filepath to a 3D model.
     Model();
+    Model(int *entities);
     Model(string const& path, Camera* camera, bool rotationX = false, bool rotationY = true, bool gamma = false);
     Model(vector<Vertex>& vertices, unsigned int numVertices, vector<unsigned int>& indices, unsigned int numIndices, Camera* camera);
     Model(string const& path, glm::vec3& actualPosition, Camera* cam, bool rotationX = false, bool rotationY = true, bool gamma = false);
@@ -120,6 +122,7 @@ public:
     void setCleanTextures(bool flag);
     std::vector<ModelAttributes>* getModelAttributes();
     virtual ModelCollider update(float terrainY, std::vector<Model*>& models, glm::vec3 &ejeColision, bool gravityEnable = false, int idx = 0);
+    virtual Model* clone(int attr = 0);
 private:
     void loadMaterial(vector<Material> &m, aiMaterial* mat);
     // loads a model with supported ASSIMP extensions from file and stores the resulting meshes in the meshes vector.

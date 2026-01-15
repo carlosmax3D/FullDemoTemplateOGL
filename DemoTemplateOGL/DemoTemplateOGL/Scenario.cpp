@@ -126,6 +126,16 @@ void Scenario::InitGraph(Model *main) {
 	*model->getBonesInfo() = *silly->getBonesInfo();
 	model->setAnimator(silly->getAnimator());
 
+	model = model->clone();
+	translate = glm::vec3(30.0f, terreno->Superficie(30.0f, 80.0f) , 80.0f);
+	scale = glm::vec3(0.02f, 0.02f, 0.02f);	// it's a bit too big for our scene, so scale it down
+	model->name = "Silly_Dancing_cloned";
+	model->setTranslate(&translate);
+	model->setNextTranslate(&translate);
+	model->setScale(&scale);
+	model->setNextRotY(180);
+	ourModel.emplace_back(model);
+
 	//	model = new Model("models/IronMan.obj", main->cameraDetails);
 //	translate = glm::vec3(0.0f, 20.0f, 30.0f);
 //	scale = glm::vec3(0.025f, 0.025f, 0.025f);	// it's a bit too big for our scene, so scale it down
@@ -267,6 +277,10 @@ Scenario::~Scenario() {
 	if (this->terreno != NULL) {
 		delete this->terreno;
 		this->terreno = NULL;
+	}
+	if (this->water != NULL) {
+		delete this->water;
+		this->water = NULL;
 	}
 	if (billBoard.size() > 0)
 		for (int i = 0; i < billBoard.size(); i++)

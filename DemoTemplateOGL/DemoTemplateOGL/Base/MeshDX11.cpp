@@ -25,7 +25,6 @@ MeshDX11::MeshDX11(vector<Vertex>& vertices, vector<unsigned int>& indices, vect
     this->indices = indices;
     this->textures = textures;
     this->materials = materials;
-    this->modelAttributes = NULL;
     this->EBOGLDrawType = EBOGLDrawType != GL_STATIC_DRAW;
     this->VBOGLDrawType = VBOGLDrawType;
     this->TYPEGLDrawType = TYPEGLDrawType;
@@ -35,7 +34,6 @@ MeshDX11::MeshDX11(vector<Vertex>& vertices, vector<unsigned int>& indices, vect
     this->vertices = vertices;
     this->indices = indices;
     this->textures = textures;
-    this->modelAttributes = NULL;
     this->EBOGLDrawType = EBOGLDrawType != GL_STATIC_DRAW;
     this->VBOGLDrawType = VBOGLDrawType;
     this->TYPEGLDrawType = TYPEGLDrawType;
@@ -104,7 +102,7 @@ void MeshDX11::updateDynamicVertexBuffer() {
     ctx->Unmap(vertexBuffer, 0);
 }
 
-void MeshDX11::updateInstanceBuffer() {
+void MeshDX11::updateInstanceBuffer(vector<ModelAttributes>* modelAttributes) {
     if (!modelAttributes || modelAttributes->empty())
         return;
     size_t needed = modelAttributes->size();
@@ -127,7 +125,7 @@ void MeshDX11::updateInstanceBuffer() {
     }
 }
 #define MAX_SRV_TEXTURES 12
-void MeshDX11::Draw(Shader &sh) {
+void MeshDX11::Draw(Shader &sh, vector<ModelAttributes>* modelAttributes) {
     float blendFactor[4] = { 0,0,0,0 };
     ShaderDX11& shader = (ShaderDX11&)sh;
     ID3D11ShaderResourceView* srvTextures[MAX_SRV_TEXTURES] = { 0 };
@@ -195,11 +193,11 @@ void MeshDX11::Draw(Shader &sh) {
     ctx->PSSetShaderResources(0, this->fontType ? 1 : MAX_SRV_TEXTURES, srvTextures);
     ctx->PSSetSamplers(0, 2, samplers);
     shader.setInt("textureSample", textureSample);
-    int multipleInstances = this->modelAttributes != NULL && this->modelAttributes->size() > 1;
+    int multipleInstances = modelAttributes != NULL && modelAttributes->size() > 1;
     shader.setInt("multipleInstances", multipleInstances);
     shader.apply();
     updateDynamicVertexBuffer();
-    updateInstanceBuffer();
+    updateInstanceBuffer(modelAttributes);
 
     UINT strides[2] = { sizeof(Vertex), sizeof(ModelAttributes) };
     UINT offsets[2] = { 0, 0 };
@@ -217,7 +215,7 @@ void MeshDX11::Draw(Shader &sh) {
 
     switch (this->VBOGLDrawType) {
         case GL_DYNAMIC_DRAW:
-            drawMultipleInstances(multipleInstances);
+            drawMultipleInstances(multipleInstances, modelAttributes);
             ctx->OMSetBlendState(nullptr, nullptr, 0xffffffff);
             break;
         case GL_LINE_LOOP:
@@ -226,7 +224,7 @@ void MeshDX11::Draw(Shader &sh) {
             ctx->DrawIndexed(nIndices, 0, 0);
             break;
         default:
-            drawMultipleInstances(multipleInstances);
+            drawMultipleInstances(multipleInstances, modelAttributes);
     }
 
     if (this->VBOGLDrawType == GL_STATIC_DRAW && this->TYPEGLDrawType == GL_POINTS)
@@ -234,7 +232,7 @@ void MeshDX11::Draw(Shader &sh) {
 
 }
 
-void MeshDX11::drawMultipleInstances(int multipleInstances) {
+void MeshDX11::drawMultipleInstances(int multipleInstances, vector<ModelAttributes>* modelAttributes) {
     if (!multipleInstances) {
         if (indexBuffer)
             ctx->DrawIndexed(nIndices, 0, 0);

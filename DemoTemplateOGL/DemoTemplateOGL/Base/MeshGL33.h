@@ -26,7 +26,7 @@ public:
     MeshGL33(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW, int TYPEGLDrawType = GL_TRIANGLES);
 
     // render the mesh
-    void Draw(Shader& shader);
+    void Draw(Shader& shader, vector<ModelAttributes>* modelAttributes = NULL);
 
 private:
     // render data 
@@ -34,6 +34,6 @@ private:
 
     // initializes all the buffer objects/arrays
     void setupMesh();
-    void drawMultipleInstances(int multipleInstances);
+    void drawMultipleInstances(int multipleInstances, vector<ModelAttributes>* modelAttributes = NULL);
 };
 #endif

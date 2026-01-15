@@ -25,8 +25,6 @@ public:
     vector<unsigned int> indices;
     vector<Texture>      textures;
     vector<Material>     materials;
-    vector<ModelAttributes>*
-                         modelAttributes;
     unsigned int nModelAttributes = 0;
     int VBOGLDrawType = GL_STATIC_DRAW;
 
@@ -40,7 +38,7 @@ public:
     //Mesh(vector<Vertex>& vertices, vector<unsigned int>& indices, vector<Texture>& textures, int VBOGLDrawType = GL_STATIC_DRAW, int EBOGLDrawType = GL_STATIC_DRAW, int TYPEGLDrawType = GL_TRIANGLES);
 
     // render the mesh
-    virtual void Draw(Shader& shader) = 0;
+    virtual void Draw(Shader& shader, vector<ModelAttributes>* modelAttributes = NULL) = 0;
 
 private:
 };

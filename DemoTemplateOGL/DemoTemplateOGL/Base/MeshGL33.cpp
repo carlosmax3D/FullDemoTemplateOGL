@@ -34,7 +34,6 @@ MeshGL33::MeshGL33(vector<Vertex>& vertices, vector<unsigned int>& indices, vect
     this->VBOGLDrawType = VBOGLDrawType;
     this->EBOGLDrawType = EBOGLDrawType;
     this->TYPEGLDrawType = TYPEGLDrawType;
-    this->modelAttributes = NULL;
     // now that we have all the required data, set the vertex buffers and its attribute pointers.
     setupMesh();
 }
@@ -45,13 +44,12 @@ MeshGL33::MeshGL33(vector<Vertex>& vertices, vector<unsigned int>& indices, vect
     this->VBOGLDrawType = VBOGLDrawType;
     this->EBOGLDrawType = EBOGLDrawType;
     this->TYPEGLDrawType = TYPEGLDrawType;
-    this->modelAttributes = NULL;
     // now that we have all the required data, set the vertex buffers and its attribute pointers.
     setupMesh();
 }
 
 // render the mesh
-void MeshGL33::Draw(Shader& shader) {
+void MeshGL33::Draw(Shader& shader, vector<ModelAttributes>* modelAttributes) {
     // bind appropriate textures
     unsigned int diffuseNr = 1;
     unsigned int specularNr = 1;
@@ -109,7 +107,7 @@ void MeshGL33::Draw(Shader& shader) {
             shader.setFloat("material.shininess", 1.0f);
         }
     }
-    int multipleInstances = this->modelAttributes != NULL && this->modelAttributes->size() > 1;
+    int multipleInstances = modelAttributes != NULL && modelAttributes->size() > 1;
     shader.setInt("multipleInstances", multipleInstances);
     // draw mesh
     glBindVertexArray(VAO);
@@ -123,7 +121,7 @@ void MeshGL33::Draw(Shader& shader) {
                 // Actualiza todo el contenido del buffer con los nuevos datos
                 glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(Vertex), vertices.data());
             }
-            drawMultipleInstances(multipleInstances);
+            drawMultipleInstances(multipleInstances, modelAttributes);
             glDisable(GL_BLEND);
             break;
         case GL_LINE_LOOP:
@@ -131,7 +129,7 @@ void MeshGL33::Draw(Shader& shader) {
             glBindVertexArray(0);
             break;
         default:
-            drawMultipleInstances(multipleInstances);
+            drawMultipleInstances(multipleInstances, modelAttributes);
             glBindVertexArray(0);
     }
     // always good practice to set everything back to defaults once configured.
@@ -211,7 +209,7 @@ void MeshGL33::setupMesh() {
     glBindVertexArray(0);
 }
 
-void MeshGL33::drawMultipleInstances(int multipleInstances){
+void MeshGL33::drawMultipleInstances(int multipleInstances, vector<ModelAttributes>* modelAttributes){
     if (multipleInstances == 0){
         if (indices.size() == 0)
             glDrawArrays(TYPEGLDrawType, 0, (GLsizei)vertices.size());
