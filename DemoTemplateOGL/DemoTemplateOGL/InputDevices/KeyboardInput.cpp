@@ -40,24 +40,24 @@ glm::vec2 MouseInput::setPosition(glm::vec2 d, bool isDelta) {
 	return setPosition(d.x, d.y, isDelta);
 }
 struct Input input;
+bool prevKEYS[256];
 bool KEYS[256];
 MouseInput cDelta;
 
 void Init() {
 	for (int i = 0; i < 256; i++) {
 		KEYS[i] = false;
+		prevKEYS[i] = false;
 	}
 }//Initizalizes keys
 
 bool KeysEvents(GameActions *actions){
 	bool checkCollition = false;
-	if (KEYS[input.P]) {
+	if (KEYS[input.P] && !prevKEYS[input.P]) {
 		actions->firstPerson = true;
-		KEYS[input.P] = false;
 	}
-	if (KEYS[input.C]) {
+	if (KEYS[input.C] && !prevKEYS[input.C]) {
 		actions->displayHitboxStats = !actions->displayHitboxStats;
-		KEYS[input.C] = false;
 	}
 	if (KEYS[input.D]) {
 		if (KEYS[KEYB_HMOVEMENT])

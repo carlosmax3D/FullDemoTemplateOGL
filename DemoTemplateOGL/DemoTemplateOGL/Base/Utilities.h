@@ -59,6 +59,7 @@ extern bool showStats;
 const float GRAVITY = -9.81f; // Gravity acceleration (m/s²)
 const float TERMINAL_VELOCITY = -50.0f; // Optional: Prevents infinite acceleration
 extern bool KEYS[256];
+extern bool prevKEYS[256];
 
 struct GameTime {
 	double lastTick = 0;

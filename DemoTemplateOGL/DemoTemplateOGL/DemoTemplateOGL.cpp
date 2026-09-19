@@ -314,11 +314,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             cDelta.setMouseWheel(delta);
         }break;
         case WM_KEYDOWN: {
-            KEYS[wParam] = true;
         } break;
         case WM_KEYUP: {
-//            if (wParam == KEYB_CAMERA || wParam == KEYB_HMOVEMENT)
-                KEYS[wParam] = false;
+        } break;
+        case WM_KILLFOCUS: {
+            memset(KEYS, 0, 256 * sizeof(bool));
         } break;
     }
     return DefWindowProc(hWnd, message, wParam, lParam);
@@ -527,6 +527,15 @@ int prepareRenderWindow(HINSTANCE hInstance, int nCmdShow) {
     newContext = true;
     return 0;
 }
+bool isKeyDown(int key) {
+    return (GetAsyncKeyState(key) & 0x8000) != 0;
+}
+void key_callback() {
+    for (int i = 0; i < 256; i++) {
+        prevKEYS[i] = KEYS[i];
+        KEYS[i] = isKeyDown(i);
+    }
+}
 #else
 void window_size_callback(GLFWwindow* window, int width, int height){
     if (height == 0)
@@ -622,6 +631,7 @@ int isProgramRunning(void *ptr){
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
+    key_callback();
 #endif
     return flag;
 }
