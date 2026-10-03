@@ -1,0 +1,316 @@
+<mxfile host="app.diagrams.net" pages="4">
+  <diagram id="architecture-current" name="Arquitectura actual">
+    <mxGraphModel dx="1571" dy="883" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="950" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="entry" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;" value="DemoTemplateOGL.cpp&#xa;Punto de entrada y ciclo principal" vertex="1">
+          <mxGeometry height="80" width="230" x="50" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="platform" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" value="Plataforma&#xa;Linux: GLFW + GLAD + OpenGL 3.3&#xa;Windows: WinAPI + WGL; ruta DX11 disponible" vertex="1">
+          <mxGeometry height="100" width="250" x="40" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="input" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" value="InputDevices/KeyboardInput&#xa;Teclado y mouse&#xa;GamePadRR: XInput en Windows" vertex="1">
+          <mxGeometry height="100" width="250" x="350" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="actions" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" value="Utilities::GameActions&#xa;Acciones de movimiento, cámara y salto" vertex="1">
+          <mxGeometry height="80" width="240" x="710" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="scene" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;" value="Base/Scene.h&#xa;Interfaz de escena&#xa;update(): terreno, gravedad y colisiones" vertex="1">
+          <mxGeometry height="100" width="260" x="700" y="265" as="geometry" />
+        </mxCell>
+        <mxCell id="scenario" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;" value="Scenario.h / Scenario.cpp&#xa;Implementa Scene&#xa;Construye y dibuja la escena de muestra" vertex="1">
+          <mxGeometry height="100" width="270" x="1065" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="scene-content" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" value="Elementos de Scenario&#xa;SkyDome | Terreno | Water&#xa;Billboard | BillboardAnimation | Billboard2D&#xa;Texto | colección de Model" vertex="1">
+          <mxGeometry height="150" width="200" x="1100" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="model" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;" value="Base/Model&#xa;Carga Assimp, transformación, estado y dibujo&#xa;Asociado a Camera" vertex="1">
+          <mxGeometry height="100" width="270" x="1065" y="425" as="geometry" />
+        </mxCell>
+        <mxCell id="mesh-shader" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;" value="Mesh + Shader&#xa;Abstracciones de render&#xa;GL33 y DX11" vertex="1">
+          <mxGeometry height="100" width="200" x="790" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="animation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;" value="Animation + Bone + Animator&#xa;Animación esquelética importada con Assimp" vertex="1">
+          <mxGeometry height="90" width="280" x="1060" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="collision" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;" value="KDTree + CollitionDetection&#xa;Árbol espacial y pruebas de colisión&#xa;CollitionBox crea hitboxes" vertex="1">
+          <mxGeometry height="100" width="260" x="350" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="camera" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" value="Base/camera.h&#xa;Cámara ligada al modelo principal&#xa;Actualizada desde el ciclo de escena" vertex="1">
+          <mxGeometry height="90" width="260" x="350" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="dependencies" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" value="Dependencias externas&#xa;GLM | Assimp | FreeImage | FreeType&#xa;GLFW | GLAD" vertex="1">
+          <mxGeometry height="100" width="300" x="15" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-entry-platform" edge="1" parent="1" source="entry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="platform">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-entry-input" edge="1" parent="1" source="entry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="input">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-input-actions" edge="1" parent="1" source="input" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="actions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-actions-scene" edge="1" parent="1" source="actions" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="scene">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-scene-scenario" edge="1" parent="1" source="scenario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="scene" value="implementa">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-scenario-content" edge="1" parent="1" source="scenario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="scene-content" value="compone">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-scenario-model" edge="1" parent="1" source="scenario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="model">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-model-render" edge="1" parent="1" source="model" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="mesh-shader">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-model-animation" edge="1" parent="1" source="model" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="animation">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-model-collision" edge="1" parent="1" source="model" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="collision">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-scene-camera" edge="1" parent="1" source="scene" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="camera">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-model-camera" edge="1" parent="1" source="model" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;" target="camera">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-platform-dependencies" edge="1" parent="1" source="platform" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;dashed=1;" target="dependencies">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="uml-scene" name="UML - Escena y entidades">
+    <mxGraphModel dx="2175" dy="1223" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="s-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="DIAGRAMA DE CLASES: escena y entidades" vertex="1">
+          <mxGeometry height="40" width="700" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="s-scene" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" value="&amp;lt;&amp;lt;interface&amp;gt;&amp;gt;&#xa;Scene&#xa;------------------------------&#xa;+getMainModel(): Model* = 0&#xa;+Render(): Scene* = 0&#xa;+getLoadedModels(): vector&lt;Model*&gt;* = 0&#xa;+update(): int&#xa;+removeCollideModel(...): bool&#xa;+lookForCollition(...): Model*" vertex="1">
+          <mxGeometry height="235" width="420" x="1450" y="42.5" as="geometry" />
+        </mxCell>
+        <mxCell id="s-scenario" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" value="Scenario&#xa;------------------------------&#xa;-sky: SkyDome*&#xa;-terreno: Terreno*&#xa;-water: Water*&#xa;-ourModel: vector&lt;Model*&gt;&#xa;-billBoard: vector&lt;Billboard*&gt;&#xa;-billBoardAnim: vector&lt;BillboardAnimation*&gt;&#xa;-billBoard2D: vector&lt;Billboard2D*&gt;&#xa;-ourText: vector&lt;Texto*&gt;&#xa;-angulo, animacion: float&#xa;+Scenario(cam: Camera*)&#xa;+Scenario(camIni: Model*)&#xa;+InitGraph(main: Model*): void&#xa;+Render(): Scene*&#xa;+getMainModel(): Model*&#xa;+getLoadedModels(): vector&lt;Model*&gt;*" vertex="1">
+          <mxGeometry height="385" width="440" x="970" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="s-camera" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" value="Camera&#xa;------------------------------&#xa;-Position: vec3&#xa;-Front, Up, Right: vec3&#xa;-Yaw, Pitch, Zoom: float&#xa;-firstPerson: bool&#xa;-DistanceFromPlayer: float&#xa;+getInstance(): Camera* {static}&#xa;+CamaraUpdate(rotY, position): mat4&#xa;+setFirstPerson(value): void&#xa;+calculateAngleAroundPlayer(value): void&#xa;+setZoom(value): void" vertex="1">
+          <mxGeometry height="285" width="450" x="1340" y="723" as="geometry" />
+        </mxCell>
+        <mxCell id="s-model" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" value="Model&#xa;------------------------------&#xa;+cameraDetails: Camera*&#xa;+meshes: vector&lt;Mesh*&gt;&#xa;+name: string&#xa;-attributes: vector&lt;ModelAttributes&gt;&#xa;-animators: vector&lt;Animator&gt;&#xa;+Model(path, camera, ...)&#xa;+Draw(): void&#xa;+update(terrainY, models, ...): ModelCollider&#xa;+setTranslate(position): void&#xa;+setAnimation(id): void&#xa;+clone(): Model*" vertex="1">
+          <mxGeometry height="300" width="420" x="20" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="s-billboard" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" value="Billboard : Model&#xa;------------------------------&#xa;-alto, ancho: float&#xa;+Draw(): void&#xa;+prepShader(shader, idx): void&#xa;+setTextureCoords(coords): void&#xa;+setAncho(value): void&#xa;+setAlto(value): void" vertex="1">
+          <mxGeometry height="220" width="350" x="50" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="s-billboard2d" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" value="Billboard2D : Billboard&#xa;------------------------------&#xa;+Billboard2D(texture, size, position, camera)&#xa;+Draw(): void&#xa;+prepShader(shader, idx): void&#xa;Renderizado con proyección ortográfica" vertex="1">
+          <mxGeometry height="170" width="350" x="40" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="s-sky" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" value="SkyDome : Model&#xa;------------------------------&#xa;+SkyDome(stacks, slices, radio, texture, camera)&#xa;+Draw(): void&#xa;+prepShader(shader): void" vertex="1">
+          <mxGeometry height="145" width="320" x="970" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="s-terrain" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" value="Terreno : Model&#xa;------------------------------&#xa;+verx, verz: int&#xa;-anchof, proff: float&#xa;+Superficie(x, z): float&#xa;+Draw(): void&#xa;+prepShader(shader): void" vertex="1">
+          <mxGeometry height="190" width="320" x="400" y="875" as="geometry" />
+        </mxCell>
+        <mxCell id="s-water" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" value="Water : Terreno&#xa;------------------------------&#xa;-waveSpeed, waveAmplitude: float&#xa;+Draw(): void&#xa;Especializa el terreno para ondas" vertex="1">
+          <mxGeometry height="150" width="320" x="40" y="895" as="geometry" />
+        </mxCell>
+        <mxCell id="s-billboard-anim" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="BillboardAnimation&#xa;------------------------------&#xa;-current: int&#xa;-frames: vector&lt;Billboard*&gt;&#xa;+pushFrame(frame): void&#xa;+nextAnimation(): void&#xa;+Draw(): void" vertex="1">
+          <mxGeometry height="190" width="380" x="490" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="s-text" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="Texto&#xa;------------------------------&#xa;-textBillboard: vector&lt;Billboard2D*&gt;&#xa;-texto: wchar_t[512]&#xa;+initTexto(texto): void&#xa;+Draw(): void&#xa;+setScale(value): void" vertex="1">
+          <mxGeometry height="175" width="380" x="510" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="s-collisionbox" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" value="CollitionBox : Model&#xa;------------------------------&#xa;+GenerateAABB(position, node, camera): Model* {static}&#xa;+CollitionBox(position, size, camera)" vertex="1">
+          <mxGeometry height="130" width="350" x="870" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="s-legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacing=8;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="Notación: + público | - privado | {static} miembro estático | = 0 método virtual puro | triángulo vacío: herencia/realización | rombo lleno: composición | línea simple: asociación" vertex="1">
+          <mxGeometry height="70" width="1500" x="50" y="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="s-realize" edge="1" parent="1" source="s-scenario" style="dashed=1;endArrow=block;endFill=0;html=1;" target="s-scene">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-billboard" edge="1" parent="1" source="s-billboard" style="endArrow=block;endFill=0;html=1;" target="s-model">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-billboard2d" edge="1" parent="1" source="s-billboard2d" style="endArrow=block;endFill=0;html=1;" target="s-billboard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-sky" edge="1" parent="1" source="s-sky" style="endArrow=block;endFill=0;html=1;" target="s-model">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-terrain" edge="1" parent="1" source="s-terrain" style="endArrow=block;endFill=0;html=1;" target="s-model">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-water" edge="1" parent="1" source="s-water" style="endArrow=block;endFill=0;html=1;" target="s-terrain">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-inherit-collision" edge="1" parent="1" source="s-collisionbox" style="endArrow=block;endFill=0;html=1;" target="s-model">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-model-camera" edge="1" parent="1" source="s-model" style="endArrow=open;endFill=0;html=1;" target="s-camera" value="cameraDetails">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-frame-composition" edge="1" parent="1" source="s-billboard-anim" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="s-billboard" value="frames 0..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-text-composition" edge="1" parent="1" source="s-text" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="s-billboard2d" value="textBillboard 0..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="s-scenario-model" edge="1" parent="1" source="s-scenario" style="endArrow=open;endFill=0;html=1;" target="s-model" value="ourModel 0..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="uml-rendering" name="UML - Render, animación y colisión">
+    <mxGraphModel dx="2571" dy="1445" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1900" pageHeight="1500" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="r-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="DIAGRAMA DE CLASES: renderizado, animación y colisiones" vertex="1">
+          <mxGeometry height="40" width="900" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="r-model" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;" value="Model&#xa;------------------------------&#xa;+AABBsize: Node&#xa;+meshes: vector&lt;Mesh*&gt;&#xa;+textures_loaded: vector&lt;Texture*&gt;&#xa;+material_loaded: vector&lt;Material*&gt;&#xa;-animators: vector&lt;Animator&gt;&#xa;-attributes: vector&lt;ModelAttributes&gt;&#xa;+Draw(): void&#xa;+buildKDtree(): void&#xa;+update(...): ModelCollider&#xa;+clone(): Model*" vertex="1">
+          <mxGeometry height="310" width="430" x="710" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="r-mesh" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" value="&amp;lt;&amp;lt;abstract&amp;gt;&amp;gt;&#xa;Mesh&#xa;------------------------------&#xa;+vertices: vector&lt;Vertex&gt;&#xa;+indices: vector&lt;unsigned int&gt;&#xa;+textures: vector&lt;Texture&gt;&#xa;+materials: vector&lt;Material&gt;&#xa;+createMesh(...): Mesh* {static}&#xa;+Draw(shader, attributes): void = 0" vertex="1">
+          <mxGeometry height="270" width="450" x="700" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r-meshgl" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" value="MeshGL33 : Mesh&#xa;------------------------------&#xa;+VAO: unsigned int&#xa;-VBO, EBO: unsigned int&#xa;+MeshGL33(vertices, indices, textures, ...)&#xa;+Draw(shader, attributes): void&#xa;-setupMesh(): void" vertex="1">
+          <mxGeometry height="205" width="450" x="1310" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="r-meshdx" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;" value="MeshDX11 : Mesh&#xa;------------------------------&#xa;Implementa buffers y dibujo Direct3D 11&#xa;+Draw(shader, attributes): void" vertex="1">
+          <mxGeometry height="145" width="450" x="40" y="102.5" as="geometry" />
+        </mxCell>
+        <mxCell id="r-shader" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="&amp;lt;&amp;lt;abstract&amp;gt;&amp;gt;&#xa;Shader&#xa;------------------------------&#xa;+ID: unsigned int&#xa;+createShader(paths...): Shader* {static}&#xa;+use(): void = 0&#xa;+setInt(name, value): void = 0&#xa;+setMat4(name, matrix): void = 0&#xa;+setMat4Array(name, matrices, count): void = 0" vertex="1">
+          <mxGeometry height="240" width="450" x="60" y="452" as="geometry" />
+        </mxCell>
+        <mxCell id="r-shadergl" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="ShaderGL33 : Shader&#xa;------------------------------&#xa;+ShaderGL33(vertexPath, fragmentPath, ...)&#xa;+use(): void&#xa;+setBool / setInt / setFloat(...)&#xa;+setVec2 / setVec3 / setVec4(...)&#xa;+setMat2 / setMat3 / setMat4(...)" vertex="1">
+          <mxGeometry height="210" width="450" x="60" y="721" as="geometry" />
+        </mxCell>
+        <mxCell id="r-shaderdx" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;" value="ShaderDX11 : Shader&#xa;------------------------------&#xa;Implementa compilación y uniforms DX11&#xa;+use(): void&#xa;+setMat4(name, matrix): void" vertex="1">
+          <mxGeometry height="145" width="450" x="60" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="r-material" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" value="Material «struct»&#xa;------------------------------&#xa;+Diffuse, Specular, Ambient: vec3&#xa;+Shininess: float&#xa;+hasDiffuse / hasSpecular / hasAmbient: bool" vertex="1">
+          <mxGeometry height="165" width="450" x="100" y="1170" as="geometry" />
+        </mxCell>
+        <mxCell id="r-animation" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" value="Animation&#xa;------------------------------&#xa;-m_Duration, m_TicksPerSecond: double&#xa;-m_Bones: vector&lt;Bone&gt;&#xa;+loadAllAnimations(path, ...): vector&lt;Animation&gt; {static}&#xa;+FindBone(name): Bone*&#xa;+GetRootNode(): AssimpNodeData&amp;" vertex="1">
+          <mxGeometry height="220" width="500" x="1300" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="r-bone" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" value="Bone&#xa;------------------------------&#xa;-m_Name: string&#xa;-m_Positions, m_Rotations, m_Scales: vector&lt;KeyFrame&gt;&#xa;+Update(animationTime): mat4&amp;&#xa;+GetBoneName(): string&amp;&#xa;+GetBoneID(): int" vertex="1">
+          <mxGeometry height="190" width="500" x="1300" y="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="r-animator" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;" value="Animator&#xa;------------------------------&#xa;-m_CurrentAnimation: Animation&#xa;-m_FinalBoneMatrices: mat4[MAX_MODEL_BONES]&#xa;+UpdateAnimation(dt): void&#xa;+PlayAnimation(animation): void&#xa;+GetFinalBoneMatrices(): mat4*" vertex="1">
+          <mxGeometry height="190" width="500" x="1300" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="r-node" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" value="Node&#xa;------------------------------&#xa;+m_left, m_right: Node*&#xa;+m_center: vec4&#xa;+m_axisX, m_axisY, m_axisZ: vec3&#xa;+m_halfWidth, m_halfHeight, m_halfDepth: float&#xa;+isLastInnerNode(): bool" vertex="1">
+          <mxGeometry height="205" width="500" x="675" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="r-kdtree" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" value="KDTree&#xa;------------------------------&#xa;-m_root: Node*&#xa;+getRoot(): Node*&#xa;+makeTree(points): void&#xa;+splitListByMedian(axis, points, left, right): vec4&#xa;+setHeadVariables(head, meshes): void {static}" vertex="1">
+          <mxGeometry height="165" width="450" x="710" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="r-collision" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=13;" value="CollitionDetection «module»&#xa;------------------------------&#xa;+checkCollision(A, B, transforms): bool&#xa;+findCollision(...): bool&#xa;+rayIntersectsOBB(...): bool&#xa;+SolveEquision(...): bool" vertex="1">
+          <mxGeometry height="150" width="450" x="130" y="985" as="geometry" />
+        </mxCell>
+        <mxCell id="r-inherit-meshgl" edge="1" parent="1" source="r-meshgl" style="endArrow=block;endFill=0;html=1;" target="r-mesh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-inherit-meshdx" edge="1" parent="1" source="r-meshdx" style="endArrow=block;endFill=0;html=1;" target="r-mesh">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-inherit-shadergl" edge="1" parent="1" source="r-shadergl" style="endArrow=block;endFill=0;html=1;" target="r-shader">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-inherit-shaderdx" edge="1" parent="1" source="r-shaderdx" style="endArrow=block;endFill=0;html=1;" target="r-shader">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-model-mesh" edge="1" parent="1" source="r-model" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="r-mesh" value="meshes 1..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-model-animator" edge="1" parent="1" source="r-model" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="r-animator" value="animators 0..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-animation-bone" edge="1" parent="1" source="r-animation" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="r-bone" value="m_Bones 0..*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-animator-animation" edge="1" parent="1" source="r-animator" style="endArrow=open;endFill=0;html=1;" target="r-animation" value="m_CurrentAnimation 1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-kdtree-node" edge="1" parent="1" source="r-kdtree" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="r-node" value="m_root 1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-model-kdtree" edge="1" parent="1" source="r-model" style="startArrow=diamond;startFill=1;endArrow=none;html=1;" target="r-node" value="AABBsize">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-model-shader" edge="1" parent="1" source="r-model" style="dashed=1;endArrow=open;endFill=0;html=1;" target="r-shader">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r-legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacing=8;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;" value="Relaciones: triángulo vacío = herencia | rombo lleno = composición (el contenedor gestiona la vida del objeto) | línea discontinua = dependencia" vertex="1">
+          <mxGeometry height="65" width="1400" x="70" y="1380" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="uml-input" name="UML - Entrada y acciones">
+    <mxGraphModel dx="1768" dy="994" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="i-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;" value="DIAGRAMA DE CLASES: entrada y acciones" vertex="1">
+          <mxGeometry height="40" width="800" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="i-main" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;" value="DemoTemplateOGL.cpp «módulo»&#xa;------------------------------&#xa;+main(argc, argv): int [Linux]&#xa;+wWinMain(...): int [Windows]&#xa;+startGameEngine(...): int&#xa;+checkInput(actions, scene): bool&#xa;+gamePadEvents(actions): int" vertex="1">
+          <mxGeometry height="230" width="430" x="620" y="57.5" as="geometry" />
+        </mxCell>
+        <mxCell id="i-input" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" value="Input «struct»&#xa;------------------------------&#xa;+Keys: enum&#xa;  A..Z, Shift, Control, Space, F1..F12" vertex="1">
+          <mxGeometry height="145" width="380" x="80" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="i-mouse" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" value="MouseInput&#xa;------------------------------&#xa;-prevP, currP, delta: vec2&#xa;-mouseWheel: char&#xa;-lbtn, rbtn: bool&#xa;+getDX(), getDY(): float&#xa;+setPosition(x, y, isDelta): vec2&#xa;+getLbtn(), getRbtn(): bool&#xa;+getMouseWheel(): char" vertex="1">
+          <mxGeometry height="250" width="380" x="80" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="i-actions" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" value="GameActions «struct»&#xa;------------------------------&#xa;+advance, hAdvance, sideAdvance: int&#xa;+sprintPressed, firstPerson: bool&#xa;+jump: double*&#xa;+action, displayHitboxStats: bool&#xa;-zoom, playerZoom, angle, pitch: float*&#xa;+setZoom(value): void&#xa;+setAngle(value): void&#xa;+setPitch(value): void" vertex="1">
+          <mxGeometry height="300" width="430" x="610" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="i-keyboard" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;" value="KeyboardInput.cpp «módulo»&#xa;------------------------------&#xa;+Init(): void&#xa;+KeysEvents(actions: GameActions*): bool&#xa;+cDelta: MouseInput&#xa;+KEYS / prevKEYS: bool[256]" vertex="1">
+          <mxGeometry height="200" width="380" x="80" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="i-gamepad" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;" value="GamePadRR «Windows / XInput»&#xa;------------------------------&#xa;-numeroControlador: int&#xa;+GetState(): XINPUT_STATE&#xa;+IsConnected(): bool&#xa;+Vibrate(left, right): void" vertex="1">
+          <mxGeometry height="190" width="360" x="1160" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="i-flow" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=8;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" value="Flujo del ciclo&#xa;1. Leer teclado, mouse o gamepad&#xa;2. Traducir eventos a GameActions&#xa;3. checkInput actualiza modelo y cámara&#xa;4. Scene.update() y Scene.Render()" vertex="1">
+          <mxGeometry height="210" width="360" x="1140" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-input-keyboard" edge="1" parent="1" source="i-keyboard" style="endArrow=open;endFill=0;html=1;" target="i-input" value="enumera teclas">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-keyboard-mouse" edge="1" parent="1" source="i-keyboard" style="endArrow=open;endFill=0;html=1;" target="i-mouse" value="usa cDelta">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-keyboard-actions" edge="1" parent="1" source="i-keyboard" style="endArrow=open;endFill=0;html=1;" target="i-actions" value="escribe acciones">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-main-actions" edge="1" parent="1" source="i-main" style="endArrow=open;endFill=0;html=1;" target="i-actions" value="consume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-main-keyboard" edge="1" parent="1" source="i-main" style="dashed=1;endArrow=open;endFill=0;html=1;" target="i-keyboard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-main-gamepad" edge="1" parent="1" source="i-main" style="dashed=1;endArrow=open;endFill=0;html=1;" target="i-gamepad">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-edge-gamepad-actions" edge="1" parent="1" source="i-gamepad" style="dashed=1;endArrow=open;endFill=0;html=1;" target="i-actions" value="actualiza">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="i-legend" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacing=8;fillColor=#f5f5f5;strokeColor=#666666;fontSize=13;" value="+ público | - privado | struct representa un tipo de datos | módulo representa funciones/globales de un archivo, no una clase instanciable" vertex="1">
+          <mxGeometry height="60" width="1440" x="80" y="900" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
